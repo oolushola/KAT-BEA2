@@ -196,6 +196,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::post('remove-incentive/{id}', 'invoiceController@removeIncentive');
     Route::post('update-waybill-invoice', 'invoiceController@financeWaybillUpload');
     Route::post('delete-invoice/{invoiceNumber}', 'invoiceController@deleteInvoice');
+    Route::resource('vat-rate', 'vatRateController');
 
 });
 

@@ -13,6 +13,7 @@ use App\trip;
 use App\tripIncentives;
 use App\incentives;
 use App\invoiceSubheading;
+use App\vatRate;
 
 class invoiceController extends Controller
 {
@@ -181,6 +182,7 @@ class invoiceController extends Controller
         );
 
         $availableIncentives = incentives::ALL();
+        $vatRate = vatRate::first();
         
         return view('finance.invoice.invoice-template',
             array(
@@ -193,7 +195,8 @@ class invoiceController extends Controller
                 'incentive' => $tripIncentives,
                 'invoiceHeadings' => $invoiceHeadings,
                 'availableIncentives' => $availableIncentives,
-                'trucksAndKaidArray' => $trucksAndKaidArray
+                'trucksAndKaidArray' => $trucksAndKaidArray,
+                'vatRateInfos' => $vatRate
             )
         );
     }
@@ -276,6 +279,7 @@ class invoiceController extends Controller
         );
         $waybillinfos = tripWaybill::SELECT('id', 'sales_order_no', 'invoice_no', 'tons', 'trip_id')->ORDERBY('trip_id', 'ASC')->GET();
         $tripIncentives = tripIncentives::GET();
+        $vatRate = vatRate::first();
 
         return view('finance.invoice.invoice-reprint', 
             array(
@@ -286,7 +290,8 @@ class invoiceController extends Controller
                 'dateInvoiced' => $getTripById,
                 'incentive' => $tripIncentives,
                 'invoiceHeadings' => $invoiceHeadings,
-                'trucksAndKaidArray' => $trucksAndKaidArray
+                'trucksAndKaidArray' => $trucksAndKaidArray,
+                'vatRateInfos' => $vatRate
             )
         );
     }
