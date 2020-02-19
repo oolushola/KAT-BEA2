@@ -14,6 +14,7 @@ use App\tripIncentives;
 use App\incentives;
 use App\invoiceSubheading;
 use App\vatRate;
+use App\invoiceClientRename;
 
 class invoiceController extends Controller
 {
@@ -280,6 +281,7 @@ class invoiceController extends Controller
         $waybillinfos = tripWaybill::SELECT('id', 'sales_order_no', 'invoice_no', 'tons', 'trip_id')->ORDERBY('trip_id', 'ASC')->GET();
         $tripIncentives = tripIncentives::GET();
         $vatRate = vatRate::first();
+        $invoiceBiller = invoiceClientRename::WHERE('invoice_no', $invoiceNumber)->first();
 
         return view('finance.invoice.invoice-reprint', 
             array(
@@ -291,7 +293,8 @@ class invoiceController extends Controller
                 'incentive' => $tripIncentives,
                 'invoiceHeadings' => $invoiceHeadings,
                 'trucksAndKaidArray' => $trucksAndKaidArray,
-                'vatRateInfos' => $vatRate
+                'vatRateInfos' => $vatRate,
+                'invoiceBiller' => $invoiceBiller
             )
         );
     }
@@ -479,6 +482,12 @@ class invoiceController extends Controller
         return 'deleted';
 
     }
-
     
+    public function invoiceBiller(Request $request) {
+        $invoiceBiller = invoiceClientRename::firstOrNew(['invoice_no' => $request->invoice_no]);
+        $invoiceBiller->client_name = $request->client_name;
+        $invoiceBiller->client_address = $request->client_address;
+        $invoiceBiller->save();
+        return 'changed';
+    }
 }

@@ -99,15 +99,44 @@ input{
 
 						<div class="row">
 							<div class="mb-4 mb-md-2 col-md-6">
+								<p id="editClientInformation" class="text-primary-400" style="cursor:pointer">Edit <i class="icon-pencil"></i></p>
+								<p id="closeEditClientInformation" class="hidden text-danger" style="cursor:pointer">Close <i class="icon-x"></i></p>
+								
 								<span class="font-weight-bold">Billing To:</span>
 								<ul class="list list-unstyled mb-0">
-									<li class="font-weight-bold">
-										<h5 class="my-2">
-											{!! strtoupper($completedInvoice[0]->company_name) !!}
-										</h5>
-									</li>
-									<li class="font-weight-bold">{!! ucwords($completedInvoice[0]->address) !!}</li>
-									<li class="font-weight-bold">Nigeria</li>
+									
+									<div id="defaultCompanyInfo">
+										<li class="font-weight-bold">
+											<h5 class="my-2">
+												@if(isset($invoiceBiller))
+													{!! $invoiceBiller->client_name !!}
+												@else
+													{!! strtoupper($completedInvoice[0]->company_name) !!}
+												@endif
+											</h5>
+										</li>
+										<li class="font-weight-bold">
+											@if(isset($invoiceBiller))
+												{!! $invoiceBiller->client_address !!}
+											@else
+												{!! ucwords($completedInvoice[0]->address) !!}
+											@endif
+										</li>
+										<li class="font-weight-bold">Nigeria</li>
+									</div>
+									
+
+									<div id="editClientContainer" class="hidden">
+										<li>
+											<input type="text" class="form-control font-weight-bold mb-2" name="client_name" id="clientName" style="width:70%" value="@if(isset($invoiceBiller)){!! $invoiceBiller->client_name !!} @else {!! strtoupper($completedInvoice[0]->company_name) !!}@endif">
+										</li>
+										<li>
+											<textarea class="form-control font-weight-bold" name="client_address" id="clientAddress" style="width:70%">@if(isset($invoiceBiller)) {!! $invoiceBiller->client_address !!} @else  {!! ucwords($completedInvoice[0]->address) !!} @endif</textarea>
+										</li>
+										<li id="clientDetailsLoader"></li>
+										<li><button id="saveClientDetails" value="{{$invoice_no}}" class="mt-2 btn btn-primary">Rename</button></li>
+										<input type="hidden" value="{{$invoice_no}}" name="invoice_no">
+									</div>
 									
 								</ul>
 							</div>
@@ -434,7 +463,40 @@ input{
 
 				}
 			})
-		})
+		});
+
+		$('#editClientInformation').click(function() {
+			$(this).addClass('hidden');
+			$('#closeEditClientInformation').removeClass('hidden')
+			$('#defaultCompanyInfo').addClass("hidden");
+			$('#editClientContainer').addClass('show').removeClass('hidden');
+		});
+		
+		$('#closeEditClientInformation').click(function() {
+			$(this).addClass('hidden')
+			$('#editClientInformation').removeClass('hidden')
+			$('#defaultCompanyInfo').removeClass("hidden");
+			$('#editClientContainer').removeClass('show').addClass('hidden');
+		});
+
+		$('#saveClientDetails').click(function(e) {
+			e.preventDefault();
+			$invoiceNo = $(this).attr('value');
+			$clientName = $("#clientName").val();
+			$clientAddress = $('#clientAddress').val();
+			$('#clientDetailsLoader').html('<i class="spinner icon-spinner mt-2"></i> please wait...')
+			$.post('/invoice-biller', $('#frmReprintInvoice').serializeArray(), function(data) {
+				if(data == 'changed') {
+					$('#clientDetailsLoader').html('The biller name changed successfully.');
+					window.location = '';
+				}
+				else{
+					$('#clientDetailsLoader').html('Oops! Something went wrong.');
+					return false;
+				}
+			})
+		}) 
+		
 
 		// download invoice invoice
 		
