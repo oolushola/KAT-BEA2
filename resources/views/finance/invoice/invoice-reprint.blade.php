@@ -268,7 +268,7 @@ input{
 
 											<span class="editClientRatePlaceholder" style="display:none">
 												<input type="text" value="{{$invoiceParams->client_rate}}" name="initialAmount[]">
-												<input type="hidden" value="{{$trip_id}}" name="tripIdListings[]">
+												<input type="text" value="{{$invoiceParams->id}}" name="tripIdListings[]">
 												<input type="hidden" value="{{$invoice_no}}" id="invoiceNumber">
 											</span>
 										</td>

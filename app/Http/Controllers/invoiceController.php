@@ -247,9 +247,17 @@ class invoiceController extends Controller
     }
 
     public function allInvoicedTrip() {
-        $completedInvoice = completeInvoice::ORDERBY('invoice_no', 'DESC')->distinct('invoice_no')->GET(['invoice_no', 'completed_invoice_no', 'paid_status', 'date_paid', 'acknowledged', 'acknowledged_date']);
+        // $completedInvoice = completeInvoice::ORDERBY('invoice_no', 'DESC')->distinct('invoice_no')->GET(['invoice_no', 'completed_invoice_no', 'paid_status', 'date_paid', 'acknowledged', 'acknowledged_date']);
+
+        $completedInvoice = DB::SELECT(
+            DB::RAW(
+                'SELECT DISTINCT a.invoice_no, a.paid_status, a.date_paid, a.acknowledged, a.acknowledged_date, b.client_id, c.company_name, a.completed_invoice_no FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c on a.trip_id = b.id AND b.client_id = c.id'
+            )
+        );
+        $invoiceBillers = invoiceClientRename::GET();
         
-        return view('finance.invoice.all-invoiced-trip', compact('completedInvoice'));
+        
+        return view('finance.invoice.all-invoiced-trip', compact('completedInvoice', 'invoiceBillers'));
     }
 
     public function singleInvoice($invoiceNumber) {

@@ -66,6 +66,7 @@ td{
                         <thead>
                             <tr class="font-size-sm font-weight-bold">
                                 <th>#</th>
+                                <th>Client Name</th>
                                 <th class="text-center">Invoice Number</th>
                                 <th class="text-center"><button type="button" class="btn btn-success" id="acknowledgedInvoices">Acknowledged</button></th>
                                 <th class="text-center">Date Acknowledge</th>
@@ -135,6 +136,8 @@ td{
                                 ?>
                                 <tr class>
                                     <td>{{$count}} <input type="hidden" name="paid_invoices[]" value="{!! $completeInvoice->invoice_no !!}"></td>
+                                    <td>{{strtoupper($completeInvoice->company_name)}}</td>
+                                    
                                     <td class="text-center {{$acknowledgeClass}}">{!! $completeInvoice->completed_invoice_no !!}</td>
                                     <td class="text-center">{!! $acknowledgementStatus !!}</td>
                                     <td class="text-center">
