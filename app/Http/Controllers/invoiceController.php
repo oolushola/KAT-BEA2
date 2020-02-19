@@ -14,6 +14,7 @@ use App\tripIncentives;
 use App\incentives;
 use App\invoiceSubheading;
 use App\vatRate;
+use App\invoiceClientRename;
 
 class invoiceController extends Controller
 {
@@ -246,9 +247,17 @@ class invoiceController extends Controller
     }
 
     public function allInvoicedTrip() {
-        $completedInvoice = completeInvoice::ORDERBY('invoice_no', 'DESC')->distinct('invoice_no')->GET(['invoice_no', 'completed_invoice_no', 'paid_status', 'date_paid', 'acknowledged', 'acknowledged_date']);
+        // $completedInvoice = completeInvoice::ORDERBY('invoice_no', 'DESC')->distinct('invoice_no')->GET(['invoice_no', 'completed_invoice_no', 'paid_status', 'date_paid', 'acknowledged', 'acknowledged_date']);
+
+        $completedInvoice = DB::SELECT(
+            DB::RAW(
+                'SELECT DISTINCT a.invoice_no, a.paid_status, a.date_paid, a.acknowledged, a.acknowledged_date, b.client_id, c.company_name, a.completed_invoice_no FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c on a.trip_id = b.id AND b.client_id = c.id'
+            )
+        );
+        $invoiceBillers = invoiceClientRename::GET();
         
-        return view('finance.invoice.all-invoiced-trip', compact('completedInvoice'));
+        
+        return view('finance.invoice.all-invoiced-trip', compact('completedInvoice', 'invoiceBillers'));
     }
 
     public function singleInvoice($invoiceNumber) {
@@ -280,6 +289,7 @@ class invoiceController extends Controller
         $waybillinfos = tripWaybill::SELECT('id', 'sales_order_no', 'invoice_no', 'tons', 'trip_id')->ORDERBY('trip_id', 'ASC')->GET();
         $tripIncentives = tripIncentives::GET();
         $vatRate = vatRate::first();
+        $invoiceBiller = invoiceClientRename::WHERE('invoice_no', $invoiceNumber)->first();
 
         return view('finance.invoice.invoice-reprint', 
             array(
@@ -291,7 +301,8 @@ class invoiceController extends Controller
                 'incentive' => $tripIncentives,
                 'invoiceHeadings' => $invoiceHeadings,
                 'trucksAndKaidArray' => $trucksAndKaidArray,
-                'vatRateInfos' => $vatRate
+                'vatRateInfos' => $vatRate,
+                'invoiceBiller' => $invoiceBiller
             )
         );
     }
@@ -479,6 +490,12 @@ class invoiceController extends Controller
         return 'deleted';
 
     }
-
     
+    public function invoiceBiller(Request $request) {
+        $invoiceBiller = invoiceClientRename::firstOrNew(['invoice_no' => $request->invoice_no]);
+        $invoiceBiller->client_name = $request->client_name;
+        $invoiceBiller->client_address = $request->client_address;
+        $invoiceBiller->save();
+        return 'changed';
+    }
 }

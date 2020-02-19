@@ -198,6 +198,8 @@ Route::group(['middleware' => 'auth'], function() {
     Route::post('delete-invoice/{invoiceNumber}', 'invoiceController@deleteInvoice');
     Route::resource('vat-rate', 'vatRateController');
 
+    Route::post('invoice-biller', 'invoiceController@invoiceBiller');
+
 });
 
 
