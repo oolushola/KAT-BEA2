@@ -424,11 +424,13 @@ input{
 			$("#saveAndPrintContainer").addClass("hidden");
 			$('.icon-trash').addClass('hidden');
 			$('.deleteInvAndTonsplitter').addClass('hidden');
+			$('#editClientInformation').addClass('hidden')
             $.print("#printableArea");
             window.setTimeout(() => {
 				$("#saveAndPrintContainer").addClass("show").removeClass('hidden');
 				$('.icon-trash').removeClass('hidden');	
 				$('.deleteInvAndTonsplitter').removeClass('hidden');
+				$('#editClientInformation').removeClass('hidden');
             }, 3000);
 		});
 		
@@ -455,7 +457,7 @@ input{
 		$('#updateInvoice').click(function(){
 			$invoiceNumber = $('#invoiceNumber').val();
 			$('#loader').html('<i class="icon-spinner spinner"></i> Please wait...');
-			$.post('/update-initial-invoice-price', $('#frmUpdateInitialPrice').serializeArray(), function(response){
+			$.post('/update-initial-invoice-price', $('#frmReprintInvoice').serializeArray(), function(response){
 				if(response == 'amountUpdated'){
 					$url = `/invoice-trip/${$invoiceNumber}`;
 					window.location.href=$url;
