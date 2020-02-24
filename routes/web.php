@@ -110,7 +110,8 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('update-trip', 'ordersController@fieldOpsUpdate');
     Route::get('view-orders', 'ordersController@show');
     Route::get('generate-report', 'ordersController@clientReport');
-    ROute::get('client-report', 'ordersController@displayClientReport');
+    Route::get('client-report', 'ordersController@displayClientReport');
+    Route::post('completed-report', 'ordersController@markCompletedReport');
 
     Route::get('transporter-phone', 'ordersController@getTransporterNumber');
     Route::get('truck-info', 'ordersController@getTruckInformation');
@@ -199,6 +200,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::resource('vat-rate', 'vatRateController');
 
     Route::post('invoice-biller', 'invoiceController@invoiceBiller');
+    Route::post('alter-trip-information', 'invoiceController@alterTripInformation');
 
 });
 

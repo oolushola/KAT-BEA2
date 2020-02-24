@@ -15,6 +15,7 @@ use App\incentives;
 use App\invoiceSubheading;
 use App\vatRate;
 use App\invoiceClientRename;
+use App\product;
 
 class invoiceController extends Controller
 {
@@ -251,7 +252,7 @@ class invoiceController extends Controller
 
         $completedInvoice = DB::SELECT(
             DB::RAW(
-                'SELECT DISTINCT a.invoice_no, a.paid_status, a.date_paid, a.acknowledged, a.acknowledged_date, b.client_id, c.company_name, a.completed_invoice_no FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c on a.trip_id = b.id AND b.client_id = c.id'
+                'SELECT DISTINCT a.invoice_no, a.paid_status, a.date_paid, a.acknowledged, a.acknowledged_date, b.client_id, c.company_name, a.completed_invoice_no FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c on a.trip_id = b.id AND b.client_id = c.id ORDER BY invoice_no DESC'
             )
         );
         $invoiceBillers = invoiceClientRename::GET();
@@ -290,6 +291,7 @@ class invoiceController extends Controller
         $tripIncentives = tripIncentives::GET();
         $vatRate = vatRate::first();
         $invoiceBiller = invoiceClientRename::WHERE('invoice_no', $invoiceNumber)->first();
+        $allProducts = product::get();
 
         return view('finance.invoice.invoice-reprint', 
             array(
@@ -302,7 +304,8 @@ class invoiceController extends Controller
                 'invoiceHeadings' => $invoiceHeadings,
                 'trucksAndKaidArray' => $trucksAndKaidArray,
                 'vatRateInfos' => $vatRate,
-                'invoiceBiller' => $invoiceBiller
+                'invoiceBiller' => $invoiceBiller,
+                'products' => $allProducts
             )
         );
     }
@@ -497,5 +500,24 @@ class invoiceController extends Controller
         $invoiceBiller->client_address = $request->client_address;
         $invoiceBiller->save();
         return 'changed';
+    }
+
+    public function alterTripInformation(Request $request) {
+        foreach($request->tripIdListings as $key => $trip_id){
+            
+            $gated_out = $request->gatedOut[$key];
+            $customers_name = $request->customersName[$key];
+            $exact_location_id = $request->exactLocation[$key];
+            $product_id = $request->product[$key];
+
+            $specificRecordId = trip::findOrFail($trip_id);
+
+            $specificRecordId->gated_out = $gated_out;
+            $specificRecordId->customers_name = $customers_name;
+            $specificRecordId->exact_location_id = $exact_location_id;
+            $specificRecordId->product_id = $product_id;
+            $specificRecordId->save();
+        }
+        return 'updated';
     }
 }

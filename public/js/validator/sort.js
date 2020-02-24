@@ -60,12 +60,26 @@ $(function() {
         });
     });
 
-    $(document).on('click', '#downloadClientReport', function(){
+    $(document).on('click', '#downloadClientReport', function(event){
+        event.preventDefault();
         var name = Math.random().toString().substring(7);
         $("#exportTableData").table2excel({
             filename:`${name}-report.xls`
         });
     });
+
+    $(document).on('click', '#sendForComplete', function(e) {
+        $('#contentLoader').html('<i class="icon icon-spinner2"></i> Please wait...');
+        $.post('/completed-report', $('#frmCompleteClientReport').serializeArray(), function(data) {
+            if(data == 'saved'){
+                $('#contentLoader').html('Report completed successfully.').addClass('success');
+                window.location = '';
+            }
+            else{
+                return false;
+            }
+        })
+    })
 
 
 

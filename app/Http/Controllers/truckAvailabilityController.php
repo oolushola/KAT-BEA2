@@ -32,6 +32,7 @@ class truckAvailabilityController extends Controller
                 'SELECT * FROM tbl_regional_state WHERE regional_country_id = \'94\' ORDER BY state ASC'
             )
         );
+        $truckTypes = truckType::SELECT('truck_type')->ORDERBY('truck_type', 'ASC')->DISTINCT()->GET();
         return view('truck-availability.create', 
             compact(
                 'loadingsites',
@@ -40,7 +41,8 @@ class truckAvailabilityController extends Controller
                 'drivers',
                 'products',
                 'states',
-                'clients'
+                'clients',
+                'truckTypes'
             )
         );
     }
