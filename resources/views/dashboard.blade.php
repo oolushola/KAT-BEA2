@@ -339,11 +339,12 @@ input, select{
     var targetForTheMonth = <?php echo json_encode($targetforthemonth); ?>;
     var gateOutForTheMonth = <?php echo json_encode($gatedOutForTheMonth); ?>;
     var gateOutStatistics = [targetForTheMonth, gateOutForTheMonth];
+    var currentMonth = $('#currentMonthInTheYear').val();
 
     var myChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['December Target', 'Actualized'],
+            labels: [currentMonth, 'Completed'],
             datasets: [{
                 label: 'Monthly Target Statistics',
                 data: gateOutStatistics,

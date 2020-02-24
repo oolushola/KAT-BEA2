@@ -62,25 +62,26 @@ td{
                     </ul>
                 @endif
                 <div class="table-responsive" id="contentLoader">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr class="font-size-sm font-weight-bold">
+                    <table class="table table-striped" width="100%">
+                        <thead class="table-success">
+                            <tr class="font-weight-bold" style="font-size:10px;">
                                 <th>#</th>
                                 <th>Client Name</th>
+                                <th>Billed to: </th>
                                 <th class="text-center">Invoice Number</th>
-                                <th class="text-center"><button type="button" class="btn btn-success" id="acknowledgedInvoices">Acknowledged</button></th>
-                                <th class="text-center">Date Acknowledge</th>
+                                <th class="text-center"><button type="button" style="font-size:10px" class="btn btn-success" id="acknowledgedInvoices">Acknowledged</button></th>
+                                <th class="text-center">Date <br> Acknowledge</th>
                                 <th class="text-center">
-                                    <button type="submit" class="btn btn-primary" id="paidInvoices">Paid?</button>
+                                    <button type="submit" class="btn btn-primary" id="paidInvoices" style="font-size:10px" >Paid?</button>
                                     <span id="loader"></span>
                                 </th>
                                 
                                 <th>Date Paid</th>
-                                <th class="text-center">Payment Status</th>
-                                <th class="text-center">Action</th>
+                                <th class="text-center">Payment <br> Status</th>
+                                <!-- <th class="text-center">Action</th> -->
                             </tr>
                         </thead>
-                        <tbody class="font-size-sm font-weight-bold" style="font-size:10px;">
+                        <tbody class="font-size-sm font-weight-bold" style="font-size:9px;">
                             <?php $count = 0;  ?>
 
                             @if(count($completedInvoice))
@@ -134,9 +135,22 @@ td{
                                     }
                                 
                                 ?>
-                                <tr class>
-                                    <td>{{$count}} <input type="hidden" name="paid_invoices[]" value="{!! $completeInvoice->invoice_no !!}"></td>
-                                    <td>{{strtoupper($completeInvoice->company_name)}}</td>
+                                <tr class="hover">
+                                    <td>
+                                        {{$count}} <input type="hidden" name="paid_invoices[]" value="{!! $completeInvoice->invoice_no !!}">
+                                    </td>
+                                    <td>
+                                        <a href="{{URL('invoice-trip/'.$completeInvoice->completed_invoice_no)}}" target="_blank">
+                                        {{strtoupper($completeInvoice->company_name)}}</a>
+                                    </td>
+                                    <td>
+                                        @foreach($invoiceBillers as $specificBiller)
+                                            @if($specificBiller->invoice_no == $completeInvoice->completed_invoice_no)
+                                                {{ $specificBiller->client_name }}
+                                            @endif
+                                            
+                                        @endforeach
+                                    </td>
                                     
                                     <td class="text-center {{$acknowledgeClass}}">{!! $completeInvoice->completed_invoice_no !!}</td>
                                     <td class="text-center">{!! $acknowledgementStatus !!}</td>
@@ -165,11 +179,11 @@ td{
                                     <td class="text-center">
                                         <span class="badge {{$class}}">{{$description}}</span>
                                     </td>
-                                    <td class="text-center">
+                                    <!-- <td class="text-center">
                                         <a href="{{URL('invoice-trip/'.$completeInvoice->completed_invoice_no)}}" target="_blank">
                                             <span class="icon-eye"></span>
                                         </a>
-                                    </td>
+                                    </td> -->
                                 </tr>
                                 @endforeach
                             @else

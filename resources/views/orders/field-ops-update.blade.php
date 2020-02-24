@@ -70,6 +70,7 @@ td{
                     <span style="font-size:11px; font-weight:bold">{{$current_stage}}</span>
 
                     <a href="{{URL('/trips/'.$trip->id.'/edit')}}" class="list-icons-item text-primary-600" title="Update this trip"><button type="button" class="btn btn-warning font-weight-semibold" style="font-size:10px;">UPDATE</button></a>
+                    <p>{{$trip->loading_site}} | <a href="{{URL('way-bill/'.$trip->trip_id.'/'.$trip->loading_site)}}">Update S.O. & Invoice No.</a></p>
                     
 
                 </h4>

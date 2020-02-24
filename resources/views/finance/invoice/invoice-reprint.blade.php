@@ -210,17 +210,43 @@ input{
                                             
 										?>
 										<tr class="font-weight-bold">
-											<td class="font-weight-bold">{!! date('d/m/Y', strtotime($invoiceParams->gated_out)) !!}</td>
+											<td class="font-weight-bold">
+												<span class="defaultInfo">{!! date('d/m/Y', strtotime($invoiceParams->gated_out)) !!}</span>
+												<div class="bulkyAlter hidden">
+													<input type="datetime-local" value="{{ $invoiceParams->gated_out }}" style="font-size:10px; width:150px" name="gatedOut[]">
+												</div>
+											</td>
 											<td>
 											<h6 class="mb-0">
+											<span class="defaultInfo">
 												<a href="#">{!! $invoiceParams->customers_name  !!}</a>
 												<span class="d-block font-size-sm ">Destination: 
 													{!! $invoiceParams->state !!}, {!! $invoiceParams->exact_location_id !!}
 												</span>
+											</span>
+											<div class="bulkyAlter hidden">
+												<input type="text" value="{!! $invoiceParams->customers_name  !!}" name="customersName[]" style="font-size:10px; width:150px">
+												<input type="text" value="{!! $invoiceParams->exact_location_id  !!}" name="exactLocation[]" style="font-size:10px; width:100px">
+											</div>
 											</h6>
 											<input type="hidden" name="trip_id[]" value="{!! $invoiceParams->id !!}">
 										</td>
-										<td>{!! $invoiceParams->product !!} </td>
+										<td>
+											<span class="defaultInfo">{!! $invoiceParams->product !!}</span>
+											<div class="bulkyAlter hidden">
+												<select style="font-size:10px; width:100px" name="product[]">
+													<!-- <option value="">{!! $invoiceParams->product !!}</option> -->
+													@foreach($products as $product)
+														@if($product->product == $invoiceParams->product)
+															<option selected value="{{$product->id}}" name="product_id[]">{{$product->product}}</option>
+														@else
+															<option value="{{$product->id}}">{{$product->product}}</option>
+														@endif
+													@endforeach
+												</select>
+											</div>
+										</td>
+										
 										<td>{!! $invoiceParams->truck_no !!}</td>
 										<td>
 											@foreach($waybillinfos as $waybilldetails)
@@ -350,7 +376,9 @@ input{
 
 									<div class="" id="saveAndPrintContainer">
 
-										<button type="button" id="saveInvoice" class="btn btn-light btn-sm"><i class="icon-file-check mr-2"></i> Download <i class="icon-pdf2"></i></button>
+										<button type="button" id="alterInformation" class="btn btn-light btn-sm"><i class="icon-rotate mr-2"></i>Alter<i class="icon-pdf2"></i></button>
+
+										<button type="button" id="updateAlteredInformation" class="btn btn-light btn-sm"><i class="icon-rotate mr-2"></i>Update<i class="icon-pdf2"></i></button>
 
 										<button type="button" id="editInvoice" class="btn btn-light btn-sm ml-3"><i class="icon-pencil mr-2"></i> Edit Rate</button>
 
@@ -406,8 +434,6 @@ input{
 @section('script')
 <script type="text/javascript" src="{{URL::asset('js/validator/print.js')}}"></script>
 <script type="text/javascript" src="{{URL::asset('js/validator/invoice.js')}}"></script>
-<script src="https://kendo.cdn.telerik.com/2017.2.621/js/jszip.min.js"></script>
- <script src="https://kendo.cdn.telerik.com/2017.2.621/js/kendo.all.min.js"></script>
   <script>
     $(function() {
         $total = $("#sumtotalIncentive").val();
@@ -500,24 +526,31 @@ input{
 		}) 
 		
 
-		// download invoice invoice
-		
-		function ExportPdf(){ 
-		kendo.drawing
-			.drawDOM("#printableArea", 
-			{ 
-				paperSize: "A4",
-				margin: { top: "1cm", bottom: "1cm", left: "1cm", right: '1cm' },
-				scale: 0.5,
-				height: 500
-			})
-				.then(function(group){
-				kendo.drawing.pdf.saveAs(group, "testing.pdf")
-			});
-		}
+		$('#alterInformation').click(function() {
+			//defaultInfo bulkyAlter
+			$('.bulkyAlter').removeClass('hidden')
+			$('.defaultInfo').addClass('hidden')
+			$(this).addClass('hidden')
+			$('#updateAlteredInformation').removeClass('hidden')
+		})
 
-		$('#saveInvoice').click(function(){
-			ExportPdf();
+		$('#updateAlteredInformation').click(function() {
+			$('.bulkyAlter').addClass('hidden')
+			$('.defaultInfo').removeClass('hidden')
+			$(this).addClass('hidden')
+			$('#alterInformation').removeClass('hidden');
+			$('#loader').html('<i class="spinner icon-spinner mt-2"></i> please wait...')
+			
+			$.post('/alter-trip-information', $('#frmReprintInvoice').serialize(), function(data) {
+				if(data === 'updated') {
+					$('#loader').html('Updated successfully.');
+					window.location='';
+				}
+				else {
+					$('#loader').html('<i class="spinner icon-spinner mt-2"></i>Something went wrong, please contact the administrator')
+					return false;
+				}
+			})
 		})
 
     });

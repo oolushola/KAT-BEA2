@@ -59,6 +59,7 @@ class ordersController extends Controller
                 'SELECT * FROM tbl_regional_state WHERE regional_country_id = \'94\' ORDER BY state ASC'
             )
         );
+        $truckTypes = truckType::SELECT('truck_type')->ORDERBY('truck_type', 'ASC')->DISTINCT()->GET();
         return view('orders.create-trip',
             compact(
                 'loadingsites',
@@ -67,7 +68,8 @@ class ordersController extends Controller
                 'drivers',
                 'products',
                 'states',
-                'clients'
+                'clients',
+                'truckTypes'
             )
         );
     }
@@ -150,6 +152,7 @@ class ordersController extends Controller
         );
         $truckAvailabilityId = base64_decode($availabilityId);
         $exactdestinations = transporterRate::ORDERBY('transporter_destination', 'ASC')->GET();
+        $truckTypes = truckType::SELECT('truck_type')->ORDERBY('truck_type', 'ASC')->DISTINCT()->GET();
 
         $recid = DB::SELECT(
             DB::RAW(
@@ -169,7 +172,8 @@ class ordersController extends Controller
                 'recid',
                 'truck_no',
                 'exactdestinations',
-                'truckAvailabilityId'
+                'truckAvailabilityId',
+                'truckTypes'
             )
         );
     }
@@ -245,12 +249,17 @@ class ordersController extends Controller
             return 'exists';
         }
         else {
+            
+            $getLastTripId = trip::SELECT('trip_id')->LATEST()->FIRST();
+            $lastTripId = str_replace('KAID', '', $getLastTripId->trip_id);
+            $counter = intval('0000') + intval($lastTripId) + 1;
+            $kaya_id = 'KAID'.sprintf('%04d', $counter);
+
             $trip = trip::CREATE($request->all());
+
             $id = $trip->id;
-            $recid = trip::findOrFail($id);
-            $counter = intval('0000') + $id;
-            $kaya_id = sprintf('%04d', $counter);
-            $recid->trip_id = 'KAID'.$kaya_id;
+            $recid = $trip::findOrFail($id);
+            $recid->trip_id = $kaya_id;
             $recid->save();
 
             $updateTruckAvailabilityStatus = truckAvailability::findOrFail($request->truck_availability_id);
@@ -410,9 +419,10 @@ class ordersController extends Controller
         );
         $transporterNumber = transporter::findOrFail($recid[0]->transporter_id);
         $getTruckTypeId = trucks::SELECT('truck_type_id')->WHERE('id', $recid[0]->truck_id)->GET();
-        $truckType = truckType::findOrFail($getTruckTypeId);
+        $truckType = truckType::findOrFail($getTruckTypeId)->last();
         $exactdestinations = transporterRate::ORDERBY('transporter_destination', 'ASC')->GET();
         $driver = drivers::findOrFail($recid[0]->driver_id);
+        $truckTypes = truckType::SELECT('truck_type')->ORDERBY('truck_type', 'ASC')->DISTINCT()->GET();        
 
         return view('orders.create-trip',
             compact('loadingsites',
@@ -426,7 +436,8 @@ class ordersController extends Controller
                 'truckType',
                 'driver',
                 'exactdestinations',
-                'clients'
+                'clients',
+                'truckTypes'
             )
         );
     }
@@ -831,7 +842,7 @@ class ordersController extends Controller
         $client_id = $request->client_id;
         $orders = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND a.tracker <= 8 AND a.client_id = '.$client_id.' '
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND a.tracker <= 8 AND a.client_id = '.$client_id.' AND a.completed_trip_report = FALSE '
             )
         );
 
@@ -864,7 +875,8 @@ class ordersController extends Controller
                     <th class="text-center">TIME & DATE </th>
                     <th>TIME ARRIVED DESTINATION</th>
                     <th>CURRENT STAGE</th>
-                    <th>REMARKS</th>                   
+                    <th>REMARKS</th>
+                    <th><button class="btn btn-primary" id="sendForComplete">COMPLETED?</button></th>                  
                 </tr>
             </thead>';
 
@@ -960,7 +972,7 @@ class ordersController extends Controller
                     <td class="text-center">'.$this->eventdetails($tripEvents, $trip, 'time_arrived_destination').'</td>
                     <td>'.$current_stage.'</td>
                     <td class="font-weight-semibold"></td>
-                                            
+                    <td class="text-center"><input type="checkbox" name="markAsCompleted[]" value="'.$trip->id.'"></td>                        
                     
                 </tr>';
                 
@@ -975,6 +987,17 @@ class ordersController extends Controller
         </table>';
 
         return $tabledata;
+    }
+
+    public function markCompletedReport(Request $request) {
+        if(isset($request->markAsCompleted)) {
+            foreach($request->markAsCompleted as $key=> $completedTripReport){
+                $recid = trip::findOrFail($completedTripReport);
+                $recid->completed_trip_report = TRUE;
+                $recid->save();
+            }
+            return 'saved';
+        }
     }
 
     function voidTrip($id){

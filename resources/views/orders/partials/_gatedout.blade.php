@@ -36,7 +36,7 @@
         <div class="col-md-4">
             <div class="form-group">
                 <label class="font-weight-semibold">Loaded Weight<sub>(Kg)</sub></label>
-                <input type="number" class="form-control" min="1" name="loaded_weight" id="loadedWeight" value="<?php if(isset($recid)) { echo $recid[0]->loaded_weight; } ?>"> 
+                <input type="text" class="form-control" name="loaded_weight" id="loadedWeight" value="<?php if(isset($recid)) { echo $recid[0]->loaded_weight; } ?>"> 
             </div>
         </div>
 

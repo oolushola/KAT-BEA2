@@ -80,7 +80,17 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <label class="font-weight-semibold">Truck Type *</label>
-                        <input type="text" id="truckType"  name="truck_type" class="form-control" value="<?php if(isset($recid)) { echo $truckType[0]['truck_type']; } ?>">
+                        <!-- <input type="text" id="truckType"  name="truck_type" class="form-control" value="<?php if(isset($recid)) { echo $truckType[0]['truck_type']; } ?>"> -->
+                        <select id="truckType"  name="truck_type" class="form-control">
+                        <option value="">Choose Truck Type</option>
+                            @foreach($truckTypes as $specificTruckType)
+                                @if(isset($recid) && $specificTruckType->truck_type == $truckType->truck_type)
+                                <option value="{{$specificTruckType->truck_type}}" selected>{{$specificTruckType->truck_type}}</option>
+                                @else
+                                <option value="{{$specificTruckType->truck_type}}">{{$specificTruckType->truck_type}}</option>
+                                @endif
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 

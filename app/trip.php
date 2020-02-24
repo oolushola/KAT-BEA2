@@ -33,6 +33,7 @@ class trip extends Model
         'day',
         'month',
         'year',
-        'user_id'
+        'user_id',
+        'completed_trip_report'
     ];
 }
