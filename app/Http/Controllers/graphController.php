@@ -72,7 +72,7 @@ class graphController extends Controller
         $onJourney = trip::WHERE('client_id', $client_id)->WHERE('tracker', '>=', 5)->WHERE('tracker', '<=', 6)->GET()->COUNT();
         $atDestination = $this->getClientStatus($client_id, '7');
         $offloadedTrips = $this->getClientStatus($client_id, '8');
-
+        
         return [$gateInCount, $arrivalatloadingBay, $onJourney, $atDestination, $offloadedTrips];
 
     }

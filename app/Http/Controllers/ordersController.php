@@ -26,9 +26,11 @@ use App\clientProduct;
 use App\completeInvoice;
 use Mail;
 use App\truckAvailability;
+use App\tripChanges;
 
 use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class ordersController extends Controller
 {
@@ -336,22 +338,10 @@ class ordersController extends Controller
         }
         else {
 
-            // return $request->transporter_id = $addasNewTransporter->id.', '.$request->driver_id = $addNewDriver->id.','.$request->truck_id = $addNewTruck->id;
-            
-            
-
-            // return $request->all(); 
-
             $getLastTripId = trip::SELECT('trip_id')->LATEST()->FIRST();
             $lastTripId = str_replace('KAID', '', $getLastTripId->trip_id);
             $counter = intval('0000') + intval($lastTripId) + 1;
             $kaya_id = sprintf('%04d', $counter);
-
-            // $trip = trip::CREATE($request->all());
-            // $recid = trip::findOrFail($trip->id);
-            // $trip_id = $recid->trip_id = 'KAID'.$kaya_id;
-            // $recid->save();
-            // return 'saved';
 
             $addNewTrip = trip::firstOrNew(['gate_in' => $request->gate_in, 'client_id' => $request->client_id, 'loading_site_id' => $request->loading_site_id]);
             $addNewTrip->truck_id = $request->truck_id;
@@ -366,38 +356,11 @@ class ordersController extends Controller
             $addNewTrip->tracker = $request->tracker;
             $addNewTrip->trip_status = TRUE;
             $addNewTrip->save();
+
+            $changes = tripChanges::CREATE(['trip_id' => $addNewTrip->id, 'user_id' => $request->user_id, 'changed_keys' => 1, 'changed_values' => 'Created']);
+
             return 'saved';
 
-
-
-            /*
-            'gate_in',
-            'client_id',
-            'loading_site_id',
-            'transporter_id',
-            'truck_id',
-            'driver_id',
-            'product_id',
-            'destination_state_id',
-            'exact_location_id',
-            'account_officer',
-            'arrival_at_loading_bay',
-            'loading_start_time',
-            'loading_end_time',
-            'departure_date_time',
-            'gated_out',
-            'customers_name',
-            'customer_no',
-            'loaded_quantity',
-            'loaded_weight',
-            'customer_address',
-            'tracker',
-            'trip_status',
-            'day',
-            'month',
-            'year',
-            'user_id'
-            */
         }       
     }
 
@@ -422,7 +385,9 @@ class ordersController extends Controller
         $truckType = truckType::findOrFail($getTruckTypeId)->last();
         $exactdestinations = transporterRate::ORDERBY('transporter_destination', 'ASC')->GET();
         $driver = drivers::findOrFail($recid[0]->driver_id);
-        $truckTypes = truckType::SELECT('truck_type')->ORDERBY('truck_type', 'ASC')->DISTINCT()->GET();        
+        $truckTypes = truckType::SELECT('truck_type')->ORDERBY('truck_type', 'ASC')->DISTINCT()->GET();
+        
+        $waybillUploadCount = tripWaybill::WHERE('trip_id', $id)->GET()->COUNT();
 
         return view('orders.create-trip',
             compact('loadingsites',
@@ -437,7 +402,8 @@ class ordersController extends Controller
                 'driver',
                 'exactdestinations',
                 'clients',
-                'truckTypes'
+                'truckTypes',
+                'waybillUploadCount'
             )
         );
     }
@@ -513,7 +479,10 @@ class ordersController extends Controller
                     $recid->client_rate = $client_rate;
                     $recid->transporter_rate = $transporter_rate;
                 }
-            $recid->UPDATE($request->all());  
+            $recid->UPDATE($request->all());
+
+            $changes = tripChanges::CREATE(['trip_id' => $id, 'user_id' => $request->user_id, 'changed_keys' => $request->tracker, 'changed_values' => 'Update']);
+
 
             if($request->tracker == 5) {
                 $tripRate = $recid->transporter_rate;
@@ -598,16 +567,26 @@ class ordersController extends Controller
         }
     }
 
-    public function show() {
+    public function show(Request $request) {
         $clients = client::SELECT('id', 'company_name')->ORDERBY('company_name', 'ASC')->GET();
         $transporters = transporter::SELECT('id', 'transporter_name')->ORDERBY('transporter_name', 'ASC')->GET();
         $loadingSites = loadingSite::SELECT('id', 'loading_site')->ORDERBY('loading_site', 'ASC')->GET();
 
         $orders = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' ORDER BY a.trip_id DESC LIMIT 100'
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage, h.first_name, h.last_name FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN users h ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND h.id = a.user_id ORDER BY a.trip_id DESC LIMIT 50'
             )
         );
+        $collection = new Collection($orders);
+        $perPage = 50;
+        $currentPage =  $request->get('page') - 1;
+        $pagedData = $collection->slice($currentPage * $perPage, $perPage)->all();
+
+        $path = url('/').'/view-orders?'.$currentPage;
+        
+        $pagination = new LengthAwarePaginator(($pagedData), count($collection), $perPage );
+        $pagination = $pagination->withPath($path);
+
         $tripWaybills = tripWaybill::GET();
         $tripEvents = tripEvent::ORDERBY('current_date', 'DESC')->GET();
         $waybillstatuses = tripWaybillStatus::GET();
@@ -638,7 +617,8 @@ class ordersController extends Controller
                 'loadingSites',
                 'products',
                 'states',
-                'invoiceCriteria'
+                'invoiceCriteria',
+                'pagination'
             )
         );
     }
@@ -728,8 +708,13 @@ class ordersController extends Controller
             $updateTracker = trip::findOrFail($request->trip_id);
             $updateTracker->tracker = $request->tracker;
             $updateTracker->save();
+
+            $changes = tripChanges::CREATE(['trip_id' => $recid->trip_id, 'user_id' => $request->user_id, 'changed_keys' => $request->tracker, 'changed_values' => 'On Journey Details']);
+
+
             return 'updated';
         }
+
     }
 
     public function waybill($orderId, $clientName) {
@@ -754,7 +739,7 @@ class ordersController extends Controller
     public function storewaybilldetails(Request $request) {
         foreach($request->invoice_no as $key=> $invoice_number) {
             if(isset($invoice_number) && $invoice_number != ''){
-                $salesorderandinvoice = tripWaybill::firstOrNew([
+                $salesorderandinvoice = tripWaybill::CREATE([
                     'trip_id' => $request->trip_id, 
                     'sales_order_no' => $request->sales_order_no[$key],
                 ]);
@@ -763,11 +748,30 @@ class ordersController extends Controller
                 $salesorderandinvoice->invoice_no = $invoice_number;
                 $salesorderandinvoice->save();
             }
+
+            $id = $salesorderandinvoice->id;
+            if($request->hasFile('photo')){
+                $recid = tripWaybill::findOrFail($id);
+                $photo = $request->file('photo');
+                $name = $recid->sales_order_no.'.'.$photo[$key]->getClientOriginalExtension();
+                $destination_path = public_path('assets/img/waybills/');
+                $waybillPath = $destination_path."/".$name;
+                $photo[$key]->move($destination_path, $name);
+                $recid->photo = $name;
+                $recid->remark = 'uploaded';
+                $recid->approve_waybill = 0;
+                $recid->waybill_status = 1;
+                $recid->moment_uploaded = date('Y-m-d\TH:i');
+                $recid->save();
+            }
         }
         $waybillstatus = tripWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
         $waybillstatus->waybill_status = FALSE;
         $waybillstatus->comment = 'With Driver';
         $waybillstatus->save();
+
+        $changes = tripChanges::CREATE(['trip_id' => $request->trip_id, 'user_id' => $request->user_id, 'changed_keys' => 9, 'changed_values' => 'Waybill Details Entered']);
+
         return 'saved';
     }
 
@@ -793,20 +797,38 @@ class ordersController extends Controller
     }
 
     public function updatewaybill(Request $request, $id) {
+            
+        $salesOrderNumber = $request->sales_order_no;
+        $invoiceNumber = $request->invoice_no;
+
+        foreach($invoiceNumber as $key=> $invoice_no) {
+            
             $recid = tripWaybill::findOrFail($id);
+            $updatedInvoiceNumber = $invoiceNumber[$key];
+
+            DB::UPDATE(
+                DB::RAW(
+                    'UPDATE tbl_kaya_trip_waybills SET sales_order_no = "'.$salesOrderNumber[$key].'", invoice_no = "'.$invoice_no.'" WHERE id = "'.$id.'" '
+                )
+            );
+            
             if($request->hasFile('photo')){
-            $photo = $request->file('photo');
-            $name = $recid->sales_order_no.'.'.$photo->getClientOriginalExtension();
-            $destination_path = public_path('assets/img/waybills/');
-            $waybillPath = $destination_path."/".$name;
-            $photo->move($destination_path, $name);
-            $recid->photo = $name;
-            $recid->remark = 'uploaded';
-            $recid->approve_waybill = 0;
-            $recid->waybill_status = 1;
-            $recid->moment_uploaded = date('Y-m-d\TH:i');
+                $photo = $request->file('photo');
+                $name = $recid->sales_order_no.'.'.$photo[$key]->getClientOriginalExtension();
+                $destination_path = public_path('assets/img/waybills/');
+                $waybillPath = $destination_path."/".$name;
+                $photo[$key]->move($destination_path, $name);
+                $recid->photo = $name;
+                $recid->remark = 'uploaded';
+                $recid->approve_waybill = 0;
+                $recid->waybill_status = 1;
+                $recid->moment_uploaded = date('Y-m-d\TH:i');
+            }
             $recid->save();
         }
+
+        $changes = tripChanges::CREATE(['trip_id' => $request->trip_id, 'user_id' => $request->user_id, 'changed_keys' => 10, 'changed_values' => 'Waybill Details Updated']);
+        
         return 'updated';
     }
 
@@ -829,7 +851,11 @@ class ordersController extends Controller
         }
         $tripwaybillstatus->save();
 
+        $changes = tripChanges::CREATE(['trip_id' => $request->trip_id, 'user_id' => $request->user_id, 'changed_keys' => 12, 'changed_values' => 'Waybill Remark Updated']);
+
+
         return 'saved';
+
 
     }
 
@@ -1000,6 +1026,33 @@ class ordersController extends Controller
         }
     }
 
+    public function showOnlyOnJourneyTrip() {
+        $clients = client::SELECT('id', 'company_name')->ORDERBY('company_name', 'ASC')->GET();
+        $transporters = transporter::SELECT('id', 'transporter_name')->ORDERBY('transporter_name', 'ASC')->GET();
+        $loadingSites = loadingSite::SELECT('id', 'loading_site')->ORDERBY('loading_site', 'ASC')->GET();
+
+        $onJourneyTrips = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage, h.first_name, h.last_name FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN users h ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id AND a.user_id = h.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND a.tracker BETWEEN \'5\' AND \'6\' ORDER BY a.trip_id DESC '
+            )
+        );
+        
+        $tripWaybills = tripWaybill::GET();
+        $tripEvents = tripEvent::ORDERBY('current_date', 'DESC')->GET();
+        $waybillstatuses = tripWaybillStatus::GET();
+        $products = product::SELECT('id', 'product')->ORDERBY('product')->GET();
+        $states = DB::SELECT(
+            DB::RAW(
+                'SELECT regional_state_id, state FROM tbl_regional_state WHERE regional_country_id = \'94\' ORDER BY state ASC'
+            )
+        );
+        $invoiceCriteria = tripWaybillStatus::GET();
+        $trippayments = tripPayment::GET();
+
+
+        return view('orders.on-journey', compact('onJourneyTrips', 'tripWaybills', 'tripEvents', 'waybillstatuses', 'clients', 'loadingSites', 'transporters', 'products', 'states', 'invoiceCriteria', 'trippayments'));
+    }
+
     function voidTrip($id){
         $recid = trip::findOrFail($id);
         $recid->trip_status = FALSE;
@@ -1090,6 +1143,99 @@ class ordersController extends Controller
             }
             continue;
         }
+    }
+
+    public function deleteSpecificWaybill(Request $request) {
+        $id = $request->id;
+        $user = $request->user;
+        $recid = tripWaybill::findOrFail($id);
+        $recid->delete();
+
+        $changes = tripChanges::CREATE(['trip_id' => $recid->trip_id, 'user_id' => $user, 'changed_keys' => 11, 'changed_values' => 'Waybill Deleted']);
+
+
+        return 'deleted';
+    }
+
+    public function viewTripThread(Request $request) {
+        $tripDetails = DB::SELECT(
+            DB::RAW(
+                'SELECT DISTINCT a.id, a.trip_id, a.gated_out, b.truck_no FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_trip_changes c ON a .truck_id = b.id AND a.id = c.trip_id ORDER BY a.trip_id  DESC'
+            )
+        );
+        $collection = new Collection($tripDetails);
+        $perPage = 100;
+        $currentPage =  $request->get('page') - 1;
+        $pagedData = $collection->slice($currentPage * $perPage, $perPage)->all();
+
+        $path = url('/').'/view-trip-thread?'.$currentPage;
+        
+        $pagination = new LengthAwarePaginator(($pagedData), count($collection), $perPage );
+        $pagination = $pagination->withPath($path);
+
+        return view('orders.trip-thread', compact('pagination'));
+    }
+
+    public function specificTripThread(Request $request) {
+        $trip_id = $request->id;
+
+        $specificTripLog = DB::SELECT(
+            DB::RAW(
+                'SELECT a.first_name, a.last_name, a.photo, b.id, b.changed_keys, b.changed_values, b.updated_at FROM users a JOIN tbl_kaya_trip_changes b ON a.id = b.user_id WHERE trip_id = "'.$trip_id.'" ORDER BY updated_at DESC'
+            )
+        );
+        if(count($specificTripLog)){
+            foreach($specificTripLog as $thread) {
+                if($thread->changed_keys == "0") { $operation = 'Voided'; }
+                if($thread->changed_keys == "1") { $operation = 'Gate In'; }
+                if($thread->changed_keys == "2") { $operation = 'Arrival at Loading Bay'; }
+                if($thread->changed_keys == "3") { $operation = 'At Loading Bay'; }
+                if($thread->changed_keys == "4") { $operation = 'Departed Loading Bay'; }
+                if($thread->changed_keys == "5") { $operation = 'Gated Out'; }
+                if($thread->changed_keys == "6") { $operation = 'On Journey'; }
+                if($thread->changed_keys == "7") { $operation = 'Arrived Destination'; }
+                if($thread->changed_keys == "8") { $operation = 'Offloaded'; }
+                if($thread->changed_keys == "9") { $operation = 'Waybill Entered'; }
+                if($thread->changed_keys == "10") { $operation = 'Waybill details Updated'; }
+                if($thread->changed_keys == "11") { $operation = 'Waybill Deleted'; }
+                if($thread->changed_keys == "12") { $operation = 'Waybill comment'; }
+
+                
+                echo '<ul style="margin:0; padding:0">
+                <li style="list-style-type:none">
+                    <div style="width:50px; height:50px; border-radius:50%; overflow:hidden; padding:0;">';
+                        if($thread->photo) {
+                            echo "<img src=\"/assets/img/users/$thread->photo\" alt=".$thread->first_name." class=\"img img-rounded\" width=\"50\" height=\"50\">";
+                        } else {
+                            echo "<img src='/assets/img/no-photo.jpg' class=\"img img-rounded\" width=\"50\" height=\"50\">";
+                        }     
+                    echo '</div>
+                </li>
+                <li style="border-left:2px dashed #ccc; padding:4px; list-style-type:none; margin-left:25px;">
+                    <span style="color:#333; font-size:11px; font-weight:bold;">Action by:</span>'.ucwords($thread->first_name).' '.ucwords($thread->last_name).' -> <span class="font-weight-bold">'.$operation.'</span>
+                </li>
+                ';
+                
+                
+                $convertodate = strtotime($thread->updated_at);
+                $readable_date = date('d-m-Y', $convertodate);
+
+                $timestamp = $thread->updated_at;
+                
+                $time = '';
+                
+                echo '<li style="border-left:2px dashed #ccc; padding:4px; list-style-type:none; margin-left:25px;">
+                    <span style="color:green; font-size:11px; font-weight:bold;">On:</span>'.$readable_date.'
+                    <span style="color:#333; font-size:11px; font-weight:bold;"> at </span>'.date('h:i s A', strtotime($thread->updated_at)).'
+                </li>
+                
+            </ul>';
+            }
+        }
+        else{
+            echo 'Sorry, we do not have any log for this trip.';
+        }
+        
     }
     
 }

@@ -44,7 +44,7 @@ function getPaymentInitiator($arrayRecord, $master) {
             <a href="#" class="header-elements-toggle text-default d-md-none"><i class="icon-more"></i></a>
         </div>
 
-        <!-- <div class="header-elements d-none">
+        <div class="header-elements d-none">
             <div class="d-flex justify-content-center">
                 <button class="btn btn-success font-weight-semibold" disabled>
                     <i class="icon-coins ml-2"></i><br>₦294,000.00<br>Total Advance Payment Request
@@ -54,7 +54,7 @@ function getPaymentInitiator($arrayRecord, $master) {
                     <i class="icon-coins ml-2"></i><br>₦126,000.00<br>Total Balance Payment Request 
                 </button>                  
             </div>
-        </div> -->
+        </div>
     </div>
 </div>
 

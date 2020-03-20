@@ -188,6 +188,32 @@ $(function() {
             return false;
         }
 
-    })
+    });
+
+    $(".cancelAcknowledgment").click(function() {
+        $id = $(this).attr("id");
+        sendToServer('/cancel-acknowledgment', $id, '#loader', 'Acknowledgment Cancelled.')
+        
+    });
+
+    $(".cancelPayment").click(function() {
+        $id = $(this).attr("id");
+        sendToServer('/remove-payment', $id, '#loader', 'Payment removed.')
+        
+    });
+
+    function sendToServer(uri, id, placeholder, successMessage){
+        $.get(uri, {value:id}, function(data) {
+            if(data === 'removed') {
+                $(placeholder).html(successMessage);
+                $uri = '';
+                window.location = $uri;
+            }
+            else{
+                $(placeholder).html('Oops, something went wrong.')
+                return false;
+            }
+        })
+    }
 
 })

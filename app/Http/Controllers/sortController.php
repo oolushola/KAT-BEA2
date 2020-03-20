@@ -50,6 +50,7 @@ class sortController extends Controller
                     <th>SALES ORDER NO.</th>
                     <th class="text-center">TRUCK NO.</th>
                     <th>ACCOUNT OFFICER</th>
+                    <th>FIELD OPS</th>
                     <th>TRANSPORTER\'s NAME</th>
                     <th>TRANSPOTER\'s NUMBER</th>
                     <th>TRUCK TYPE</th>
@@ -86,7 +87,6 @@ class sortController extends Controller
                     <th>WAYBILL COLLECTION DATE</th>
                     <th>DATE INVOICE</th>
                     <th>DATE PAID</th>
-                    <th>Action</th>
                 </tr>
             </thead>';
 
@@ -156,19 +156,45 @@ class sortController extends Controller
 
                     $tabledata.='<tr class="'.$css.' hover" style="font-size:10px;">
                         <td>'.$counter.'</td>
-                        <td class="text-center">'.$trip->trip_id.'</td>
+                        <td class="text-center">
+                            '.$trip->trip_id.'
+                            <div class="list-icons">
+                                                            
+                                <a href="way-bill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
+                                    <i class="icon-file-check"></i>
+                                </a>
+
+                                <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
+                                    <i class="icon-calendar52"></i>
+                                </a>
+
+                                <span class="list-icons-item">';
+                                    if($trip->tracker < 5){
+                                        $tabledata.='<i class="icon icon-x text-danger voidTrip" value="{{$trip->trip_id}}" title="Cancel Trip" id="{{$trip->id}}"></i>';
+                                    } else {
+                                    $tabledata.='<i class="icon icon-checkmark2" title="Gated Out"></i>';
+                                    }
+                                $tabledata.='</span>
+                                
+                                <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
+                                    <i class="icon-file-eye"></i>
+                                </a>
+                            </div>
+                            
+                        </td>
                         <td>'.$trip->loading_site.'</td>
                         <td class="text-center font-weight-semibold">';
                             foreach($tripWaybills as $salesNo){
                                 if($trip->id == $salesNo->trip_id){
                                 $tabledata.='<a href="assets/img/waybills/.'.$salesNo->photo.'" target="_blank" title="View waybill '.$salesNo->sales_order_no.'">
-                                '.$salesNo->sales_order_no.'<br>
+                                '.strtoupper($salesNo->sales_order_no).'<br>
                                 </a>';
                                 }
                             }
                         $tabledata.='</td>
                         <td>'.strtoupper($trip->truck_no).'</td>
                         <td>'.strtoupper($trip->account_officer).'</td>
+                        <td>'.ucfirst($trip->first_name).' '.ucfirst($trip->last_name).'</td>
                         <td>'.strtoupper($trip->transporter_name).'</td>
                         <td class="text-center">'.$trip->phone_no.'</td>
                         <td>'.strtoupper($trip->truck_type).'</td>
@@ -180,7 +206,7 @@ class sortController extends Controller
                         <td class="text-center font-weight-semibold">';
                             foreach($tripWaybills as $invoiceNo){
                                 if($trip->id == $invoiceNo->trip_id){
-                                     $tabledata.=$invoiceNo->invoice_no.'<br>';
+                                     strtoupper($tabledata.=$invoiceNo->invoice_no).'<br>';
                                 }
                             }
                             
@@ -249,27 +275,7 @@ class sortController extends Controller
                             }
                         $tabledata.='</td>
 
-                        <td>
-                            <div class="list-icons">
-                                                            
-                                <a href="way-bill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
-                                    <i class="icon-file-check"></i>
-                                </a>
-
-                                <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
-                                    <i class="icon-calendar52"></i>
-                                </a>
-
-                                <a href="#" class="list-icons-item text-danger-600" title="Cancel Trip">
-                                    <i class="icon-trash"></i>
-                                </a>
-
-                                <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
-                                    <i class="icon-file-eye"></i>
-                                </a>
-
-                            </div>
-                        </td>
+                        
                     </tr>';
                     
                     }
@@ -296,15 +302,11 @@ class sortController extends Controller
 
         $invoiceCriteria = tripWaybillStatus::GET();
 
-
         $orders = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND a.client_id = "'.$client_id.'" AND a.loading_site_id = "'.$loading_site_id.'" ORDER BY a.trip_id ASC  '
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage, h.first_name, h.last_name FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN users h ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id AND a.user_id = h.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND a.client_id = "'.$client_id.'" AND a.loading_site_id = "'.$loading_site_id.'" ORDER BY a.trip_id ASC  '
             ) 
         );
-
-        
-        
 
         $tabledata = '<table class="table table-bordered">
             <thead class="table-info" style="font-size:11px; background:#000; color:#eee; ">
@@ -315,6 +317,7 @@ class sortController extends Controller
                     <th>SALES ORDER NO.</th>
                     <th class="text-center">TRUCK NO.</th>
                     <th>ACCOUNT OFFICER</th>
+                    <td>FIELD OPS</td>
                     <th>TRANSPORTER\'s NAME</th>
                     <th>TRANSPOTER\'s NUMBER</th>
                     <th>TRUCK TYPE</th>
@@ -352,8 +355,6 @@ class sortController extends Controller
                     <th>WAYBILL COLLECTION DATE</th>
                     <th>DATE INVOICE</th>
                     <th>DATE PAID</th>
-                   
-                    <th>Action</th>
                 </tr>
             </thead>';
 
@@ -424,19 +425,45 @@ class sortController extends Controller
 
                     $tabledata.='<tr class="'.$css.' hover" style="font-size:10px;">
                         <td>'.$counter.'</td>
-                        <td class="text-center">'.$trip->trip_id.'</td>
-                        <td>'.$trip->loading_site.'</td>
+                        <td class="text-center">
+                            '.$trip->trip_id.'
+                            <div class="list-icons">
+                                                            
+                                <a href="way-bill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
+                                    <i class="icon-file-check"></i>
+                                </a>
+
+                                <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
+                                    <i class="icon-calendar52"></i>
+                                </a>
+
+                                <span class="list-icons-item">';
+                                    if($trip->tracker < 5){
+                                        $tabledata.='<i class="icon icon-x text-danger voidTrip" value="{{$trip->trip_id}}" title="Cancel Trip" id="{{$trip->id}}"></i>';
+                                    } else {
+                                    $tabledata.='<i class="icon icon-checkmark2" title="Gated Out"></i>';
+                                    }
+                                $tabledata.='</span>
+                                
+                                <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
+                                    <i class="icon-file-eye"></i>
+                                </a>
+                            </div>
+                            
+                        </td>
+                       <td>'.strtoupper($trip->loading_site).'</td>
                         <td class="text-center font-weight-semibold">';
                             foreach($tripWaybills as $salesNo){
                                 if($trip->id == $salesNo->trip_id){
                                 $tabledata.='<a href="assets/img/waybills/.'.$salesNo->photo.'" target="_blank" title="View waybill '.$salesNo->sales_order_no.'">
-                                '.$salesNo->sales_order_no.'<br>
+                                '.strtoupper($salesNo->sales_order_no).'<br>
                                 </a>';
                                 }
                             }
                         $tabledata.='</td>
                         <td>'.strtoupper($trip->truck_no).'</td>
                         <td>'.strtoupper($trip->account_officer).'</td>
+                        <td>'.ucwords($trip->first_name).' '.ucwords($trip->last_name).'</td>
                         <td>'.strtoupper($trip->transporter_name).'</td>
                         <td class="text-center">'.$trip->phone_no.'</td>
                         <td>'.strtoupper($trip->truck_type).'</td>
@@ -448,7 +475,7 @@ class sortController extends Controller
                         <td class="text-center font-weight-semibold">';
                             foreach($tripWaybills as $invoiceNo){
                                 if($trip->id == $invoiceNo->trip_id){
-                                     $tabledata.=$invoiceNo->invoice_no.'<br>';
+                                    strtoupper($tabledata.=$invoiceNo->invoice_no).'<br>';
                                 }
                             }
                             
@@ -518,27 +545,6 @@ class sortController extends Controller
                             }
                         $tabledata.='</td>
 
-                        <td>
-                            <div class="list-icons">
-                                                            
-                                <a href="way-bill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
-                                    <i class="icon-file-check"></i>
-                                </a>
-
-                                <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
-                                    <i class="icon-calendar52"></i>
-                                </a>
-
-                                <a href="#" class="list-icons-item text-danger-600" title="Cancel Trip">
-                                    <i class="icon-trash"></i>
-                                </a>
-
-                                <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
-                                    <i class="icon-file-eye"></i>
-                                </a>
-
-                            </div>
-                        </td>
                     </tr>';
                     
                     }
@@ -574,6 +580,7 @@ class sortController extends Controller
                     <th>SALES ORDER NO.</th>
                     <th class="text-center">TRUCK NO.</th>
                     <th>ACCOUNT OFFICER</th>
+                    <th>FIELD OPS</th>
                     <th>TRANSPORTER\'s NAME</th>
                     <th>TRANSPOTER\'s NUMBER</th>
                     <th>TRUCK TYPE</th>
@@ -610,8 +617,6 @@ class sortController extends Controller
                     <th>WAYBILL COLLECTION DATE</th>
                     <th>DATE INVOICE</th>
                     <th>DATE PAID</th>
-                   
-                    <th>Action</th>
                 </tr>
             </thead>';
 
@@ -682,19 +687,45 @@ class sortController extends Controller
 
                     $tabledata.='<tr class="'.$css.' hover" style="font-size:10px;">
                         <td>'.$counter.'</td>
-                        <td class="text-center">'.$trip->trip_id.'</td>
-                        <td>'.$trip->loading_site.'</td>
+                        <td class="text-center">
+                            '.$trip->trip_id.'
+                            <div class="list-icons">
+                                                            
+                                <a href="way-bill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
+                                    <i class="icon-file-check"></i>
+                                </a>
+
+                                <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
+                                    <i class="icon-calendar52"></i>
+                                </a>
+
+                                <span class="list-icons-item">';
+                                    if($trip->tracker < 5){
+                                        $tabledata.='<i class="icon icon-x text-danger voidTrip" value="{{$trip->trip_id}}" title="Cancel Trip" id="{{$trip->id}}"></i>';
+                                    } else {
+                                    $tabledata.='<i class="icon icon-checkmark2" title="Gated Out"></i>';
+                                    }
+                                $tabledata.='</span>
+                                
+                                <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
+                                    <i class="icon-file-eye"></i>
+                                </a>
+                            </div>
+                            
+                        </td>
+                        <td>'.strtoupper($trip->loading_site).'</td>
                         <td class="text-center font-weight-semibold">';
                             foreach($tripWaybills as $salesNo){
                                 if($trip->id == $salesNo->trip_id){
                                 $tabledata.='<a href="assets/img/waybills/.'.$salesNo->photo.'" target="_blank" title="View waybill '.$salesNo->sales_order_no.'">
-                                '.$salesNo->sales_order_no.'<br>
+                                '.strtoupper($salesNo->sales_order_no).'<br>
                                 </a>';
                                 }
                             }
                         $tabledata.='</td>
                         <td>'.strtoupper($trip->truck_no).'</td>
                         <td>'.strtoupper($trip->account_officer).'</td>
+                        <td>'.ucwords($trip->first_name).' '.ucwords($trip->last_name).'</td>
                         <td>'.strtoupper($trip->transporter_name).'</td>
                         <td class="text-center">'.$trip->phone_no.'</td>
                         <td>'.strtoupper($trip->truck_type).'</td>
@@ -706,7 +737,7 @@ class sortController extends Controller
                         <td class="text-center font-weight-semibold">';
                             foreach($tripWaybills as $invoiceNo){
                                 if($trip->id == $invoiceNo->trip_id){
-                                     $tabledata.=$invoiceNo->invoice_no.'<br>';
+                                    strtoupper($tabledata.=$invoiceNo->invoice_no).'<br>';
                                 }
                             }
                             
@@ -774,28 +805,6 @@ class sortController extends Controller
                                 }
                             }
                         $tabledata.='</td>
-
-                        <td>
-                            <div class="list-icons">
-                                                            
-                                <a href="way-bill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
-                                    <i class="icon-file-check"></i>
-                                </a>
-
-                                <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
-                                    <i class="icon-calendar52"></i>
-                                </a>
-
-                                <a href="#" class="list-icons-item text-danger-600" title="Cancel Trip">
-                                    <i class="icon-trash"></i>
-                                </a>
-
-                                <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
-                                    <i class="icon-file-eye"></i>
-                                </a>
-
-                            </div>
-                        </td>
                     </tr>';
                     
                     }
@@ -820,7 +829,6 @@ class sortController extends Controller
 
         $invoiceCriteria = tripWaybillStatus::GET();
 
-
         $tabledata = '<table class="table table-bordered">
             <thead class="table-info" style="font-size:11px; background:#000; color:#eee; ">
                 <tr class="font-weigth-semibold">
@@ -866,8 +874,6 @@ class sortController extends Controller
                     <th>WAYBILL COLLECTION DATE</th>
                     <th>DATE INVOICE</th>
                     <th>DATE PAID</th>
-                   
-                    <th>Action</th>
                 </tr>
             </thead>';
 
@@ -938,7 +944,32 @@ class sortController extends Controller
 
                     $tabledata.='<tr class="'.$css.' hover" style="font-size:10px;">
                         <td>'.$counter.'</td>
-                        <td class="text-center">'.$trip->trip_id.'</td>
+                        <td class="text-center">
+                            '.$trip->trip_id.'
+                            <div class="list-icons">
+                                                            
+                                <a href="way-bill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
+                                    <i class="icon-file-check"></i>
+                                </a>
+
+                                <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
+                                    <i class="icon-calendar52"></i>
+                                </a>
+
+                                <span class="list-icons-item">';
+                                    if($trip->tracker < 5){
+                                        $tabledata.='<i class="icon icon-x text-danger voidTrip" value="{{$trip->trip_id}}" title="Cancel Trip" id="{{$trip->id}}"></i>';
+                                    } else {
+                                    $tabledata.='<i class="icon icon-checkmark2" title="Gated Out"></i>';
+                                    }
+                                $tabledata.='</span>
+                                
+                                <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
+                                    <i class="icon-file-eye"></i>
+                                </a>
+                            </div>
+                            
+                        </td>
                         <td>'.$trip->loading_site.'</td>
                         <td class="text-center font-weight-semibold">';
                             foreach($tripWaybills as $salesNo){
@@ -1030,28 +1061,6 @@ class sortController extends Controller
                                 }
                             }
                         $tabledata.='</td>
-
-                        <td>
-                            <div class="list-icons">
-                                                            
-                                <a href="way-bill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
-                                    <i class="icon-file-check"></i>
-                                </a>
-
-                                <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
-                                    <i class="icon-calendar52"></i>
-                                </a>
-
-                                <a href="#" class="list-icons-item text-danger-600" title="Cancel Trip">
-                                    <i class="icon-trash"></i>
-                                </a>
-
-                                <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
-                                    <i class="icon-file-eye"></i>
-                                </a>
-
-                            </div>
-                        </td>
                     </tr>';
                     
                     }
@@ -1071,7 +1080,7 @@ class sortController extends Controller
         $waybill_status = $request->waybill_status;
         $orders = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND a.id IN (SELECT trip_id from tbl_kaya_trip_waybill_statuses WHERE waybill_status = '.$waybill_status.')'
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage, h.first_name, h.last_name FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN users h ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id AND a.user_id = h.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND a.id IN (SELECT trip_id from tbl_kaya_trip_waybill_statuses WHERE waybill_status = '.$waybill_status.')'
             )
         );
         $tripWaybills = tripWaybill::GET();
@@ -1090,6 +1099,7 @@ class sortController extends Controller
                     <th>SALES ORDER NO.</th>
                     <th class="text-center">TRUCK NO.</th>
                     <th>ACCOUNT OFFICER</th>
+                    <th>FIELD OPS</th>
                     <th>TRANSPORTER\'s NAME</th>
                     <th>TRANSPOTER\'s NUMBER</th>
                     <th>TRUCK TYPE</th>
@@ -1127,8 +1137,6 @@ class sortController extends Controller
                     <th>WAYBILL COLLECTION DATE</th>
                     <th>DATE INVOICE</th>
                     <th>DATE PAID</th>
-                   
-                    <th>Action</th>
                 </tr>
             </thead>';
 
@@ -1199,7 +1207,32 @@ class sortController extends Controller
 
                     $tabledata.='<tr class="'.$css.' hover" style="font-size:10px;">
                         <td>'.$counter.'</td>
-                        <td class="text-center">'.$trip->trip_id.'</td>
+                        <td class="text-center">
+                            '.$trip->trip_id.'
+                            <div class="list-icons">
+                                                            
+                                <a href="way-bill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
+                                    <i class="icon-file-check"></i>
+                                </a>
+
+                                <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
+                                    <i class="icon-calendar52"></i>
+                                </a>
+
+                                <span class="list-icons-item">';
+                                    if($trip->tracker < 5){
+                                        $tabledata.='<i class="icon icon-x text-danger voidTrip" value="{{$trip->trip_id}}" title="Cancel Trip" id="{{$trip->id}}"></i>';
+                                    } else {
+                                    $tabledata.='<i class="icon icon-checkmark2" title="Gated Out"></i>';
+                                    }
+                                $tabledata.='</span>
+                                
+                                <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
+                                    <i class="icon-file-eye"></i>
+                                </a>
+                            </div>
+                            
+                        </td>
                         <td>'.$trip->loading_site.'</td>
                         <td class="text-center font-weight-semibold">';
                             foreach($tripWaybills as $salesNo){
@@ -1212,6 +1245,7 @@ class sortController extends Controller
                         $tabledata.='</td>
                         <td>'.strtoupper($trip->truck_no).'</td>
                         <td>'.strtoupper($trip->account_officer).'</td>
+                        <td>'.ucwords($trip->first_name).' '.ucwords($trip->last_name).'</td>
                         <td>'.strtoupper($trip->transporter_name).'</td>
                         <td class="text-center">'.$trip->phone_no.'</td>
                         <td>'.strtoupper($trip->truck_type).'</td>
@@ -1292,28 +1326,6 @@ class sortController extends Controller
                                 }
                             }
                         $tabledata.='</td>
-
-                        <td>
-                            <div class="list-icons">
-                                                            
-                                <a href="way-bill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
-                                    <i class="icon-file-check"></i>
-                                </a>
-
-                                <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
-                                    <i class="icon-calendar52"></i>
-                                </a>
-
-                                <a href="#" class="list-icons-item text-danger-600" title="Cancel Trip">
-                                    <i class="icon-trash"></i>
-                                </a>
-
-                                <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
-                                    <i class="icon-file-eye"></i>
-                                </a>
-
-                            </div>
-                        </td>
                     </tr>';
                     
                     }
@@ -1333,7 +1345,7 @@ class sortController extends Controller
     function tripQueryBuilder($client_id, $field_name) {
         $query = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND a.'.$field_name.' = "'.$client_id.'" ORDER BY a.trip_id DESC '
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage, h.first_name, h.last_name FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN users h ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id AND a.user_id = h.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND a.'.$field_name.' = "'.$client_id.'" ORDER BY a.trip_id DESC '
             )
         );
         return $query;

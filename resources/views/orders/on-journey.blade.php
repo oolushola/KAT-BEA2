@@ -1,6 +1,6 @@
 @extends('layout')
 
-@section('title') Kaya ::. Trip Order Summary @stop
+@section('title') Kaya ::. Trips Currently on Journey @stop
 
 @section('css')
 <style type="text/css">
@@ -141,8 +141,6 @@ td{
     
     <form method="POST" id="frmCancelTrip">
     @csrf {!! method_field('PATCH') !!}
-    <div class="row"><section class="col-md-12 col-sm-12">{!! $pagination->links() !!}</section></div>
-    <input type="hidden" name="page" value="">
     <div class="table-responsive" id="contentPlaceholder">
         <table class="table table-bordered">
             <thead class="table-info" style="font-size:11px; background:#000; color:#eee;">
@@ -205,8 +203,8 @@ td{
             </thead>
             <tbody id="masterDataTable">
                 <?php $counter = 0; ?>
-                @if(count($pagination))
-                    @foreach($pagination as $trip)
+                @if(count($onJourneyTrips))
+                    @foreach($onJourneyTrips as $trip)
                     <?php $counter++;
                     $counter % 2 == 0 ? $css = ' font-weight-semibold ' : $css = 'order-table font-weight-semibold';
                     if($trip->tracker == 1){ $current_stage = 'GATED IN';}

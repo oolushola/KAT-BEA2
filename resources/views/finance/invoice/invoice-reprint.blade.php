@@ -42,8 +42,17 @@ input{
 
 		<!-- Content area -->
 		<?php
-			$withholdingTaxValue = $vatRateInfos->withholding_tax;
-			$vatRateValue = $vatRateInfos->vat_rate;
+			$withholdingTaxValue_ = $vatRateInfos->withholding_tax_used;
+			$vatRateValue_ = $vatRateInfos->vat_used;
+			if(!isset($withholdingTaxValue_) && !isset($vatRateValue_)) {
+				$withholdingTaxValue = 5;
+				$vatRateValue = 7.5;
+			}
+			else{
+				$withholdingTaxValue = $withholdingTaxValue_;
+				$vatRateValue = $vatRateValue_;
+			}
+			
 		?>
 		<div class="content">
 			<form id="frmReprintInvoice" method="POST">
@@ -128,7 +137,16 @@ input{
 
 									<div id="editClientContainer" class="hidden">
 										<li>
-											<input type="text" class="form-control font-weight-bold mb-2" name="client_name" id="clientName" style="width:70%" value="@if(isset($invoiceBiller)){!! $invoiceBiller->client_name !!} @else {!! strtoupper($completedInvoice[0]->company_name) !!}@endif">
+											<select name="client_name" id="clientName" style="width:70%" class="form-control font-weight-bold mb-2">
+												<option value="">Choose Who You are billing it to.</option>
+												@foreach($clients as $client)
+												@if($completedInvoice[0]->company_name == $client->company_name)
+												<option value="{{$client->company_name}}" selected> {{ $client->company_name }} </option>
+												@else
+												<option value="{{$client->company_name}}"> {{ $client->company_name }} </option>
+												@endif
+												@endforeach
+											</select>
 										</li>
 										<li>
 											<textarea class="form-control font-weight-bold" name="client_address" id="clientAddress" style="width:70%">@if(isset($invoiceBiller)) {!! $invoiceBiller->client_address !!} @else  {!! ucwords($completedInvoice[0]->address) !!} @endif</textarea>
@@ -294,7 +312,7 @@ input{
 
 											<span class="editClientRatePlaceholder" style="display:none">
 												<input type="text" value="{{$invoiceParams->client_rate}}" name="initialAmount[]">
-												<input type="text" value="{{$invoiceParams->id}}" name="tripIdListings[]">
+												<input type="hidden" value="{{$invoiceParams->id}}" name="tripIdListings[]">
 												<input type="hidden" value="{{$invoice_no}}" id="invoiceNumber">
 											</span>
 										</td>
@@ -378,7 +396,7 @@ input{
 
 										<button type="button" id="alterInformation" class="btn btn-light btn-sm"><i class="icon-rotate mr-2"></i>Alter<i class="icon-pdf2"></i></button>
 
-										<button type="button" id="updateAlteredInformation" class="btn btn-light btn-sm"><i class="icon-rotate mr-2"></i>Update<i class="icon-pdf2"></i></button>
+										<button type="button" id="updateAlteredInformation" class="btn btn-light btn-sm hidden"><i class="icon-rotate mr-2"></i>Update<i class="icon-pdf2"></i></button>
 
 										<button type="button" id="editInvoice" class="btn btn-light btn-sm ml-3"><i class="icon-pencil mr-2"></i> Edit Rate</button>
 
@@ -506,6 +524,13 @@ input{
 			$('#defaultCompanyInfo').removeClass("hidden");
 			$('#editClientContainer').removeClass('show').addClass('hidden');
 		});
+
+		//change client name to get address
+		$('#clientName').change(function() {
+			$.get('/get-client-address', $('#frmReprintInvoice').serializeArray(), function(data) {
+				$("#clientAddress").val(data);
+			});
+		})
 
 		$('#saveClientDetails').click(function(e) {
 			e.preventDefault();

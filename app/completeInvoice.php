@@ -10,6 +10,8 @@ class completeInvoice extends Model
     protected $fillable = [
         'trip_id',
         'invoice_no',
-        'completed_invoice_no'
+        'completed_invoice_no',
+        'vat_used',
+        'withholding_tax_used'
     ];
 }

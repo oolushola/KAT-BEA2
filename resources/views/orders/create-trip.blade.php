@@ -16,9 +16,9 @@
     @endif
     <input type="hidden" name="trip_status" value="1">
 
-    @if(!isset($recid))
-        <input type="hidden" name="user_id" value="{{Auth::user()->id}}">
-    @endif
+    
+    <input type="hidden" name="user_id" value="{{Auth::user()->id}}">
+    
 
     <input type="hidden" name="truckNumberChecker" id="truckNumberChecker" value="<?php if(isset($recid)){ echo 1; } else { echo 0; } ?>">
     <input type="hidden" name="transporterChecker" id="transporterChecker" value="<?php if(isset($recid)){ echo 1; } else{ echo 0; } ?>">

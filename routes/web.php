@@ -92,6 +92,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('trip/{orderId}/{clientName}/{eventid}/edit', 'ordersController@editeventTrip');
     Route::patch('trip-cancel-order/{id}', 'ordersController@voidTrip');
     Route::get('voided-trips', 'ordersController@showVoidedTrips');
+    Route::get('on-journey-trips', 'ordersController@showOnlyOnJourneyTrip');
 
     Route::post('trip-event', 'ordersController@storeOrderEvent');
     Route::patch('trip-event/{tripeventid}', 'ordersController@updateTripEvent');
@@ -104,6 +105,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('trip-overview/{kayaid}', 'overviewController@displaytripoverview');
     Route::post('trip-overview-payment-request', 'overviewController@requestPayment');
     Route::get('payment-request', 'overviewController@paymentRequest');
+    Route::get('delete-specific-waybill', 'ordersController@deleteSpecificWaybill');
 
     Route::post('approve-advance-payment', 'overviewController@approveAdvancePayment');
 
@@ -201,6 +203,16 @@ Route::group(['middleware' => 'auth'], function() {
 
     Route::post('invoice-biller', 'invoiceController@invoiceBiller');
     Route::post('alter-trip-information', 'invoiceController@alterTripInformation');
+
+    Route::get('get-client-address', 'invoiceController@clientAddress');
+    Route::get('cancel-acknowledgment', 'invoiceController@cancelAcknowledgement');
+    Route::get('remove-payment', 'invoiceController@removePayment');
+
+    Route::group(['middleware' => 'threadview'], function(){
+        Route::get('view-trip-thread', 'ordersController@viewTripThread');
+        Route::get('specific-trip-thread', 'ordersController@specificTripThread');
+    
+    });
 
 });
 

@@ -166,7 +166,7 @@
 									@if(Auth::user()->role_id == 3) Finance Officer @endif
 									@if(Auth::user()->role_id == 4) Visibility Officer @endif
 									@if(Auth::user()->role_id == 5) Field Ops Officer @endif
-									@if(Auth::user()->role_id == 6) Transport Supervisor @endif
+									@if(Auth::user()->role_id == 6 && Auth::user()->email=='success.iziomo@kayaafrica.co') Transport Manager @else Transport Supervisor @endif
 								</div>
 							</div>
 
@@ -288,6 +288,7 @@
 									Voided Trips</a>
 								</li>
 								<li class="nav-item"><a href="{{URL('generate-report')}}" class="nav-link">Report</a></li>
+								<li class="nav-item"><a href="{{URL('on-journey-trips')}}" class="nav-link">Trips on Journey</a></li>
 								@endif
 							</ul>
 						</li>
@@ -458,6 +459,7 @@
 
 
 @yield('script')
+
 @endif
 
 
