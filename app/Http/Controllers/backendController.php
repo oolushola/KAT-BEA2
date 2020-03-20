@@ -57,15 +57,21 @@ class backendController extends Controller
         $allTrips = trip::SELECT('id', 'trip_id')->ORDERBY('trip_id', 'DESC')->WHERE('tracker', '>=', 5)->GET();
         $current_month = date('F');
         $current_year = date('Y');
+        $current_date = date('Y-m-d');
 
-        $monthlyTarget = target::WHERE('current_month', $current_month)->WHERE('current_year', $current_year)->GET();
+        $monthlyTarget = target::WHERE('current_month', $current_month)->WHERE('current_year', $current_year)->GET()->LAST();
         $getGatedOutByMonth = trip::WHERE('month', $current_month)->WHERE('year', $current_year)->WHERE('tracker', '>=', 5)->GET()->COUNT();
 
         $gateIn = trip::WHERE('tracker', 1)->WHERE('trip_status', '!=', 0)->GET()->COUNT();
-        $loadingBay = trip::WHERE('tracker', 2)->WHERE('trip_status', '!=', 0)->GET()->COUNT();
-        $onJourney = trip::WHERE('tracker', 6)->GET()->COUNT();
+        $loadingBay = trip::WHERE('tracker', '>=', 2)->WHERE('tracker', '<=', '3')->WHERE('trip_status', '!=', 0)->GET()->COUNT();
+        $departedLoadingBay = trip::WHERE('tracker', 4)->WHERE('trip_status', '!=', 0)->GET()->COUNT();
+        $onJourney = trip::WHERE('tracker', '>=', '5')->WHERE('tracker', '<=', 6)->WHERE('trip_status', '!=', 0)->GET()->COUNT();
         $atDestination = trip::WHERE('tracker', 7)->GET()->COUNT();
-        $offloadedTrips = trip::WHERE('tracker', 8)->GET()->COUNT();
+        $offloadedTrips = DB::SELECT(
+            DB::RAW(
+                'SELECT COUNT(*) as offloadedTrips FROM tbl_kaya_trips a JOIN tbl_kaya_trip_events b ON a.id = b.trip_id WHERE offloading_status = TRUE AND DATE(offload_start_time) = "'.$current_date.'" AND a.tracker = \'8\''
+            )
+        );
         
         $numberofdailygatedout = trip::WHEREDATE('gated_out', date('Y-m-d'))->GET()->COUNT();
         $gatedOutForTheMonth = trip::WHERE('month', $current_month)->WHERE('year', $current_year)->WHERE('tracker', '>=', 5)->GET()->COUNT();
@@ -79,7 +85,6 @@ class backendController extends Controller
             )
         );
 
-
         $allLoadingSites = loadingSite::SELECT('id', 'loading_site')->ORDERBY('loading_site', 'ASC')->GET();
 
         foreach($allLoadingSites as $loadingSite){
@@ -88,13 +93,8 @@ class backendController extends Controller
         }
 
         $allclients = client::ORDERBY('company_name', 'ASC')->GET();
-
         $paymentRequest = tripPayment::WHERE('advance_paid', FALSE)->ORWHERE('balance_paid', FALSE)->GET()->COUNT();
-
         $clients = client::WHERE('client_status', '1')->GET()->COUNT();
-
-        $offloadedTrips = trip::WHERE('tracker', 8)->GET()->COUNT();
-
 
         Session::put([
             'payment_request' => $paymentRequest,
@@ -102,10 +102,77 @@ class backendController extends Controller
             'client' => $clients,
             'offloaded_trips' => $offloadedTrips
         ]);
-        
 
-        return view('dashboard', compact('getGatedOutByMonth', 'allTrips', 'monthlyTarget', 'onJourney', 'atDestination', 'offloadedTrips',  'numberofdailygatedout', 'gatedOutForTheMonth', 'countDailyTripByLoadingSite', 'loading_sites', 'noOfGatedOutTripForCurrentWeek', 'loadingBay', 'gateIn', 'allclients'));
+        $currentGateOutRecord = $this->displayRecordOfTrips('gated_out', $currentDate);
+        $gateInData = $this->recordTracker(1, 1);
+        $atloadingbayData = $this->recordTracker(2, 3);
+        $departedLoadingBayData =  $this->recordTracker(4, 4);
+        $onJourneyData =  $this->recordTracker(5, 6);
+        $atDestinationData = $this->recordTracker(7, 7);
+        $offloadedData = $this->offloadedRecords($currentDate);
+
+        $tripWaybills = tripWaybill::GET();
+        $tripRecordsForTheMonth = $this->totalTripsForTheCurrentMonth();
+        $totalGateOuts = trip::WHERE('gated_out', '<>', '')->WHERE('trip_status', '<>', 0)->GET()->COUNT();
+
+        $todaysDate = date('d');
+        $count=1;
+        $dateYearAndMonth = date('Y-m');
+        do{
+            $newDate = $dateYearAndMonth.'-'.$count;
+            $count++;
+            $noOfTripsPerDay[] = trip::whereDATE('gated_out',  $newDate)->GET()->COUNT();
+        }
+        while($count <= $todaysDate);
+
+        $availableTrucks = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.company_name, c.loading_site, d.truck_no, e.transporter_name, e.phone_no, f.driver_first_name, f.driver_last_name, f.driver_phone_number, f.motor_boy_first_name, f.motor_boy_last_name, f.motor_boy_phone_no, g.product, h.state, i.first_name, i.last_name, j.tonnage, j.truck_type FROM tbl_kaya_truck_availabilities a JOIN tbl_kaya_clients b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_trucks d JOIN tbl_kaya_transporters e JOIN tbl_kaya_drivers f JOIN tbl_kaya_products g JOIN tbl_regional_state h JOIN users i JOIN tbl_kaya_truck_types j ON a.client_id = b.id AND a.loading_site_id = c.id AND a.truck_id = d.id AND a.transporter_id = e.id and a.driver_id = f.id and a.product_id = g.id and a.destination_state_id = h.regional_state_id and a.reported_by = i.id AND d.truck_type_id = j.id  WHERE a.status = FALSE'
+            )
+        );
+
+
+        return view('dashboard', compact('getGatedOutByMonth', 'allTrips', 'monthlyTarget', 'onJourney', 'atDestination', 'offloadedTrips',  'numberofdailygatedout', 'gatedOutForTheMonth', 'countDailyTripByLoadingSite', 'loading_sites', 'noOfGatedOutTripForCurrentWeek', 'loadingBay', 'gateIn', 'allclients', 'departedLoadingBay', 'currentGateOutRecord', 'tripWaybills', 'gateInData', 'atloadingbayData', 'departedLoadingBayData', 'onJourneyData', 'atDestinationData', 'offloadedData', 'tripRecordsForTheMonth', 'totalGateOuts', 'noOfTripsPerDay', 'availableTrucks'));
     }
+
+    function displayRecordOfTrips($fieldValue, $currentDate) {
+        $query = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND DATE('.$fieldValue.') = "'.$currentDate.'" ORDER BY a.trip_id DESC'
+            )
+        );
+        return $query;
+    }
+
+    function recordTracker($firstTrack, $secondTrack) {
+        $query = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker BETWEEN "'.$firstTrack.'" AND "'.$secondTrack.'"  ORDER BY a.trip_id DESC'
+            )
+        );
+        return $query;
+    }
+
+    function offloadedRecords($current_date) {
+        $query = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN tbl_kaya_trip_events h ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id AND h.trip_id = a.id WHERE a.trip_status = \'1\' AND offloading_status = TRUE AND DATE(offload_start_time) = "'.$current_date.'" AND a.tracker = \'8\' ORDER BY a.trip_id DESC'
+            )
+        );
+        return $query;
+    }
+
+    function totalTripsForTheCurrentMonth() {
+        $query = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND MONTH(gated_out) = MONTH(CURRENT_DATE()) AND YEAR(gated_out) = YEAR(CURRENT_DATE()) ORDER BY a.trip_id DESC'
+            )
+        );
+        return $query;
+    }
+
+
+    
     
     
     public function logout() {

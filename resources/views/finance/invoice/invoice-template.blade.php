@@ -309,6 +309,9 @@
 									</table>
 								</div>
 
+								<input type="text" name="vat_used" value="{{ $vatRateInfos->vat_rate }}">
+								<input type="text" name="withholding_vat_used" value="{{ $vatRateInfos->withholding_tax }}">
+
 								<div class="text-right mt-3">
 									<span id="loader"></span>
 

@@ -42,11 +42,14 @@ td{
 
         <!-- Basic layout-->
         <div class="card">
+            <p style="font-size:10px; color:red; font-weight:bold">NOTE: If this trip has just  an SO or INV other box should be filled with an hyphen "-"</p>
             <div class="card-header header-elements-inline">
-                <h5 class="card-title">Waybill </h5>
+                <h5 class="card-title">Waybill</h5>
             </div>
 
             <div class="card-body">
+                
+
                 @if(isset($recid))
                 <form action="{{URL('way-bill', $recid->id)}}" method="POST" name="frmWayBill" id="frmWayBill" enctype="multipart/form-data">
                     @csrf
@@ -56,6 +59,7 @@ td{
                 <form action="{{URL('way-bill')}}" method="POST" name="frmWayBill" id="frmWayBill">
                 @endif
                     <input type="hidden" name="trip_id" id="tripId" value="{{$tripId}}" >
+                    <input type="hidden" name="user_id" id="user_id" value="{{Auth::user()->id }}" >
                     <input type="hidden" name="tracker" id="tracker" value="{{$tracker}}" >
                     <input type="hidden" name="waybill_name" value="{{$orderId}}{{$client_name}}">
                 @csrf
@@ -64,28 +68,30 @@ td{
                     <span class="error font-weight-semibold" id="addMore" style="cursor:pointer">Add More...</span>
                     @endif
 
-                    <div class="row mb-3 mb-md-2 input_field_wraps">
-                        <div class="col-md-6">
+                    <div class="row mb-md-2 input_field_wraps">
+                        <div class="col-md-4">
                             <div class="form-group">
-                                <input type="text" class="form-control salesOrderNumber" placeholder="Sales Order Number" name="sales_order_no[]" value="@if(isset($recid)){{$recid->sales_order_no}} @endif">
+                                <input type="text" class="form-control salesOrderNumber" placeholder="S.O.  Number" name="sales_order_no[]" value="@if(isset($recid)){{$recid->sales_order_no}}@endif">
                             </div>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
-                                <input type="text" class="form-control" placeholder="Invoice Number" name="invoice_no[]" value="@if(isset($recid)){{$recid->invoice_no}}@endif" >
+                                <input type="text" class="form-control invoiceNumber" placeholder="Invoice No" name="invoice_no[]" value="@if(isset($recid)){{$recid->invoice_no}}@endif" >
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <span style="font-size:10px; font-weight:bold; color:blue">Upload Waybill</span>
+                                <input type="file" name="photo[]" style="font-size:9px;" class="waybillChooser">
                             </div>
                         </div>
                     </div>
 
-                    @if(isset($recid))
-                        <div class="form-group" id="wayBillContainer">
-                            <label>Upload Waybill @if(isset($recid) && ($recid->photo == 1))<i class="icon-rotate-cw2"></i>@endif</label>
-                            <input type="file" name="photo" id="file" @if(isset($recid) && ($recid->photo == 1))disabled @endif>
-                            <input type="hidden" name="filecheck" id="filecheck" value="0" /> 
-                            <input type="hidden" name="ftype" id="ftype" value="png,jpg,jpeg,svg,gif" />
-                        </div>
-                    @endif
+                    
+                    
+                    
                     
                     @if($auth == 1 || $auth == 2 || $auth == 3 || $auth == 4)
                         <legend class="font-weight-semibold"><i class="icon-comment-discussion mr-2"></i> Comment about this waybill</legend>
@@ -196,6 +202,11 @@ td{
                                             <a href="{{URL('way-bill/'.$orderId.'/'.str_slug($client_name).'/'.$waybill->id)}}" class="list-icons-item text-primary-600">
                                                 <i class="icon-pencil7"></i>
                                             </a>
+
+                                            <span href="#" class="list-icons-item text-danger-600">
+                                                <i class="icon-trash deleteSpecificWaybill" value="{{$waybill->id}}" ></i>
+                                            </span>
+
                                         </div>
                                     </td>
                                 </tr>

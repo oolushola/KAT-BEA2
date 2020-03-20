@@ -33,7 +33,7 @@ class weekElasticSortController extends Controller
 
         $orders = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND a.tracker >= \'5\' AND Date(a.gated_out) BETWEEN "'.$from.'" AND "'.$to.'" ' 
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage, h.first_name, h.last_name FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN users h ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id AND a.user_id = h.id WHERE a.trip_status = \'1\' AND a.tracker >= \'5\' AND Date(a.gated_out) BETWEEN "'.$from.'" AND "'.$to.'" ' 
             )
         );
 
@@ -46,6 +46,7 @@ class weekElasticSortController extends Controller
                 <th>SALES ORDER NO.</th>
                 <th class="text-center">TRUCK NO.</th>
                 <th>ACCOUNT OFFICER</th>
+                <th>FIELD OPS</th>
                 <th>TRANSPORTER\'s NAME</th>
                 <th>TRANSPOTER\'s NUMBER</th>
                 <th>TRUCK TYPE</th>
@@ -82,8 +83,6 @@ class weekElasticSortController extends Controller
                 <th>WAYBILL COLLECTION DATE</th>
                 <th>DATE INVOICE</th>
                 <th>DATE PAID</th>
-               
-                <th>Action</th>
             </tr>
         </thead>';
 
@@ -154,7 +153,32 @@ class weekElasticSortController extends Controller
 
                 $tabledata.='<tr class="'.$css.' hover" style="font-size:10px;">
                     <td>'.$counter.'</td>
-                    <td class="text-center">'.$trip->trip_id.'</td>
+                    <td class="text-center">
+                        '.$trip->trip_id.'
+                        <div class="list-icons">
+                                                        
+                            <a href="way-bill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
+                                <i class="icon-file-check"></i>
+                            </a>
+
+                            <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
+                                <i class="icon-calendar52"></i>
+                            </a>
+
+                            <span class="list-icons-item">';
+                                if($trip->tracker < 5){
+                                    $tabledata.='<i class="icon icon-x text-danger voidTrip" value="{{$trip->trip_id}}" title="Cancel Trip" id="{{$trip->id}}"></i>';
+                                } else {
+                                $tabledata.='<i class="icon icon-checkmark2" title="Gated Out"></i>';
+                                }
+                            $tabledata.='</span>
+                            
+                            <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
+                                <i class="icon-file-eye"></i>
+                            </a>
+                        </div>
+                        
+                    </td>
                     <td>'.$trip->loading_site.'</td>
                     <td class="text-center font-weight-semibold">';
                         foreach($tripWaybills as $salesNo){
@@ -167,6 +191,7 @@ class weekElasticSortController extends Controller
                     $tabledata.='</td>
                     <td>'.strtoupper($trip->truck_no).'</td>
                     <td>'.strtoupper($trip->account_officer).'</td>
+                    <td>'.strtoupper($trip->first_name).' '.strtoupper($trip->last_name).'</td>
                     <td>'.strtoupper($trip->transporter_name).'</td>
                     <td class="text-center">'.$trip->phone_no.'</td>
                     <td>'.strtoupper($trip->truck_type).'</td>
@@ -215,33 +240,39 @@ class weekElasticSortController extends Controller
                             }
                         }
                     $tabledata.='</td>
-                    <td class="text-center" style="background:'.$bgcolor.'; color:'.$color.'">'.$textdescription.'</td>                        
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
+                    <td class="text-center" style="background:'.$bgcolor.'; color:'.$color.'">'.$textdescription.'</td> ';                       
+                    $tabledata.='<td class="text-center">';
+                            foreach($invoiceCriteria as $invoiceStatus){
+                                if($invoiceStatus->trip_id == $trip->id && $invoiceStatus->invoice_status == TRUE){
+                                    $tabledata.='<span class="badge badge-primary">INVOICED</span>';
+                                    break;
+                                }
+                            }
+                            
+                        $tabledata.='</td>
+                        <td class="text-center">';
+                            foreach($waybillstatuses as $collectionDate) {
+                                if(($collectionDate->trip_id == $trip->id) && ($collectionDate->waybill_status == TRUE)){
+                                    $tabledata.=$collectionDate->updated_at;
+                                }
+                            }
+                        $tabledata.='</td>
+                        <td class="text-center">';
+                            foreach($waybillstatuses as $dateInvoiced){
+                                if(($dateInvoiced->trip_id == $trip->id)){
+                                    $tabledata.=$dateInvoiced->date_invoiced;
+                                }
+                            }
+                        $tabledata.='</td>
+                        <td>';
+                            foreach($invoiceCriteria as $datePaid){
+                                if($datePaid->trip_id == $trip->id && $datePaid->paid_status == TRUE){
+                                    $tabledata.=$datePaid->updated_at;
+                                }
+                            }
+                        $tabledata.='</td>
 
-                    <td>
-                        <div class="list-icons">
-                                                        
-                            <a href="waybill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
-                                <i class="icon-file-check"></i>
-                            </a>
-
-                            <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
-                                <i class="icon-calendar52"></i>
-                            </a>
-
-                            <a href="#" class="list-icons-item text-danger-600" title="Cancel Trip">
-                                <i class="icon-trash"></i>
-                            </a>
-
-                            <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
-                                <i class="icon-file-eye"></i>
-                            </a>
-
-                        </div>
-                    </td>
+                    
                 </tr>';
                 
                 }
@@ -270,7 +301,7 @@ class weekElasticSortController extends Controller
 
         $orders = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND a.tracker >= \'5\' AND Date(a.gated_out) BETWEEN "'.$from.'" AND "'.$to.'" AND loading_site_id = '.$loading_site_id.'' 
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage, h.first_name, h.last_name FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN users h ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND a.tracker >= \'5\' AND Date(a.gated_out) BETWEEN "'.$from.'" AND "'.$to.'" AND loading_site_id = '.$loading_site_id.'' 
             )
         );
 
@@ -283,6 +314,7 @@ class weekElasticSortController extends Controller
                 <th>SALES ORDER NO.</th>
                 <th class="text-center">TRUCK NO.</th>
                 <th>ACCOUNT OFFICER</th>
+                <th>FIELD OPS</th>
                 <th>TRANSPORTER\'s NAME</th>
                 <th>TRANSPOTER\'s NUMBER</th>
                 <th>TRUCK TYPE</th>
@@ -319,8 +351,6 @@ class weekElasticSortController extends Controller
                 <th>WAYBILL COLLECTION DATE</th>
                 <th>DATE INVOICE</th>
                 <th>DATE PAID</th>
-               
-                <th>Action</th>
             </tr>
         </thead>';
 
@@ -391,7 +421,32 @@ class weekElasticSortController extends Controller
 
                 $tabledata.='<tr class="'.$css.' hover" style="font-size:10px;">
                     <td>'.$counter.'</td>
-                    <td class="text-center">'.$trip->trip_id.'</td>
+                    <td class="text-center">
+                        '.$trip->trip_id.'
+                        <div class="list-icons">
+                                                        
+                            <a href="way-bill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
+                                <i class="icon-file-check"></i>
+                            </a>
+
+                            <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
+                                <i class="icon-calendar52"></i>
+                            </a>
+
+                            <span class="list-icons-item">';
+                                if($trip->tracker < 5){
+                                    $tabledata.='<i class="icon icon-x text-danger voidTrip" value="{{$trip->trip_id}}" title="Cancel Trip" id="{{$trip->id}}"></i>';
+                                } else {
+                                $tabledata.='<i class="icon icon-checkmark2" title="Gated Out"></i>';
+                                }
+                            $tabledata.='</span>
+                            
+                            <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
+                                <i class="icon-file-eye"></i>
+                            </a>
+                        </div>
+                        
+                    </td>
                     <td>'.$trip->loading_site.'</td>
                     <td class="text-center font-weight-semibold">';
                         foreach($tripWaybills as $salesNo){
@@ -404,6 +459,7 @@ class weekElasticSortController extends Controller
                     $tabledata.='</td>
                     <td>'.strtoupper($trip->truck_no).'</td>
                     <td>'.strtoupper($trip->account_officer).'</td>
+                    <td>'.strtoupper($trip->first_name).' '.strtoupper($trip->last_name).'</td>
                     <td>'.strtoupper($trip->transporter_name).'</td>
                     <td class="text-center">'.$trip->phone_no.'</td>
                     <td>'.strtoupper($trip->truck_type).'</td>
@@ -483,29 +539,6 @@ class weekElasticSortController extends Controller
                             }
                         }
                     $tabledata.='</td>
-
-
-                    <td>
-                        <div class="list-icons">
-                                                        
-                            <a href="waybill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
-                                <i class="icon-file-check"></i>
-                            </a>
-
-                            <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
-                                <i class="icon-calendar52"></i>
-                            </a>
-
-                            <a href="#" class="list-icons-item text-danger-600" title="Cancel Trip">
-                                <i class="icon-trash"></i>
-                            </a>
-
-                            <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
-                                <i class="icon-file-eye"></i>
-                            </a>
-
-                        </div>
-                    </td>
                 </tr>';
                 
                 }
@@ -534,7 +567,7 @@ class weekElasticSortController extends Controller
 
         $orders = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND a.tracker >= \'5\' AND Date(a.gated_out) BETWEEN "'.$from.'" AND "'.$to.'" AND product_id = '.$product_id.'' 
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage, h.first_name, h.last_name FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN users h ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id AND a.user_id = h.id WHERE a.trip_status = \'1\' AND a.tracker >= \'5\' AND Date(a.gated_out) BETWEEN "'.$from.'" AND "'.$to.'" AND product_id = '.$product_id.'' 
             )
         );
 
@@ -547,6 +580,7 @@ class weekElasticSortController extends Controller
                 <th>SALES ORDER NO.</th>
                 <th class="text-center">TRUCK NO.</th>
                 <th>ACCOUNT OFFICER</th>
+                <th>FIELD OPS</th>
                 <th>TRANSPORTER\'s NAME</th>
                 <th>TRANSPOTER\'s NUMBER</th>
                 <th>TRUCK TYPE</th>
@@ -582,9 +616,7 @@ class weekElasticSortController extends Controller
                 <th>INVOICE STATUS</th>
                 <th>WAYBILL COLLECTION DATE</th>
                 <th>DATE INVOICE</th>
-                <th>DATE PAID</th>
-               
-                <th>Action</th>
+                <th>DATE PAID</th>               
             </tr>
         </thead>';
 
@@ -655,7 +687,32 @@ class weekElasticSortController extends Controller
 
                 $tabledata.='<tr class="'.$css.' hover" style="font-size:10px;">
                     <td>'.$counter.'</td>
-                    <td class="text-center">'.$trip->trip_id.'</td>
+                    <td class="text-center">
+                        '.$trip->trip_id.'
+                        <div class="list-icons">
+                                                        
+                            <a href="way-bill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
+                                <i class="icon-file-check"></i>
+                            </a>
+
+                            <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
+                                <i class="icon-calendar52"></i>
+                            </a>
+
+                            <span class="list-icons-item">';
+                                if($trip->tracker < 5){
+                                    $tabledata.='<i class="icon icon-x text-danger voidTrip" value="{{$trip->trip_id}}" title="Cancel Trip" id="{{$trip->id}}"></i>';
+                                } else {
+                                $tabledata.='<i class="icon icon-checkmark2" title="Gated Out"></i>';
+                                }
+                            $tabledata.='</span>
+                            
+                            <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
+                                <i class="icon-file-eye"></i>
+                            </a>
+                        </div>
+                        
+                    </td>
                     <td>'.$trip->loading_site.'</td>
                     <td class="text-center font-weight-semibold">';
                         foreach($tripWaybills as $salesNo){
@@ -668,6 +725,7 @@ class weekElasticSortController extends Controller
                     $tabledata.='</td>
                     <td>'.strtoupper($trip->truck_no).'</td>
                     <td>'.strtoupper($trip->account_officer).'</td>
+                    <td>'.strtoupper($trip->first_name).' '.strtoupper($trip->last_name).'</td>
                     <td>'.strtoupper($trip->transporter_name).'</td>
                     <td class="text-center">'.$trip->phone_no.'</td>
                     <td>'.strtoupper($trip->truck_type).'</td>
@@ -747,29 +805,6 @@ class weekElasticSortController extends Controller
                             }
                         }
                     $tabledata.='</td>
-
-
-                    <td>
-                        <div class="list-icons">
-                                                        
-                            <a href="waybill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
-                                <i class="icon-file-check"></i>
-                            </a>
-
-                            <a href="trip/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-info-600" title="Add Events">
-                                <i class="icon-calendar52"></i>
-                            </a>
-
-                            <a href="#" class="list-icons-item text-danger-600" title="Cancel Trip">
-                                <i class="icon-trash"></i>
-                            </a>
-
-                            <a href="trip-overview/'.$trip->trip_id.'" class="list-icons-item text-secondary-600" title="Trip History">
-                                <i class="icon-file-eye"></i>
-                            </a>
-
-                        </div>
-                    </td>
                 </tr>';
                 
                 }

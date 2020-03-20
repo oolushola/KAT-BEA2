@@ -31,7 +31,7 @@ class financialController extends Controller
         $allTrips = trip::SELECT('id', 'trip_id')->ORDERBY('trip_id', 'DESC')->WHERE('tracker', '>=', 5)->GET();
         $current_month = date('F');
         $current_year = date('Y');
-        $tripCounts = trip::WHERE('tracker', '>=', 5)->GET()->COUNT();
+        $tripCounts = trip::WHERE('gated_out', '!=', '')->WHERE('trip_status', '!=', 0)->GET()->COUNT();
         $availableCargo = DB::SELECT(
             DB::RAW(
                 'SELECT SUM(available_order) AS total_order FROM `tbl_kaya_cargo_availabilities`'

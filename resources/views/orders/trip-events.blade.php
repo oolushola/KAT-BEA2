@@ -48,6 +48,7 @@ td{
                     @endif
                     <input type="hidden" name="trackerStatus" id="trackerStatus" value="{{$tracker}}" />
                     <input type="hidden" name="trip_id" value="{{$tripId}}" />
+                    <input type="hidden" name="user_id" id="user_id" value="{{Auth::user()->id }}">
                     <input type="hidden" name="tracker" value="@if(isset($recid)){{$tracker}}@endif" id="tracker" />
                     <input type="hidden" name="current_date" value="{{date('Y-m-d')}}" />
                     

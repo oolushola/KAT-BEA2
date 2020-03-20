@@ -112,4 +112,17 @@ $(function() {
         $(placeholder).html(message).addClass(className).fadeIn(3000).delay(6000).fadeOut(2000);
     }
 
+    $('.specificTripEvent').click(function() {
+        $trip_id = $(this).attr('id');
+        $("#contentPlaceholder").html('<i class="spinner icon-spinner2" style="font-size:150px;"></i> Please wait...')
+       
+        $.get('/specific-trip-thread', { id: $trip_id }, function(data) {
+            $('#contentPlaceholder').html(data);
+        })
+
+        
+
+        
+    })
+
 })

@@ -204,7 +204,6 @@ class invoiceController extends Controller
     }
 
     public function invoicedWaybill(Request $request) {
-
         $addedIncentives = $request->addedIncentives;
         if(isset($addedIncentives) && sizeof($addedIncentives) > 0) {
             foreach($addedIncentives as $key => $incentiveOnLocation){
@@ -228,7 +227,9 @@ class invoiceController extends Controller
         foreach($request->trip_id as $order_id) {
             $completedInvoice = completeInvoice::firstOrNew(['trip_id'=>$order_id]);
             $completedInvoice->invoice_no = $request->invoice_no_counter;
-            $completedInvoice->completed_invoice_no = 'INV-'.date('Y').'-'.$request->invoice_no_counter;    
+            $completedInvoice->completed_invoice_no = 'INV-'.date('Y').'-'.$request->invoice_no_counter;
+            $completedInvoice->vat_used = $request->vat_used;
+            $completedInvoice->withholding_tax_used = $request->withholding_vat_used; 
             $completedInvoice->save();
 
             $fullInvoiceNo = $completedInvoice->completed_invoice_no;
@@ -289,9 +290,12 @@ class invoiceController extends Controller
         );
         $waybillinfos = tripWaybill::SELECT('id', 'sales_order_no', 'invoice_no', 'tons', 'trip_id')->ORDERBY('trip_id', 'ASC')->GET();
         $tripIncentives = tripIncentives::GET();
-        $vatRate = vatRate::first();
+        //$vatRate = vatRate::first();
         $invoiceBiller = invoiceClientRename::WHERE('invoice_no', $invoiceNumber)->first();
         $allProducts = product::get();
+        $clientListings = client::ORDERBY('company_name', 'ASC')->GET();
+
+        $vatRate = completeInvoice::SELECT('vat_used', 'withholding_tax_used')->WHERE('completed_invoice_no', $invoiceNumber)->DISTINCT()->GET()->FIRST();
 
         return view('finance.invoice.invoice-reprint', 
             array(
@@ -305,7 +309,9 @@ class invoiceController extends Controller
                 'trucksAndKaidArray' => $trucksAndKaidArray,
                 'vatRateInfos' => $vatRate,
                 'invoiceBiller' => $invoiceBiller,
-                'products' => $allProducts
+                'products' => $allProducts,
+                'clients' => $clientListings,
+               
             )
         );
     }
@@ -322,6 +328,7 @@ class invoiceController extends Controller
         }
         
         if($request->acknowledgeChecker == 2) {
+            
             $acknowledgmentDate = $request->acknowledgmentDate;
             $acknowledgedInvoiceId = $request->acknowledgedInvoiceId;
             foreach($acknowledgmentDate as $key=> $dateAcknowledged){
@@ -519,5 +526,30 @@ class invoiceController extends Controller
             $specificRecordId->save();
         }
         return 'updated';
+    }
+
+    public function clientAddress(Request $request) {
+        $getAddress = client::SELECT('address')->WHERE('company_name', $request->client_name)->GET()->FIRST();
+        return $getAddress->address;
+    }
+
+    public function cancelAcknowledgement(Request $request) {
+        $invoice_no = $request->value;
+        $cancelAcknowledgment = completeInvoice::WHERE('invoice_no', $invoice_no)->UPDATE([
+            'acknowledged' => FALSE, 
+            'acknowledged_date' => NULL, 
+            'paid_status' => FALSE, 
+            'date_paid' => NULL
+        ]);
+        return 'removed';
+    }
+
+    public function removePayment(Request $request) {
+        $invoice_no = $request->value;
+        $cancelledPayment = completeInvoice::WHERE('invoice_no', $invoice_no)->UPDATE([
+            'paid_status' => FALSE, 
+            'date_paid' => NULL
+        ]);
+        return 'removed';
     }
 }

@@ -21,9 +21,11 @@ input, select{
 @section('main')
 
 <!-- Main content -->
+@include('_partials.gate-out-month-view')
+@include('_partials.current-gate-out-view')
+@include('_partials.current_trip_status')
+@include('_partials.truck-availability')
 
-
-    
 <div class="content-wrapper">
     <?php
         function monthListings(){
@@ -47,12 +49,12 @@ input, select{
             <div class="header-elements d-none">
                 <div class="d-flex justify-content-center">
                     <a href="#" class="btn btn-link btn-float text-default">
-                        <i class="icon-pie-chart2 text-primary"></i>
-                            <span>Periscope</span>
+                        <h2 style="margin:0; padding:10px; letter-spacing:10px;" class="bg-danger font-weight-bold">{{$totalGateOuts}}</h2>
+                        <p class="text-primary font-weight-bold">TOTAL GATE OUT</p>
                     </a>
-                    <a href="{{URL('invoices')}}" class="btn btn-link btn-float text-default">
-                        <i class="icon-calculator text-primary"></i> 
-                        <span>Invoices</span>
+                    <a href="#truckAvailability" data-toggle="modal"  class="btn btn-link btn-float text-default">
+                        <h2 style="margin:0; padding:10px; letter-spacing:10px;" class="bg-primary font-weight-bold">{{ count($availableTrucks) }}</h2>
+                        <p class="text-primary font-weight-bold">TRUCK AVAILABILITY</p>
                     </a>
                 </div>
             </div>
@@ -69,6 +71,12 @@ input, select{
             </div>
 
             <div class="header-elements d-none">
+                <div class="breadcrumb justify-content-center mr-2">
+                    <a href="{{URL('view-trip-thread')}}" class="breadcrumb-elements-item">
+                        <i class="icon-eye mr-2"></i>
+                        View Trip Thread
+                    </a>
+                </div>
                 <div class="breadcrumb justify-content-center">
                     <a href="#" class="breadcrumb-elements-item">
                         <i class="icon-comment-discussion mr-2"></i>
@@ -81,7 +89,7 @@ input, select{
     <!-- /page header -->
 
     <div class="row">
-        <div class="col-md-4 mb-2">
+        <div class="col-md-4 col-sm-12 mb-2">
             <div class="dashboardbox">
                 <table class="table">
                     <tr>
@@ -95,13 +103,12 @@ input, select{
                     </tr>
                 </table>
                 <hr class="mt-5-negative">
-                <canvas id="targetProcessChart"  height="200"></canvas>
+                <canvas id="targetProcessChart" height="200" data-toggle="modal" href="#totalGateOutForTheMonth"></canvas>
                 <?php 
-                    $currentMonthTarget = $monthlyTarget[0]->target;
-                    if($currentMonthTarget <= 0){
-                        $targetforthemonth = 150;
+                    if(!$monthlyTarget){
+                        $targetforthemonth = 200;
                     } else{
-                        $targetforthemonth = $monthlyTarget[0]->target;
+                        $targetforthemonth = $monthlyTarget->target;
                     }
                     $gatedOutForTheMonth = $getGatedOutByMonth;
                     $gatedOutPercentageRate = round($gatedOutForTheMonth/$targetforthemonth * 100, 1);
@@ -113,7 +120,7 @@ input, select{
             </div>
         </div>
 
-        <div class="col-md-8 col-sm-8 mb-2">
+        <div class="col-md-8 col-sm-12 mb-2" data-toggle="modal" href="#currentTripStatus">
             <div class="dashboardbox">
                 <table class="table">
                     <tr>
@@ -132,10 +139,38 @@ input, select{
                     </tr>
                 </table>
                 <hr class="mt-5-negative">
-                <canvas id="masterTripChart"  height="130"></canvas>
+                <canvas id="masterTripChart" height="130">
+                    <span>Gate In</span>
+                    <span>At Loading Bay</span>
+                    <span>Departed Loading Bay</span>
+                    <span>On Journey</span>
+                    <span>At Destination</span>
+                    <span>Offloaded</span>
+                </canvas>
+                
                     <?php
-                        $stagesOfOperation = [$gateIn, $loadingBay, $onJourney, $atDestination, $offloadedTrips];
+                        $offloadedTrips = $offloadedTrips[0]->offloadedTrips;
+                        $stagesOfOperation = [$gateIn, $loadingBay, $departedLoadingBay, $onJourney, $atDestination, $offloadedTrips];
+
                     ?>
+            </div>
+            
+        </div>
+
+        
+    </div>
+
+
+    <!-- Waybill and Daily line chart of Operation -->
+    <div class="row mt-3">
+        <div class="col-md-4 mb-2" data-toggle="modal" href="#currentGateOutInformation">
+            <div class="dashboardbox">
+                <canvas id="myProjectionChart"  height="200"></canvas>
+            </div>
+        </div>
+        <div class="col-md-8 col-sm-12 mb-2" id="">
+            <div class="dashboardbox">
+                <canvas id="dailyGateOutChart" height="130"></canvas>
             </div>
         </div>
 
@@ -146,7 +181,7 @@ input, select{
     <div class="row mt-3">
         <div class="col-md-4 mb-2">
             <div class="dashboardbox">
-                <canvas id="myProjectionChart"  height="200"></canvas>
+                <canvas id="waybillChart"  height="200"></canvas>
             </div>
         </div>
         <div class="col-md-4 mb-2" id="placeholderForWeek">
@@ -327,18 +362,59 @@ input, select{
 </div>
 <!-- /main content -->
 
+
+<?php
+    $current_day = date('d');
+    $monthInView = date('M');
+
+    echo date('S');
+    for($i=1; $i<= $current_day; $i++){
+        $daysIntheMonth[] = $i.date("S-", mktime(0, 0, 0, 0, $i, 0)).$monthInView;
+    }
+    
+    
+    
+?>
+
 @stop
 
 
 @section('script')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
 
+<script>
+    $('.container').hide();
+    $('#gate-in-container').show();
+    $('.btn-group button').click(function(){
+        var target = "#" + $(this).data("target");
+        $(".container").not(target).hide();
+        $(target).show();
+    });
+
+    autosearch('#searchDataset', '#masterDataTable')
+    autosearch('#searchGatedOut', '#monthlyGatedOutData')
+    autosearch('#searchCurrentGateOut', '#currentGateOutData')
+
+    function autosearch(searchBoxId, dataSetId) {
+        $(searchBoxId).on("keyup", function() {
+        var value = $(this).val().toLowerCase();
+        $(`${dataSetId} tr`).filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+    });
+    }
+</script>
+
+
 <!-- Chart for Target Process -->
 <script>
     var ctx = document.getElementById('targetProcessChart');
     var targetForTheMonth = <?php echo json_encode($targetforthemonth); ?>;
     var gateOutForTheMonth = <?php echo json_encode($gatedOutForTheMonth); ?>;
-    var gateOutStatistics = [targetForTheMonth, gateOutForTheMonth];
+
+    var remainderTarget = targetForTheMonth - gateOutForTheMonth;
+    var gateOutStatistics = [remainderTarget, gateOutForTheMonth];
+
     var currentMonth = $('#currentMonthInTheYear').val();
 
     var myChart = new Chart(ctx, {
@@ -349,7 +425,7 @@ input, select{
                 label: 'Monthly Target Statistics',
                 data: gateOutStatistics,
                 backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(255, 0, 0, 0.7)',
                     'rgba(54, 162, 235, 0.2)',
                     'rgba(255, 206, 86, 0.2)',
                     'rgba(75, 192, 192, 0.2)',
@@ -378,7 +454,7 @@ input, select{
     var myChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: [ 'Gate In', 'At Loading Bay', 'On Journey', 'At Destination', 'Offloaded'],
+            labels: [ 'Gate In', 'At Loading Bay', 'Departed Loading Bay', 'On Journey', 'At Destination', 'Offloaded'],
             datasets: [{
                 label: 'Trip Status',
                 data: stagesOfOperation,
@@ -408,21 +484,69 @@ input, select{
                         beginAtZero: true
                     }
                 }]
+            },
+        },
+    });
+
+   
+</script>
+
+<!-- Chart for waybill Process -->
+<script>
+    var ctx = document.getElementById('waybillChart');
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Good', 'Warning', 'Danger'],
+            datasets: [{
+                label: 'Waybill Status',
+                data: [10, 8, 5],
+                backgroundColor: [
+                    'rgb(0,128,0, 1)',
+                    'rgb(255,255,0, 1)',
+                    'rgb(255,0,0, 1)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(255, 159, 64, 0.2)'
+                ],
+                borderColor: [
+                    'rgb(0,128,0, 0.4)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgb(255,0,0, 0.5)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
             }
         }
+
     });
 </script>
 
-<!-- Available cargo Statistics -->
+<!-- Chart for Daily Gate out -->
 <script>
-    var ctx = document.getElementById('myTripVolume');
+    var ctx = document.getElementById('dailyGateOutChart');
+    var dayssofar = <?php echo json_encode($daysIntheMonth); ?>;
+    var noOfTripsPerDay = <?php echo json_encode($noOfTripsPerDay); ?>;
+    var currentMonth = $('#currentMonthInTheYear').val();
+
     var myChart = new Chart(ctx, {
-        type: 'doughnut',
+        type: 'line',
         data: {
-            labels: ['Trip Requested', 'Trip Accepted'],
+            labels: dayssofar,
             datasets: [{
-                label: 'Trip Request Statistics',
-                data: availableCargoArray,
+                label: `${currentMonth}`,
+                data: noOfTripsPerDay,
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.2)',
                     'rgba(54, 162, 235, 0.2)',
@@ -442,9 +566,19 @@ input, select{
                 borderWidth: 1
             }]
         },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
 
     });
 </script>
+
 
 <!-- Gated out for the Day -->
 <script>
@@ -579,8 +713,6 @@ input, select{
         }
     });
 </script>
-
-
 
 <!-- Master Bar Chart -->
 

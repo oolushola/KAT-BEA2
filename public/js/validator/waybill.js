@@ -1,24 +1,50 @@
 $(function() {
 
     $("#addMore").click(function(e) {
-        var mediumsize = '<div class="col-md-6">';
+        var mediumsize = '<div class="col-md-4 mb-2">';
         var close = '</div>';
-        var formgroup = '<div class="form-group">';
+        var formgroup = '<div class="form-group-4">';
         var sonumber_inputfield = `${mediumsize}${formgroup}<input type="text" name="sales_order_no[]" placeholder="S.O. Number" class="form-control salesOrderNumber" />${close}${close}`;
 
-        var invoicenumber_input = `${mediumsize}${formgroup}<input type="text" name="invoice_no[]" placeholder="Invoice Number" class="form-control"    />${close}${close}`;
-        $(".input_field_wraps").append(`${sonumber_inputfield}${invoicenumber_input}`)
+        var invoicenumber_input = `${mediumsize}${formgroup}<input type="text" name="invoice_no[]" placeholder="Invoice No." class="form-control invoiceNumber" />${close}${close}`;
+
+        var waybillPhoto = `${mediumsize}${formgroup}<input type="file" name="photo[]" style="font-size:9px;" class="waybillChooser">`
+
+        $(".input_field_wraps").append(`${sonumber_inputfield} ${invoicenumber_input} ${waybillPhoto}`)
     });
+
+    function multiValidateFields(className, errorMessage) {
+        $exit = true;
+        $(className).each(function(i, v){
+            $value = $(this).val();
+            if($value === ""){
+                alert(errorMessage);
+                $exit = false;
+            }
+        });
+        return $exit;
+    }
 
     $("#addWaybillStatus").click(function(event) {
         event.preventDefault();
+        if(multiValidateFields('.salesOrderNumber', 'You have at least one s.o. number to be entered.')==false){ return }
+        if(multiValidateFields('.invoiceNumber', 'You have at least one invoice number to be entered.')==false){ return }
+        if(multiValidateFields('.waybillChooser', 'You have at least one proof of waybill to be uploaded.')==false){ return }
+
         if(validateWaybill()==false){ return };
+        $(this).html('<i class="spinner icon-spinner2"></i> Please wait...');
+        $(this).prop("disabled", "disabled");
         $("#frmWayBill").submit();
+        
     });
+
 
     $("#updateWayBillStatus").click(function() {
         $file = $("#file").val();
-        if($file == "") {
+        $salesOrderNumber = $('.salesOrderNumber').val();
+        $invoiceNumber = $('.invoiceNumber').val();
+
+        if($file == "" && ($salesOrderNumber == "" || $invoiceNumber == "")) {
             errorMessage(
                 '#loader',
                 'Choose the waybill to be uploaded',
@@ -33,11 +59,9 @@ $(function() {
                 if(filecheck == "0"){return false;}
             }
         }
-        successful(
-            '#loader',
-            `<i class="icon-spinner2 spinner mr-2"></i>Please Wait...`,
-            'success'
-        )
+        
+        $(this).html('<i class="spinner icon-spinner2"></i> Please wait...');
+        $(this).prop("disabled", "disabled");
         $("#frmWayBill").submit();
     })
 
@@ -141,6 +165,28 @@ $(function() {
         })
     })
 
+    // delete specific waybill details
+    $('.deleteSpecificWaybill').click(function() {
+        $id = $(this).attr("value");
+        $user = $("#user_id").val();
+        $ask = confirm('Are you sure you want to delete this waybill? ');
+        if($ask) {
+            $('#loader').html('<i class="spinner icon-spinner2"></i>Please wait...').addClass('success');
+            $.get('/delete-specific-waybill/', {id:$id, user:$user}, function(data) {
+                if(data == 'deleted') {
+                    successful('#loader', 'waybill details removed successfully', 'success')
+                    window.location = '';
+                }
+                else{
+                    return false;
+                }
+            })
+        }
+        else{
+            return false;
+        }
+    });
+
 
     $("#frmWayBill").ajaxForm(function(data){
         if(data == 'exists'){
@@ -161,5 +207,5 @@ $(function() {
                 window.location = '';
             }
         }
-    })
+    });
 });

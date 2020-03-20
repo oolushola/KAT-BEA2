@@ -122,16 +122,10 @@ td{
 
                                     if($completeInvoice->acknowledged == TRUE) {
                                         $acknowledgeClass = 'bg-success';
-                                        $acknowledgementStatus = '<span class="icon-checkmark2" title="Received"></span>';
+                                        $acknowledgementStatus = '<span class="icon-checkmark2 text-primary" title="Received"></span>';
                                     } else {
                                         $acknowledgeClass = '';
-                                        $acknowledgementStatus = '<input type="checkbox" name="acknowledgedInvoice[]" class="acknowledgment">
-                                            <div class="hidden" style="font-size:10px; font-weight:bold; outline:none">
-                                                <div>Date Acknowledge</div>
-                                                <input type="date" name="acknowledgmentDate[]" style="outline:none" >
-                                                <input type="hidden" name="acknowledgedInvoiceId[]" value="'.$completeInvoice->invoice_no.'">
-                                            </div>
-                                        ';
+                                        $acknowledgementStatus = '<span class="text-warning icon-spinner2" title="Waiting..."></span>';
                                     }
                                 
                                 ?>
@@ -153,10 +147,19 @@ td{
                                     </td>
                                     
                                     <td class="text-center {{$acknowledgeClass}}">{!! $completeInvoice->completed_invoice_no !!}</td>
-                                    <td class="text-center">{!! $acknowledgementStatus !!}</td>
+                                    <td class="text-center">
+                                            <input type="checkbox" name="acknowledgedInvoice[]" class="acknowledgment">
+                                            <div class="hidden" style="font-size:10px; font-weight:bold; outline:none">
+                                                <div>Date Acknowledge</div>
+                                                <input type="date" name="acknowledgmentDate[]" style="outline:none" >
+                                                <input type="hidden" name="acknowledgedInvoiceId[]" value="{{ $completeInvoice->invoice_no }}">
+                                            </div>
+                                        {!! $acknowledgementStatus !!}
+                                    </td>
                                     <td class="text-center">
                                         @if($completeInvoice->acknowledged == true)
                                             {{date('d/m/Y', strtotime($completeInvoice->acknowledged_date))}}
+                                            <i class="icon icon-x text-danger-400 cancelAcknowledgment" title="Cancel Acknowledgement" id="{{$completeInvoice->invoice_no}}"></i>
                                         @endif
                                     </td>
                                     <td class="text-center">
@@ -174,6 +177,7 @@ td{
                                     <td>
                                         @if($completeInvoice->paid_status == true)
                                             {{date('d/m/Y', strtotime($completeInvoice->date_paid))}}
+                                            <i class="icon icon-x text-danger-400 cancelPayment" title="Remove Payment" id="{{$completeInvoice->invoice_no}}"></i>
                                         @endif
                                     </td>
                                     <td class="text-center">
