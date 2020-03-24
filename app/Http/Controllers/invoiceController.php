@@ -16,6 +16,7 @@ use App\invoiceSubheading;
 use App\vatRate;
 use App\invoiceClientRename;
 use App\product;
+use App\invoiceSpecialRemark;
 
 class invoiceController extends Controller
 {
@@ -35,7 +36,7 @@ class invoiceController extends Controller
     function detailedInvoiceInformation() {
         $query = DB::SELECT(
             DB::RAW(
-                'SELECT b.id, b.client_rate, b.transporter_rate, b.trip_id, b.client_id, b.customers_name, b.exact_location_id, c.truck_no, c.truck_type_id, d.product, e.truck_type, e.tonnage, f.state FROM tbl_kaya_trip_waybill_statuses a JOIN tbl_kaya_trips b JOIN tbl_kaya_trucks c JOIN tbl_kaya_products d JOIN tbl_kaya_truck_types e JOIN tbl_regional_state f ON a.trip_id = b.id AND c.id = b.truck_id AND b.product_id = d.id AND c.truck_type_id = e.id AND b.destination_state_id = f.regional_state_id    WHERE waybill_status = TRUE AND comment = \'Recieved\' AND invoice_status = FALSE ORDER BY a.trip_id ASC'
+                'SELECT b.id, b.client_rate, b.transporter_rate, b.trip_id, b.client_id, b.customers_name, b.exact_location_id, c.truck_no, c.truck_type_id, d.product, b.gated_out, e.truck_type, e.tonnage, f.state FROM tbl_kaya_trip_waybill_statuses a JOIN tbl_kaya_trips b JOIN tbl_kaya_trucks c JOIN tbl_kaya_products d JOIN tbl_kaya_truck_types e JOIN tbl_regional_state f ON a.trip_id = b.id AND c.id = b.truck_id AND b.product_id = d.id AND c.truck_type_id = e.id AND b.destination_state_id = f.regional_state_id    WHERE waybill_status = TRUE AND comment = \'Recieved\' AND invoice_status = FALSE ORDER BY a.trip_id ASC'
             )
         );
         
@@ -263,13 +264,14 @@ class invoiceController extends Controller
     }
 
     public function singleInvoice($invoiceNumber) {
-        $getTripById = completeInvoice::SELECT('trip_id', 'created_at')->WHERE('completed_invoice_no', $invoiceNumber)->GET();
+        $getTripById = completeInvoice::SELECT('trip_id', 'created_at', 'paid_status')->WHERE('completed_invoice_no', $invoiceNumber)->GET();
         foreach($getTripById as $specificTrip)
         [$trucksAndKaidArray[]] = DB::SELECT(
             DB::RAW(
                 'SELECT a.*, b.truck_no FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b ON a.truck_id = b.id WHERE a.id = '.$specificTrip->trip_id.' '
             )
         );
+        
 
         foreach($getTripById as $orderId) {
             $trip_id = $orderId->trip_id;
@@ -279,6 +281,7 @@ class invoiceController extends Controller
                 )
             );
         }
+
 
         $tripRecord = trip::findOrFail($trip_id);
         $invoiceHeadings = invoiceSubheading::WHERE('client_id', $tripRecord->client_id)->FIRST();
@@ -297,6 +300,11 @@ class invoiceController extends Controller
 
         $vatRate = completeInvoice::SELECT('vat_used', 'withholding_tax_used')->WHERE('completed_invoice_no', $invoiceNumber)->DISTINCT()->GET()->FIRST();
 
+        $invoiceList = $this->detailedInvoiceInformation();
+        $clientList = client::ORDERBY('company_name', 'ASC')->GET();
+
+        $invoiceSpecialRemark = invoiceSpecialRemark::WHERE('invoice_no', $invoiceNumber)->GET()->FIRST();
+
         return view('finance.invoice.invoice-reprint', 
             array(
                 'completedInvoice' => $completedInvoice,
@@ -311,6 +319,11 @@ class invoiceController extends Controller
                 'invoiceBiller' => $invoiceBiller,
                 'products' => $allProducts,
                 'clients' => $clientListings,
+                'paidStatus' => $getTripById,
+                'invoiceList' => $invoiceList,
+                'clientList' => $clientList,
+                'waybillinfos' => $waybillinfos,
+                'invoiceSpecialRemark' => $invoiceSpecialRemark
                
             )
         );
@@ -551,5 +564,69 @@ class invoiceController extends Controller
             'date_paid' => NULL
         ]);
         return 'removed';
+    }
+
+    public function removeSpecificTripOnInvoice(Request $request) {
+        $trip_id = $request->value;
+        $tripRecord = completeInvoice::WHERE('trip_id', $trip_id)->GET()->LAST();
+        $tripRecord->DELETE();
+
+        $tripWaybillStatus = tripWaybillStatus::WHERE('trip_id', $trip_id)->GET()->LAST();
+        $tripWaybillStatus->invoice_status = FALSE;
+        $tripWaybillStatus->date_invoiced = NULL;
+        $tripWaybillStatus->SAVE();
+
+        $tripWaybill = tripWaybill::WHERE('trip_id', $trip_id)->GET()->LAST();
+        $tripWaybill->invoice_status = FALSE;
+        $tripWaybill->date_invoiced = NULL;
+        $tripWaybill->SAVE();
+
+        $tripIncentive = tripIncentives::WHERE('trip_id', $trip_id)->GET()->LAST();
+        if(count($tripIncentive) > 0){
+            $tripIncentive->DELETE();        
+        }
+
+        return 'removed';
+    }
+
+    public function addMoreTripToSpecificInvoice(Request $request) {
+        $getDistinctInvoiceNo = completeInvoice::WHERE('completed_invoice_no', $request->invoice_no)->GET()->LAST();
+        $date_invoiced = date('d-m-Y');
+
+        foreach($request->trips as $trip_id) {
+            completeInvoice::firstOrNew(['trip_id' => $trip_id, 'invoice_no' => $getDistinctInvoiceNo->invoice_no, 'completed_invoice_no' => $request->invoice_no, 'vat_used' => $getDistinctInvoiceNo->vat_used, 'withholding_tax_used' => $getDistinctInvoiceNo->withholding_tax_used, 'created_at' => $getDistinctInvoiceNo->created_at]);
+
+            $tripWaybillStatus = tripWaybillStatus::WHERE('trip_id', $trip_id)->GET()->FIRST();
+            $tripWaybillStatus->invoice_status = TRUE;
+            $tripWaybillStatus->date_invoiced = $date_invoiced;
+            $tripWaybillStatus->SAVE();
+
+            $tripWaybill = tripWaybill::WHERE('trip_id', $trip_id)->GET()->FIRST();
+            $tripWaybill->invoice_status = TRUE;
+            $tripWaybill->date_invoiced = $date_invoiced;
+            $tripWaybill->SAVE();
+
+            // Update the acknowledgement status and date and date created to the updated date.
+            $acknowledgement = completeInvoice::WHERE('completed_invoice_no', $request->invoice_no)->UPDATE(['acknowledged' => false, 'acknowledged_date' => NULL]);
+        }
+        return redirect()->back();
+    }
+
+    public function addSpecialRemark(Request $request) {
+        $validateData = $this->validate($request, [
+            'condition' => 'required | string',
+            'invoice_no' => 'required | string',
+            'amount' => 'required | integer',
+            'description' => 'string | required'
+        ]);
+
+        $storeData = invoiceSpecialRemark::firstOrNew(['invoice_no' => $request->invoice_no]);
+        $storeData->amount = $request->amount;
+        $storeData->description = $request->description;
+        $storeData->condition = $request->condition;
+        $storeData->save();
+
+        return 'saved';
+        
     }
 }

@@ -37,14 +37,15 @@
                                         <td>
                                             <span class="text-primary"><b>{{$gateOutForTheMonth->truck_no}}</b></span>
                                             <p style="margin:0"><b>Truck Type</b>: {{ $gateOutForTheMonth->truck_type }} {{ $gateOutForTheMonth->tonnage / 1000 }}T</p>
-                                            <p style="margin:0"><b>Transporter</b>: Ibrahim Anas, 2348022440810</p>
+                                            <p style="margin:0"><b>Transporter</b>: {{$gateOutForTheMonth->transporter_name}}, {{$gateOutForTheMonth->phone_no}}</p>
                                         </td>
                                         
                                         <td><p style="margin:0" class="font-weight-bold">
                                             @foreach($tripWaybills as $tripWaybill)
                                                 @if($gateOutForTheMonth->id == $tripWaybill->trip_id)
-                                                {{$tripWaybill->sales_order_no}}<br>
-                                                {{$tripWaybill->invoice_no}}
+                                                <a href="{{URL::asset('assets/img/waybills/'.$tripWaybill->photo)}}" target="_blank" title="View waybill {{$tripWaybill->sales_order_no}}" >
+                                                    <p class="mb-1">{{$tripWaybill->sales_order_no}} {{$tripWaybill->invoice_no}}</p>
+                                                </a>
                                                 @endif
                                             @endforeach
                                         </p>
