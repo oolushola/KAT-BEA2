@@ -39,8 +39,8 @@
                                             <td>
                                                 @foreach($tripWaybills as $tripWaybill)
                                                     @if($specificRecord->id == $tripWaybill->trip_id)
-                                                    {{$tripWaybill->sales_order_no}}
-                                                    {{$tripWaybill->invoice_no}}
+                                                    <span class="mb-2"><a href="{{URL::asset('assets/img/waybills/'.$tripWaybill->photo)}}" target="_blank" title="View waybill {{$tripWaybill->sales_order_no}}">{{$tripWaybill->sales_order_no}}
+                                                    {{$tripWaybill->invoice_no}}</a></span>
                                                     @endif
                                                 @endforeach
                                             </td>

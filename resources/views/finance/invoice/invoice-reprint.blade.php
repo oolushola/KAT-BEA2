@@ -56,6 +56,9 @@ input{
 		?>
 		<div class="content">
 			<form id="frmReprintInvoice" method="POST">
+				<?php
+					$payment_status = $paidStatus[0]->paid_status;
+				?>
 				@csrf
 			<!-- Invoice template -->
 			<div id="printableArea">
@@ -63,13 +66,16 @@ input{
 					<div class="card-header bg-transparent header-elements-inline">
                         <h6 class="card-title"><?php 
                             $array = explode(" ", $dateInvoiced[0]->created_at);
-                            //echo date('d-m-Y', strtotime($array[0]));
-                            
-						?></h6>
+						?>
+						<button type="button" data-toggle="modal" href="#addMoreTrips" class="btn btn-primary font-size-sm font-weight-semibold hideOnPrint" >ADD MORE</button>&nbsp;
+
+						<button type="button" class="btn btn-primary font-size-sm font-weight-semibold hideOnPrint" data-toggle="modal" href="#salesOrderAndInvoiceNumber">CHANGE INVOICE NO, S.O NUMBER</button>
 						
-						<div class="deleteInvAndTonsplitter">
-							<button type="button" class="btn btn-danger deleteInvoice font-size-sm font-weight-semibold" value="{{$invoice_no}}">DELETE INVOICE</button>&nbsp;
-							<button type="button" class="btn btn-primary font-size-sm font-weight-semibold" data-toggle="modal" href="#salesOrderAndInvoiceNumber">CHANGE INVOICE NO, S.O NUMBER</button>
+					</h6>
+						
+						<div class="deleteInvAndTonsplitter hideOnPrint">
+							<button type="button" class="btn btn-danger deleteInvoice font-size-sm font-weight-semibold" value="{{$invoice_no}}">DELETE INVOICE</button>
+
 						</div>
 					</div>
 
@@ -108,7 +114,7 @@ input{
 
 						<div class="row">
 							<div class="mb-4 mb-md-2 col-md-6">
-								<p id="editClientInformation" class="text-primary-400" style="cursor:pointer">Edit <i class="icon-pencil"></i></p>
+								<p id="editClientInformation" class="text-primary-400 hideOnPrint" style="cursor:pointer">Edit <i class="icon-pencil"></i></p>
 								<p id="closeEditClientInformation" class="hidden text-danger" style="cursor:pointer">Close <i class="icon-x"></i></p>
 								
 								<span class="font-weight-bold">Billing To:</span>
@@ -203,6 +209,9 @@ input{
 									<th><b>@if(isset($invoiceHeadings)){{$invoiceHeadings->invoice_no_header}}@else{{'Waybill No.'}}@endif</b></th>
 									<th width="10%"><b>Ton</b></th>
 									<th><b>Rate</b> </th>
+									@if(!$payment_status && count($completedInvoice) > 1)
+									<th class="specificTripRemove hideOnPrint" id="removeLoader"></th>
+									@endif
 								</tr>
 							</thead>
 							<tbody style="font-size:12px; font-family:tahoma">
@@ -212,6 +221,8 @@ input{
 										$sumtotalIncentive = 0;
 										$totalVatRate = 0;
 										$incentiveVatRate = 0;
+										$sumTotalSpecialRemark = 0;
+										$specialRemarkCondition = "+";
 									?>
 									
 									@foreach($completedInvoice as $invoiceParams)
@@ -237,7 +248,7 @@ input{
 											<td>
 											<h6 class="mb-0">
 											<span class="defaultInfo">
-												<a href="#">{!! $invoiceParams->customers_name  !!}</a>
+												<span class="text-primary">{!! $invoiceParams->customers_name  !!}</span>
 												<span class="d-block font-size-sm ">Destination: 
 													{!! $invoiceParams->state !!}, {!! $invoiceParams->exact_location_id !!}
 												</span>
@@ -280,6 +291,7 @@ input{
 												@endif
 											@endforeach
 										</td>
+										
 										<td>
 											@foreach($waybillinfos as $waybilldetails)
 												@if($waybilldetails->trip_id == $invoiceParams->id)
@@ -305,7 +317,12 @@ input{
 											<span class="initialRatePlaceholder">&#x20a6;{!! number_format($invoiceParams->client_rate, 2) !!}<br>
 											@foreach($incentive as $incentivedesc)
 												@if($incentivedesc->trip_id == $invoiceParams->id)
-												&#x20a6;{{number_format($incentivedesc->amount, 2)}} <i class="icon-trash text-danger-400 removeIncentive" title="Remove Incentive" style="font-size:10px; cursor:pointer" id="{{$incentivedesc->id}}"></i>
+												&#x20a6;{{number_format($incentivedesc->amount, 2)}} 
+												
+													@if(!$payment_status)
+													<i class="icon-trash hideOnPrint text-danger-400 removeIncentive" title="Remove Incentive" style="font-size:10px; cursor:pointer" id="{{$incentivedesc->id}}"></i>
+													@endif
+
 												@endif
 											@endforeach
 											</span> 
@@ -316,6 +333,15 @@ input{
 												<input type="hidden" value="{{$invoice_no}}" id="invoiceNumber">
 											</span>
 										</td>
+										@if(!$payment_status && count($completedInvoice) > 1)
+									
+										<td class="specificTripRemove hideOnPrint">
+											<i class="icon icon-minus-circle2 removeSpecificTrip text-danger" title="Remove this trip with ID: {{ $invoiceParams->trip_id  }}" id="{{$invoiceParams->id}}" style="cursor:pointer"></i>
+										</td>
+									
+										@endif
+
+
 										</tr>
 											@foreach($incentive as $totalIncentive)
 												@if($totalIncentive->trip_id == $invoiceParams->id)
@@ -328,6 +354,17 @@ input{
 												@endif
 											@endforeach
 									@endforeach
+										@if(isset($invoiceSpecialRemark))
+										<?php $invoiceSpecialRemark->condition == '+' ? $class = 'text-primary' : $class = 'text-danger'; ?>
+										<tr class="font-weight-bold {{$class}} ">
+											<td colspan="3"></td>
+											<td colspan="4">{{ $invoiceSpecialRemark->description }}</td>
+											<td>&#x20a6;{{ number_format($invoiceSpecialRemark->amount, 2) }}</td>
+											<?php $sumTotalSpecialRemark = $invoiceSpecialRemark->amount;
+												$specialRemarkCondition = $invoiceSpecialRemark->condition;
+											?>
+										</tr>
+										@endif
 								@else
 									<tr>
 										<td colspan="10">You didnt select any trip for invoicing</td>
@@ -335,7 +372,24 @@ input{
 								@endif
 								
 							</tbody>
+
 						</table>
+
+					</div>
+
+					<div id="specialRemark" class="font-size-sm mt-3 mb-3 hideOnPrint">
+						<input type="checkbox" id="specialRemarkChecker" class="ml-4"><span class="descriptor-label font-weight-semibold text-danger">Use Special Remark For this Invoice</span>
+						<span class="descriptor hidden">
+							<select name="condition" id="condition">
+								<option value="">Choose Criteria for Special Remark</option>
+								<option value="+">Add-on (Incentive/Extra/Overpay)</option>
+								<option value="-">Deduction (Underpay)</option>
+							</select>
+							<input type="text" placeholder="Description" name="description" id="description">
+							<input type="text" placeholder="Amount" name="amount" id="amount">
+							<button id="saveSpecialRemark" class="btn btn-warning">Save</button>
+						</span>
+
 					</div>
 
 					<div class="card-body" style="font-family:tahoma; font-size:12px; ">
@@ -346,11 +400,12 @@ input{
 									 <img src="{{URL::asset('/assets/img/kaya/'.$companyProfile[0]->signatory)}}" width="100" alt="{{$companyProfile[0]->first_name}}"> 
 								</div>
 
-								<ul class="list-unstyled">
+								<ul class="list-unstyled" style="position:relative; z-index:1000;">
 									<li>{!! ucfirst($companyProfile[0]->first_name) !!} {!! ucfirst($companyProfile[0]->last_name) !!}</li>
 									<li>{!! $companyProfile[0]->email !!}</li>
 									<li><em>For</em> : Kaya Africa Technologies Nig. Ltd</li>
 								</ul>
+								<img src="{{URL('assets/img/official-stamp.png')}}" alt="auto-stamp" width="250" height="70" style="position:relative; top:-30px; z-index:12; left:-20px;">
 							</div>
 
 							<div class="pt-2 mb-3 wmin-md-400 ml-auto col-md-8">
@@ -359,7 +414,16 @@ input{
 										<tbody>
 										<tr>
 												<?php
-													$subtotal+=$sumtotalIncentive;
+													
+													if(isset($invoiceSpecialRemark)){
+														if($invoiceSpecialRemark->condition == "+"){
+															$subtotal+=$sumtotalIncentive + $sumTotalSpecialRemark;
+														} else {
+															$subtotal+=$sumtotalIncentive - $sumTotalSpecialRemark;
+														}
+													} else{
+														$subtotal+=$sumtotalIncentive + $sumTotalSpecialRemark;
+													}
 													//change
 													$totalVatRate = $vatRateValue / 100 * $subtotal;
 												?>
@@ -371,14 +435,6 @@ input{
 												<th><b>VAT:</b> <span class="font-weight-normal">({{$vatRateValue}}%)</span></th>
 												<td class="text-right">&#x20a6;{!! number_format($totalVatRate, 2) !!}</td>
 											</tr>
-											<!-- <tr>
-												<th><b>Subtotal (Incentive):</b></th>
-												<td class="text-right">&#x20a6;{!! number_format($sumtotalIncentive, 2) !!}</td>
-											</tr>
-											<tr>
-												<th><b>VAT:</b> <span class="font-weight-normal">(7.5%)</span></th>
-												<td class="text-right">&#x20a6;{!! number_format($incentiveVatRate, 2) !!}</td>
-											</tr> -->
 											<tr>
 												<th><b>TOTAL:</b></th>
 												<td class="text-right text-primary"><h5 class="font-weight-semibold">&#x20a6;{!! number_format($subtotal + $totalVatRate, 2) !!}</h5></td>
@@ -392,7 +448,7 @@ input{
 								<div class="text-right mt-3">
 									<span id="loader"></span>
 
-									<div class="" id="saveAndPrintContainer">
+									<div class="hideOnPrint">
 
 										<button type="button" id="alterInformation" class="btn btn-light btn-sm"><i class="icon-rotate mr-2"></i>Alter<i class="icon-pdf2"></i></button>
 
@@ -443,7 +499,8 @@ input{
 
 	
 	
-@include('finance.invoice.partials._invoice-and-sales-update')	
+@include('finance.invoice.partials._invoice-and-sales-update')
+@include('finance.invoice.partials._add-more-trip-to-invoice')
 	
 </div>
 
@@ -465,16 +522,10 @@ input{
 		$('#amountPayable').html($amountPayable);
 
         $("#printInvoice").click(function() {
-			$("#saveAndPrintContainer").addClass("hidden");
-			$('.icon-trash').addClass('hidden');
-			$('.deleteInvAndTonsplitter').addClass('hidden');
-			$('#editClientInformation').addClass('hidden')
-            $.print("#printableArea");
+			$(".hideOnPrint").addClass("hidden");
+             $.print("#printableArea");
             window.setTimeout(() => {
-				$("#saveAndPrintContainer").addClass("show").removeClass('hidden');
-				$('.icon-trash').removeClass('hidden');	
-				$('.deleteInvAndTonsplitter').removeClass('hidden');
-				$('#editClientInformation').removeClass('hidden');
+				$(".hideOnPrint").addClass("show").removeClass('hidden');
             }, 3000);
 		});
 		
@@ -577,8 +628,9 @@ input{
 				}
 			})
 		})
-
-    });
+	});
+	
+	
 </script>
 @stop
 

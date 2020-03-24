@@ -216,4 +216,62 @@ $(function() {
         })
     }
 
+    $('.removeSpecificTrip').click(function() {
+        $trip_id = $(this).attr("id");
+        $ask = confirm("Are you sure you want remove this trip? if done by mistake, it could be added by back.");
+        if($ask) {
+            $('#removeLoader').html('<i class="spinner icon-spinner"></i>Wait..').addClass("mb-2");
+            $(this).parent().parent().remove();
+            sendToServer('/remove-specific-trip-on-invoice', $trip_id, '#loader', 'Removed successfully.');    
+        }
+        else{
+            return false;
+        }
+    });
+
+    
+    $('#specialRemarkChecker').click(function() {
+        $checked = $(this).is(":checked");
+        if($checked){
+            $('.descriptor-label').addClass('hidden');
+            $('.descriptor').removeClass('hidden');
+        }
+        else{
+            $('.descriptor-label').removeClass('hidden');
+            $('.descriptor').addClass('hidden');
+        }
+    });
+
+    //send to save special remark
+    $('#saveSpecialRemark').click(function(e) {
+        e.preventDefault();
+        $condition = $('#condition').val();
+        if($condition == "") {
+            $('#condition').focus();
+            return false;
+        }
+
+        $description = $('#description').val();
+        if($description == "") {
+            $('#description').focus();
+            return false;
+        }
+
+        $amount = $('#amount').val();
+        if($amount == "") {
+            $('#amount').focus();
+            return false;
+        }
+
+        $.post('/add-special-remark', $('#frmReprintInvoice').serializeArray(), function(data){
+            if(data == 'saved'){
+                window.location = '';
+            }
+            else{
+                return false;
+            }
+        })
+
+    })
+
 })

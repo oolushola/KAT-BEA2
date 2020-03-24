@@ -366,8 +366,7 @@ input, select{
 <?php
     $current_day = date('d');
     $monthInView = date('M');
-
-    echo date('S');
+    
     for($i=1; $i<= $current_day; $i++){
         $daysIntheMonth[] = $i.date("S-", mktime(0, 0, 0, 0, $i, 0)).$monthInView;
     }

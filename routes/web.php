@@ -214,6 +214,10 @@ Route::group(['middleware' => 'auth'], function() {
     
     });
 
+    Route::get('remove-specific-trip-on-invoice', 'invoiceController@removeSpecificTripOnInvoice');
+    Route::post('add-more-trip-to-invoice', 'invoiceController@addMoreTripToSpecificInvoice');
+    Route::post('add-special-remark', 'invoiceController@addSpecialRemark');
+
 });
 
 
