@@ -217,6 +217,14 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('remove-specific-trip-on-invoice', 'invoiceController@removeSpecificTripOnInvoice');
     Route::post('add-more-trip-to-invoice', 'invoiceController@addMoreTripToSpecificInvoice');
     Route::post('add-special-remark', 'invoiceController@addSpecialRemark');
+    
+    Route::get('offloading/my-trips-view', 'offloadingClerkController@showTripsForOffload');
+    Route::get('users/assign-adhoc-staff-to-region', 'offloadingClerkController@assignaddHocStaffToRegion');
+    Route::get('user-assigned-states', 'offloadingClerkController@getUserAssignedRegion');
+    Route::post('assign-adhoc-clerk-region', 'offloadingClerkController@addRegionToUsers');
+    Route::post('remove-adhoc-clerk-region', 'offloadingClerkController@removeRegionFromUsers');
+    Route::patch('update-trip-event-offloading-clerk', 'offloadingClerkController@offloadingClerkEventUpdate');
+    Route::get('offloading-clerk-notification', 'offloadingClerkController@offloadingClerkNotification');
 
 });
 

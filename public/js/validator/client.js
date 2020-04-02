@@ -325,7 +325,7 @@ $(function() {
 
   $(document).on("click", "#assignLoadingSite", function(e) {
     e.preventDefault();
-    assignment('/store-loading-site', '#frmAssignLoadingSite', '#contentDropper');
+    assignment('/assign-adhoc-clerk-region', '#frmAssignLoadingSite', '#contentDropper');
   });
 
   $(document).on("click", "#removeAssignedLoadingSite", function(e) {

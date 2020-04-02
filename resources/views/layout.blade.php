@@ -51,7 +51,7 @@
 				</li>
 			</ul>
 
-			<span class="badge bg-success ml-md-3 mr-md-auto">beta version </span>
+			<span class="badge bg-success ml-md-3 mr-md-auto">V1.1.8</span>
 
 			<ul class="navbar-nav">
 				
@@ -166,7 +166,9 @@
 									@if(Auth::user()->role_id == 3) Finance Officer @endif
 									@if(Auth::user()->role_id == 4) Visibility Officer @endif
 									@if(Auth::user()->role_id == 5) Field Ops Officer @endif
-									@if(Auth::user()->role_id == 6 && Auth::user()->email=='success.iziomo@kayaafrica.co') Transport Manager @else Transport Supervisor @endif
+									@if(Auth::user()->role_id == 6 && Auth::user()->email=='success.iziomo@kayaafrica.co') Transport Manager @endif
+									@if(Auth::user()->role_id == 6) Transport Supervisor @endif
+									@if(Auth::user()->role_id == 7) Ad-hoc Staff @endif
 								</div>
 							</div>
 
@@ -218,8 +220,25 @@
 								</li>
 							</ul>
 						</li>
-						
+						@endif
 
+						@if($auth == 1 || $auth == 4 || $auth == 7)  
+						<li class="nav-item-header">
+                            <div class="text-uppercase font-size-xs line-height-xs">FOR AD-HOC STAFFS</div> 
+                            <i class="icon-menu" title="Forms"></i>
+                        </li>
+                        
+						<li class="nav-item">
+							<a href="{{URL('offloading/my-trips-view')}}" class="nav-link">
+								<i class="icon-truck"></i>
+								<span>My Trips</span>
+								<span class="badge bg-success align-self-center ml-auto"></span>
+							</a>
+						</li>
+						@endif
+
+
+						@if($auth == 1 || $auth == 2)
 						<li class="nav-item-header">
                             <div class="text-uppercase font-size-xs line-height-xs">Users</div> 
                             <i class="icon-menu" title="Forms"></i>
@@ -229,6 +248,14 @@
 							<a href="{{URL('user-registration')}}" class="nav-link">
 								<i class="icon-user-plus"></i>
 								<span>Register User</span>
+								<span class="badge bg-success align-self-center ml-auto"></span>
+							</a>
+						</li>
+
+						<li class="nav-item">
+							<a href="{{URL('users/assign-adhoc-staff-to-region')}}" class="nav-link">
+								<i class="icon-users2"></i>
+								<span>Assign an ad-hoc to a region</span>
 								<span class="badge bg-success align-self-center ml-auto"></span>
 							</a>
 						</li>
@@ -278,7 +305,7 @@
 								</li>
 								@endif
 
-								@if($auth !== 5)
+								@if($auth != 5 && $auth != 7)
 								<li class="nav-item">
 									<a href="{{URL('view-orders')}}" class="nav-link">
 									Trip Database</a>
@@ -459,7 +486,6 @@
 
 
 @yield('script')
-
 @endif
 
 
