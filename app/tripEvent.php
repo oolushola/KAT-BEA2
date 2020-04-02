@@ -19,6 +19,7 @@ class tripEvent extends Model
         'time_arrived_destination',
         'offloading_status',
         'offload_start_time',
-        'offload_end_time'
+        'offload_end_time',
+        'offloaded_location'
     ];
 }

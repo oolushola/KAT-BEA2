@@ -3,6 +3,9 @@
 
 @elseif(Auth::user()->role_id == 5 || Auth::user()->role_id  == 6)
 <script>window.location.href='/update-trip'</script>
+
+@elseif(Auth::user()->role_id == 7)
+<script>window.location.href='/offloading/my-trips-view'</script>
     
 @elseif(Auth::user()->email)
 @extends('layout')

@@ -117,6 +117,12 @@
                         </label>
                     </div>
 
+                    <div class="form-check-inline">
+                        <label class="form-check-label">
+                            <input type="radio" class="form-check-input userRole" name="userRole" value="7" @if(isset($recid) && $recid->role_id == 7) checked @endif>Ad-hoc Staff
+                        </label>
+                    </div>
+
                     <input type="hidden" name="role_id" id="roleId" value="@if(isset($recid)) {{$recid->role_id}} @else 0 @endif">
                     
                     @if(isset($recid))
