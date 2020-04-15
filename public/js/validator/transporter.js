@@ -202,7 +202,162 @@ $(function(){
         else{
             return false;
         }
+    });
+
+    $('.paymentCheckRequirement').click(function(){
+        $('.paymentCheckRequirement').removeClass('text-primary');
+        $checker = $(this).attr("value");
+        if($checker == 1) {
+            $('#advancePaymentPlace').addClass('show').removeClass('hidden')
+            $('#balancePaymentPlace').addClass('hidden').removeClass('show');
+            $(this).addClass('text-primary');
+        } else {
+            if($checker == 2) {
+                $('#advancePaymentPlace').addClass('hidden').removeClass('show')
+                $('#balancePaymentPlace').addClass('show').removeClass('hidden');
+                $(this).addClass('text-primary');
+            }
+        }
+        
     })
+
+
+    /**
+     * Request for advance payment
+     */
+
+     $(".advanceRequest").click(function($event){
+         $e = $(this);
+         $event.preventDefault();
+         $value = $(this).attr("value");
+         $specificTripId = $(this).attr('id')
+         $title = $(this).attr("title")
+         $requester = $("#userId").val();
+         $(`#${$value}`).html('<i class="spinner icon-spinner2"></i>Please wait, notifying finance...').addClass('font-size-sm');
+         $.get('/advance-request-payment', {trip_id:$specificTripId, user_id:$requester}, function(data){
+             if(data == 'requestSent') {
+                $e.html(`<i class="icon-checkmark2"></i>${$title} <br> Advance Requested`).addClass('btn btn-warning').prop("disabled", "disabled");
+                $(`#${$value}`).html('').removeClass('font-size-sm');
+            }
+             else{
+                $(`#${$value}`).html('<i class="spinner icon-spinner2"></i>Oops! something went wrong.').addClass('font-size-sm text-danger');
+            }
+         })
+     });
+
+
+     $('.addMoreProofofWaybill').click(function(){
+        $fileName = '<span class="d-block mt-1" style="font-size:10px;"><input type="file" name="file[]"></span>' 
+        $(this).next().append($fileName);
+     })
+
+     $('.uploadWaybillProof').click(function(){
+         $checked = $(this).is(":checked");
+         $value = $(this).attr("value");
+         if($checked){
+            $(`#${$value}`).removeClass("hidden");
+            $(this).next().next().next().next().addClass("hidden");
+         }
+         else{
+            $(`#${$value}`).addClass("hidden");
+            $(this).next().next().next().next().removeClass("hidden");
+         }
+     })
+
+     // Request for balance
+     $(".requestForBalance").click(function($event){
+        $e = $(this);
+        $event.preventDefault();
+        $value = $(this).attr("value");
+        $specificTripId = $(this).attr('id')
+        $title = $(this).attr("title")
+        $requester = $(this).attr("requester");
+
+        $e.html('<i class="spinner icon-spinner2"></i>Please wait, <br>notifying finance...').addClass('font-size-sm');
+
+        $.get('/balance-request-payment', {trip_id:$specificTripId, user_id:$requester}, function(data){
+            if(data == 'requestSent') {
+               $e.html(`<i class="icon-checkmark2"></i>Balance of ${$title} <br> Requested`).addClass('btn btn-warning').prop("disabled", "disabled");
+               //$(`#${$value}`).html('').removeClass('font-size-sm');
+           }
+            else{
+                if(data == 'abort') {
+                    $e.html('<i class="icon-x"></i> Request Aborted').addClass('btn btn-danger').prop('disabled', 'disabled'); 
+                    $e.next().html('You haven\'t uploaded any proof of waybill.').addClass('font-size-sm mt-1 text-danger font-weight-bold').fadeIn(2000).delay(5000).fadeOut('1000');     
+                }
+           }
+        })
+    });
+
+    //change account details;
+    $(".changeAccountDetails").click(function() {
+        $title = $(this).attr("title");
+        $(`#bankDetailsDefault${$title}`).addClass("hidden")
+        $(`#bankInformation${$title}`).removeClass("hidden")
+        $(this).addClass("hidden");
+        $(this).next($('.closeAccountDetails')).removeClass('hidden');
+        $(".advanceRequest").attr('disabled', 'disabled');
+    })
+    //close account details
+    $('.closeAccountDetails').click(function() {
+        $title = $(this).attr("title");
+        $(`#bankDetailsDefault${$title}`).removeClass("hidden")
+        $(`#bankInformation${$title}`).addClass("hidden")
+        $(this).addClass("hidden");
+        $(this).prev($('.changeAccountDetails')).removeClass('hidden');
+        $(".advanceRequest").removeAttr('disabled');
+    })
+
+    //Update account details
+    $('.updateTransporterAccount').click(function($e){
+        $e.preventDefault();
+        $uniqueIdentifier = $(this).attr("title");
+        $tractor =  'bankInformation'+$uniqueIdentifier;
+        $accountName = $('#'+$tractor).find('.accountName').val();
+        $bankName = $('#'+$tractor).find('.bankName').val();
+        $accountNumber = $('#'+$tractor).find('.accountNumber').val();
+        $id = $(this).attr("value");
+        
+        $(this).attr("disabled", "disabled").html('Updating...')
+        $.get(`/transporter-account-update/${$id}`, {accountName:$accountName, bankName:$bankName, accountNumber:$accountNumber}, function(data) {
+            if(data == 'updated') {
+                window.location = '/request-transporter-payment';
+            }
+            else{
+                alert('Connection Lost. If problem persist, please contact tech support.');
+                return false;
+            }
+        });
+    })
+
+    //Quick search trips
+    //Search Trips!
+    $("#searchTrip").on("keyup", function() {
+        var value = $(this).val().toLowerCase();
+        $(".card section").filter(function() {
+          $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+      });
+
+
+     $('.uploadWaybillRemark').click(function($event){
+         $event.preventDefault();
+         $tripId = $(this).attr("value");
+         $frmName = `#frm${$tripId}`;
+         $($frmName).submit();
+     });
+
+     $(".balanceRequest").ajaxForm(function(data){
+         if(data == "updated"){
+             window.location = '/request-transporter-payment';
+         }
+         else{
+             return false;
+         }
+     })
+
+     
+     
 
     
 

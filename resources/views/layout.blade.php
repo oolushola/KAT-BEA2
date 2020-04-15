@@ -10,7 +10,6 @@
     
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-	<title>Kaya - Logistics Redefined </title>
 	<link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
 	<link href="{{URL::asset('assets/css/bootstrap.min.css')}}" rel="stylesheet" type="text/css" media="all">
 	<link href="{{URL::asset('global_assets/css/icons/icomoon/styles.min.css')}}" rel="stylesheet" type="text/css">
@@ -20,6 +19,7 @@
 	<link href="{{URL::asset('assets/css/colors.min.css')}}" rel="stylesheet" type="text/css">
 	<link rel="stylesheet" href="{{URL::asset('css/custom.css')}}" type="text/css" />
 	<link rel="stylesheet" href="{{URL::asset('css/print-master.css')}}" type="text/css" media="all" />
+    <link rel="shortcut icon" href="{{URL::asset('/assets/img/kaya/kaya-africa-techonology-nig-ltd.PNG')}}" />
 	@yield('css')
 
 
@@ -316,15 +316,106 @@
 								</li>
 								<li class="nav-item"><a href="{{URL('generate-report')}}" class="nav-link">Report</a></li>
 								<li class="nav-item"><a href="{{URL('on-journey-trips')}}" class="nav-link">Trips on Journey</a></li>
+								<li class="nav-item"><a href="{{URL('request-transporter-payment')}}" class="nav-link">Request Payment</a></li>
 								@endif
 							</ul>
 						</li>
 
 
 						@if($auth == 1 || $auth == 3)
-						<li class="nav-item-header"><div class="text-uppercase font-size-xs line-height-xs">FINANCE</div> <i class="icon-menu" title="Forms"></i></li>
+						
+						<li class="nav-item-header"><div class="text-uppercase font-size-xs line-height-xs">FINANCE SECTION</div> <i class="icon-menu" title="Forms"></i></li>
+						<li class="nav-item nav-item-submenu nav-item-open">
+							<a href="#" class="nav-link"><i class="icon-piggy-bank"></i> <span>Financials</span></a>
+							<ul class="nav nav-group-sub" data-submenu-title="Menu levels" style="display: block;">
+								<li class="nav-item">
+									<a href="{{URL('financials/overview')}}" class="nav-link font-weight-semibold">
+										<i class="icon-meter2"></i>
+										<span>Overview</span>
+									</a>
+								</li>
+								<li class="nav-item">
+									<a href="{{URL('financials/dashboard')}}" class="nav-link font-weight-semibold">
+										<i class="icon-eye"></i>
+										<span>Trip Database</span>
+									</a>
+								</li>
+								<li class="nav-item nav-item-submenu">
+									<a href="#" class="nav-link font-weight-semibold"><i class="icon-credit-card"></i> Receivables</a>
+									<ul class="nav nav-group-sub" style="display: none;">
+										<li class="nav-item">
+											<a href="#" class="nav-link">
+												<i class="icon-meter-slow"></i>
+												<span>Receivables Tracker</span>
+											</a>
+										</li>
+										<li class="nav-item">
+											<a href="{{URL('invoices')}}" class="nav-link">
+												<i class="icon-pencil3"></i>
+												<span>Invoices</span>
+											</a>
+										</li>
+										<li class="nav-item">
+											<a href="{{URL('all-invoiced-trips')}}" class="nav-link">
+												<i class="icon-books"></i>
+												<span>Invoiced</span>
+											</a>
+										</li>
+										<li class="nav-item">
+											<a href="{{URL('incentives')}}" class="nav-link">
+												<i class="icon-alarm-add"></i>
+												<span>Incentives</span>
+											</a>
+										</li>
+										<li class="nav-item">
+											<a href="{{URL('vat-rate')}}" class="nav-link">
+												<i class="icon-cogs"></i>
+												<span>Vat Rate</span>
+											</a>
+										</li>
+									</ul>
+								</li>
+								<li class="nav-item nav-item-submenu">
+									<a href="#" class="nav-link font-weight-semibold"><i class="icon-wallet"></i> Payables
+										<span class="badge bg-danger align-self-center ml-2">
+											{!! Session::get('payment_request') !!} Pending
+										</span>
+									</a>
+									<ul class="nav nav-group-sub" style="display: none;">
+									<li class="nav-item">
+										<a href="{{URL('payment-request')}}" class="nav-link">
+											<i class="icon-git-pull-request"></i>
+											<span>Payment Requests</span>
+											
+										</a>
+									</li>
+									<li class="nav-item">
+										<a href="{{URL('transporter-rate')}}" class="nav-link">
+											<i class="icon-calculator3"></i>
+											<span>Transporter Rate</span>
+										</a>
+									</li>
+									<li class="nav-item">
+										<a href="{{URL('bulk-payment')}}" class="nav-link">
+											<i class="icon-spray"></i>
+											<span>Bulk Payment</span>
+										</a>
+									</li>
+									<li class="nav-item">
+										<a href="{{URL('local-purchase-order')}}" class="nav-link">
+											<i class="icon-feed"></i>
+											<span>L.P.O.</span>
+										</a>
+									</li>
+
+									</ul>
+								</li>
+								
+								
+							</ul>
+						</li>
                         
-						<li class="nav-item">
+						<!-- <li class="nav-item">
 							<a href="{{URL('financials/overview')}}" class="nav-link">
 								<i class="icon-eye"></i>
 								<span>Overview</span>
@@ -392,7 +483,7 @@
 								<i class="icon-coins"></i>
 								<span>Vat Rate</span>
 							</a>
-						</li>
+						</li> -->
 						@endif
 
 						

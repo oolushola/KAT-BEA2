@@ -13,25 +13,7 @@ Advance Request for TRIP : {{$tripid}}
         </ul>
     </div>
 
-    <div style="width:50%; float:left">
-        <h5 style="background:#eee; color:green; padding:10px; font-family:menlo; text-shadow:1px 1px 1px #fff; margin:0px;">WAYBILL</h5>
-        <table>
-            <thead style="font-family: tahoma; font-size:11px;">
-                <tr>
-                    <th>Sales Order No.</th>
-                    <th>Invoice No.</th>
-                </tr>
-            </thead>
-            <tbody style="font-size:10px; font-family:tahoma; padding-left:20px;">
-                @foreach($getWaybillCredentials as $waybillinfos)
-                <tr>
-                    <td>{{$waybillinfos->sales_order_no}}</td>
-                    <td>{{$waybillinfos->invoice_no}}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
+    
 </div>
 
 <div style="clear:both" style="width:100%">

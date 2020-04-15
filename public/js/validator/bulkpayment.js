@@ -131,22 +131,40 @@ $(function(){
         $("#totalAmount_").val($amount);
         $("#tripIdHolder").html($tripId);
         $("#payid").val($id);
+        $('#actualAmount').val($amount);
     });
 
     $("#percentageDifference").click(function() {
         $("#percentHolder").removeClass("hidden");
         $("#payInFullContainer").addClass("hidden");
+        $("#manualAdvancwPaymentHolder").addClass("hidden");
+
         $(this).addClass("exception-default");
         $("#fullPayment").removeClass("exception-default");
+        $('#manualAdvanceInput').removeClass('exception-default');
         $("#advanceNavigator").val(2);
     })
 
     $("#fullPayment").click(function() {
         $("#payInFullContainer").removeClass("hidden");
         $("#percentHolder").addClass("hidden");
+        $("#manualAdvancwPaymentHolder").addClass("hidden");
+
         $(this).addClass("exception-default");
         $("#percentageDifference").removeClass("exception-default");
+        $('#manualAdvanceInput').removeClass('exception-default');
         $("#advanceNavigator").val(3);
+    });
+
+    $("#manualAdvanceInput").click(function() {
+        $("#payInFullContainer").addClass("hidden");
+        $("#percentHolder").addClass("hidden");
+        $("#manualAdvancwPaymentHolder").removeClass("hidden");
+
+        $(this).addClass("exception-default");
+        $("#percentageDifference").removeClass("exception-default");
+        $("#fullPayment").removeClass("exception-default");
+        $("#advanceNavigator").val(4);
     });
 
     //Perform some functions here as regards totalAmountHolder
@@ -162,7 +180,6 @@ $(function(){
             $("#advanceRatePreview").html('New Advance Rate : &#x20A6;'+$expectedAdvanceRate.toFixed(2)).addClass('success');
         }
 
-
         if($newAdvanceRate == "") {
             $("#newBalanceRate").val("");
             $("#balanceRatePreview").html("");
@@ -173,9 +190,20 @@ $(function(){
             $expectedBalanceRate = $balanceRate / 100 * $getTotalAmount;
             $("#balanceRatePreview").html('New Balance Rate: &#x20A6;'+$expectedBalanceRate.toFixed(2)).addClass('success');
         }
-    })
+    });
 
-    //
+
+    $('#advanceTobePaid').keyup(function() {
+        $actualAmount = $('#actualAmount').val();
+        $enteredAmount = $(this).val();
+        $expectedBalance = $actualAmount - $enteredAmount;
+        $('#probableBabalance').val($expectedBalance);
+    });
+
+   
+   
+
+    
     $("#payInFull").click(function() {
         $checked = $(this).is(":checked");
         if($checked){
@@ -185,7 +213,7 @@ $(function(){
         }
     });
 
-    // use different percentile
+    // use different difference
     $("#updatePercentile").click(function(e) {
         e.preventDefault();
         $newAdvanceRate = $("#newAdvanceRate").val();
@@ -235,6 +263,33 @@ $(function(){
         });
     });
 
+    $('#manualAmountProceed').click(function(e) {
+        e.preventDefault();
+        $advanceTobePaid = $('#advanceTobePaid').val();
+        $probableBabalance = $('#probableBabalance').val();
+
+        if($advanceTobePaid == '') {
+            $("#exceptionLoader").html("<i class=\"icon-x\"></i> Advance rate to be paid is required.").addClass("error");
+            $('#advanceTobePaid').focus();
+            return false;
+        }
+
+        $("#exceptionLoader").html("<i class=\"spinner icon-spinner2\"></i> Please wait...").addClass("error");
+        
+        try {
+            $.post('/advance-exception', $('#frmAdvanceEception').serializeArray(), function(data) {
+                if(data == 'updated'){
+                    $("#exceptionLoader").html('Advance record saved successfully.').addClass("success").fadeIn(1000).delay(3000).fadeOut(2000);
+                }
+            })
+        } catch (error) {
+            if(error) {
+                $("#exceptionLoader").html("<i class=\"icon-x\"></i>"+error).addClass("error");
+                return false;
+            }
+        }
+    })
+
     // balance popup exception
     $(".balanceExcept").click(function() {
         $value = $(this).attr("value");
@@ -248,7 +303,30 @@ $(function(){
         $id = $(this).attr("id");
         $("#balanceTripId").val($id);
         $("#balanceTripIdHolder").html($array[4]);
+
+        $('#actualBalanceAmount').val($array[2]);
     });
+
+    $('#bitPartBalance').click(function(){
+        $checked = $(this).is(':checked');
+        if($checked){
+            $('#wrongRouteHolder').addClass('hidden').removeClass('show');
+            $('#bitPaymentHolder').addClass('show').removeClass('hidden');
+            $('#balanceExceptionChecker').val(2)
+        } else {
+            $('#wrongRouteHolder').addClass('show').removeClass('hidden');
+            $('#bitPaymentHolder').addClass('hidden').removeClass('show');
+            $('#balanceExceptionChecker').val(1);
+        }
+    });
+
+    $('#balancePartPayment').keyup(function() {
+        $balanceTobePaid = $(this).val();
+        $actualBalanceAmount = $('#actualBalanceAmount').val();
+        $outstanding = Number($actualBalanceAmount - $balanceTobePaid);
+        $('#outstandingBalance').val($outstanding);
+
+    })
 
     // get states
     $("#stateId").on("change", function() {
@@ -339,6 +417,35 @@ $(function(){
         });
     });
 
+    $('#updateBalanceRequest').click(function(e) {
+        e.preventDefault();
+        $actualBalanceAmount = $('#actualBalanceAmount').val();
+        $balanceTobePaid = $('#balancePartPayment').val();
+        $outstandingBalance = $('#outstandingBalance').val();
+
+        if($balanceTobePaid === '') {
+            $("#exceptionBalanceLoader").html('<i class="icon-x"></i>Balance Amount is required.').addClass('error').fadeIn(2000).delay(4000).fadeOut(2000);
+            return false;
+        }
+
+        if(Number($balanceTobePaid) > Number($actualBalanceAmount)) {
+            $("#exceptionBalanceLoader").html('<i class="icon-x"></i>Actual balance is lesser than what you want to pay?').addClass('error').fadeIn(2000).delay(4000).fadeOut(2000);
+            return false;
+        }
+
+        $.post('/balance-exception', $("#frmBalanceException").serializeArray(), function(data) {
+            if(data == "saved"){
+                $("#exceptionBalanceLoader").html('<i class="icon-checkmark2"></i>Exception has been successfully registered.').addClass('success').fadeIn(2000).delay(4000).fadeOut(2000);
+                window.location = '/payment-request';
+            }
+            else{
+                $("#exceptionBalanceLoader").html('<i class="icon-x"></i>Server Error!').addClass('error').fadeIn(2000).delay(4000).fadeOut(2000);
+                return false;
+            }
+        });
+
+    })
+
     // approve balance payment
     $("#approveBalancePayment").click(function(e) {
         e.preventDefault();
@@ -351,6 +458,53 @@ $(function(){
             else {
                 $("#balanceLoader").html('<i class="icon-x">Oops! something went wrong. If this persist after 5 minutes please contact Admin.').delay(4000).fadeOut(2000);
                 return false
+            }
+        });
+    })
+
+    $('#payalloutstanding').click(function(){
+        $check = $(this).is(':checked');
+        if($check){
+            $('.partPaymentofOutstanding').removeClass('hidden');
+            $('#outstandBalanceChecker').val(2);
+        } else {
+            $('#outstandBalanceChecker').val(1);
+            $('.partPaymentofOutstanding').addClass('hidden');
+        }
+    })
+
+    $('.payoutstandingBalance').click(function(){
+        $values = $(this).attr("value");
+        $array = $values.split(',');
+        $('#outstandingBalanceUpdate').val($array[0]);
+        $("#outstandingBalanceTripId").val($array[1]);
+        $('#outstandingBalanceId').val($(this).attr('id'));
+    });
+
+    //pay part payment of outstanding.
+    $('#outstandingPartPayment').keyup(function(event) {
+        $outstandingBalanceUpdate = $('#outstandingBalanceUpdate').val();        
+        $remainingOutStanding = $outstandingBalanceUpdate - event.target.value;
+        $('#newOutstanding').val($remainingOutStanding);
+    });
+
+    //update outstanding balance
+    $('#updateOutstandingBalanceRequest').click(function(event) {
+        event.preventDefault();
+        if($('#outstandBalanceChecker').val() === 1) {
+            $outstandingPartPayment = $('#outstandingPartPayment').val();
+            if($outstandingPartPayment === '') {
+                $("#outstandlingBalanceLoader").html('<i class="icon-x"></i>The outstading balance Amount is required.').addClass('error').fadeIn(2000).delay(4000).fadeOut(2000);
+                return false;
+            }
+        }
+        $('#outstandlingBalanceLoader').html('<i class="spinner icon-spinner3"></i>Please wait...').addClass('success');
+        $.post('/update-outstanding-balance', $('#frmOutstandingBalance').serializeArray(), function(data) {
+            if(data == 'saved') {
+                $('#outstandlingBalanceLoader').html('Outstanding balance has been successfully updated.').addClass('success');
+                window.location.href='';
+            } else {
+                return false;
             }
         });
     })

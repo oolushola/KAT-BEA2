@@ -9,6 +9,20 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\HttpResponse;
 use App\transporter;
 use App\transporterDocuments;
+use App\trip;
+use App\loadingSite;
+use App\truckType;
+use App\trucks;
+use App\drivers;
+use App\product;
+use App\client;
+use App\transporterRate;
+use App\tripPayment;
+use App\bulkPayment;
+use Mail;
+use App\offloadWaybillRemark;
+use App\tripWaybill;
+use App\PaymentHistory;
 
 class transporterController extends Controller
 {
@@ -113,5 +127,216 @@ class transporterController extends Controller
         unlink($path);
         return 'deleted';
         
+    }
+
+    public function requestForPayment() {
+        $advancePaymentRequest = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, d.bank_name, d.account_name, d.account_number, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id  WHERE  a.trip_status = \'1\' AND advance_paid = \'FALSE\' ORDER BY a.trip_id ASC LIMIT 100'
+            )
+        );
+        $allpendingbalanceRequests = DB::SELECT(
+            DB::RAW(
+                'SELECT a.id, a.advance, a.standard_advance_rate, a.balance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.id AS tripid, b.*, c.company_name, d.state, f.transporter_name, f.phone_no, f.bank_name, f.account_name, f.account_number, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id WHERE a.advance_paid = TRUE and a.balance_paid = FALSE ORDER BY b.trip_id ASC'
+            )
+        );
+        $getwaybillUploadProof = offloadWaybillRemark::GET();
+        return view('finance.transporter-payment-request.request-payment', compact('advancePaymentRequest', 'allpendingbalanceRequests', 'getwaybillUploadProof'));
+    }
+
+    public function advanceRequestPayment(Request $request) {
+        $recid = trip::findOrFail($request->trip_id);
+        $user_id = $request->user_id;
+        $tripRate = $recid->transporter_rate;
+        $standardAdvanceRate = $tripRate * 0.7;
+        $standardBalanceRate = $tripRate * 0.3;
+        $available_balance = 0;
+
+        $recid->advance_request = TRUE;
+        $recid->advance_requested_by = $user_id;
+        $recid->save();
+
+        $transporterChunkPayment = bulkPayment::WHERE('transporter_id', $recid->transporter_id)->GET();
+        if(sizeof($transporterChunkPayment)>0) {
+            $current_balance = $transporterChunkPayment[0]->balance;
+            if($current_balance >= $standardAdvanceRate){
+                $amountPayable = $standardAdvanceRate;
+                $available_balance = $current_balance - $standardAdvanceRate;
+            }
+            else {
+                $amountPayable = $current_balance - $standardAdvanceRate;
+            }
+        }
+        else{
+            $current_balance = 0;
+            $amountPayable = $standardAdvanceRate;
+        }
+    
+        $client = client::findOrFail($recid->client_id);
+        $clientName = $client->company_name;
+        $customerAddress = $recid->customer_address;
+        $customer_no = $recid->customer_no;
+        $customer_name = $recid->customers_name;
+
+        $truck = trucks::findOrFail($recid->truck_id);
+        $truckTypeId = $truck->truck_type_id;
+        $truckType = truckType::findOrFail($truckTypeId);
+
+        $exactState = DB::SELECT(DB::RAW('SELECT * FROM tbl_regional_state WHERE regional_state_id = '.$recid->destination_state_id.' '));
+        $state = $exactState[0]->state;
+
+        $transporter = transporter::FindOrFail($recid->transporter_id);
+
+        $product = product::findOrFail($recid->product_id);
+
+        $payment = tripPayment::firstOrNew(['trip_id' => $recid->id]);
+        $payment->client_id = $recid->client_id;
+        $payment->transporter_rate_id = $recid->exact_location_id;
+        $payment->transporter_id = $recid->transporter_id;
+        $payment->amount = $tripRate;
+        $payment->standard_advance_rate = $standardAdvanceRate;
+        $payment->standard_balance_rate = $standardBalanceRate;
+        $payment->advance = $standardAdvanceRate;
+        $payment->balance = $standardBalanceRate;
+        $payment->save();
+
+        $tripId = $recid->trip_id;
+
+        //create a payment history log here.
+        $payment = PaymentHistory::CREATE(['trip_id' => $request->trip_id]);
+        $payment->amount = $standardAdvanceRate;
+        $payment->payment_mode = 'Advance Requested';
+        $payment->save();
+
+        try{
+            // Mail::send('initiate-payment', array(
+            //     'tripid' => $tripId,
+            //     'destination' => $recid->exact_location_id,
+            //     'transporter_name' => $transporter->transporter_name,
+            //     'tonnage' => $truckType->tonnage,
+            //     'truck_no' => $truck->truck_no,
+            //     'product_name' => $product->product,
+            //     'customer_name' => $recid->customers_name,
+            //     'current_balance' => $current_balance,
+            //     'standardAdvanceRate' => $standardAdvanceRate,
+            //     'amountPayable' => $amountPayable,
+            //     'available_balance' => $available_balance,
+            //     'bank_name' => $transporter->bank_name,
+            //     'account_number' => $transporter->account_number,
+            //     'account_name' => $transporter->account_name,
+            // ), function($message) use ($request, $tripId) {
+            //     $message->from('no-reply@kayaafrica.co', 'KAYA-FINACE');
+            //     $message->to('kayaafricafin@gmail.com', 'Finance')->subject('Advance Request for : '.$tripId);
+            // });
+            return 'requestSent';
+        } catch(\Throwable $e) {
+            throw $e;
+        }
+        
+    }
+
+    public function uploadCollectedWaybillProof(Request $request) {
+        foreach($request->file as $key => $signedWaybill){
+            if($request->hasFile('file')) {
+                $signedWaybill = $request->file('file');
+                $name = 'signed-waybill-'.$request->trip_id.'-'.$key.'.'.$signedWaybill[$key]->getClientOriginalExtension();
+                $destination_path = public_path('assets/img/signedwaybills/');
+                $waybillPath = $destination_path."/".$name;
+                $signedWaybill[$key]->move($destination_path, $name);
+                $collectedWaybill = offloadWaybillRemark::firstOrNew(['trip_id' => $request->trip_id, 'received_waybill' => $name]);
+                $collectedWaybill->waybill_collected_status = TRUE;
+                $collectedWaybill->waybill_remark = $request->remark;
+                $collectedWaybill->save();
+            }
+        }
+        return 'updated';
+
+    }
+
+    public function balanceRequestPayment(Request $request) {
+        $checkOffloadWaybill = offloadWaybillRemark::WHERE('trip_id', $request->trip_id)->GET()->COUNT();
+        // if($checkOffloadWaybill) {
+            $id = $request->trip_id;
+
+            $balanceRequest = trip::findOrFail($id);
+            $balanceRequest->balance_request = TRUE;
+            $balanceRequest->balance_requested_by = $request->user_id;
+            $balanceRequest->save();
+
+            $newChunkBalance = 0;
+            $data = $this->transactQueryBalance($id);
+            $balanceRequest = $data[0]->balance;
+            $transporter_id = $data[0]->transporter_id;
+            $trip_id = str_replace('KAID', '', $data[0]->trip_id);
+            $transporterChunkPayment = bulkPayment::WHERE('transporter_id', $transporter_id)->GET();
+            if(sizeof($transporterChunkPayment)>0) {
+                $availableBalance = $transporterChunkPayment[0]->balance;
+                if($availableBalance >= $balanceRequest){
+                    $amountPayable = $balanceRequest;
+                    $newChunkBalance = $availableBalance - $balanceRequest;
+                }
+                else {
+                    $amountPayable = $availableBalance - $balanceRequest;
+                }
+                $updateAccountBalance = bulkPayment::firstOrNew(['transporter_id' => $transporter_id]);
+                $updateAccountBalance->balance = $newChunkBalance;
+                $updateAccountBalance->save();
+            }
+            else{
+                $availableBalance = 0;
+                $amountPayable = $balanceRequest;
+            }
+            $getWaybillCredentials = tripWaybill::WHERE('trip_id', $trip_id)->GET();
+            $tripid = $data[0]->trip_id;
+
+            //create a payment history log here.
+            $payment = PaymentHistory::CREATE(['trip_id' => $request->trip_id]);
+            $payment->amount = $balanceRequest;
+            $payment->payment_mode = 'Balance Requested';
+            $payment->save();
+
+            // Mail::send('initiate-balance', array(
+            //     'tripid' => $tripid,
+            //     'getWaybillCredentials' => $getWaybillCredentials,
+            //     'destination' => $data[0]->transporter_destination.', '.$data[0]->state,
+            //     'transporter_name' => $data[0]->transporter_name,
+            //     'bank_name' => $data[0]->bank_name,
+            //     'account_name' => $data[0]->account_name,
+            //     'account_number' => $data[0]->account_number,
+            //     'tonnage' => $data[0]->tonnage,
+            //     'truck_no' => $data[0]->truck_no,
+            //     'product_name' => $data[0]->product,
+            //     'customer_name' => $data[0]->customers_name,
+            //     'current_balance' => $availableBalance,
+            //     'balance_request' => $balanceRequest,
+            //     'amountPayable' => $amountPayable,
+            //     'available_balance' => $newChunkBalance,
+            // ), function($message) use ($request, $tripid) {
+            //     $message->from('no-reply@kayaafrica.co', 'KAYA-FINACE');
+            //     $message->to('kayaafricafin@gmail.com', 'Finance')->subject('Payment for TRIP: '.$tripid);
+            // });
+            return 'requestSent';
+        //} else {
+            return 'abort';
+        //}
+    }
+
+    function transactQueryBalance($paymentRequestId) {
+        $answer = DB::SELECT(
+            DB::RAW(
+                'SELECT a.id, a.advance, a.balance, a.standard_balance_rate, b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, e.transporter_destination, f.transporter_name, f.phone_no, f.bank_name, f.account_number, f.account_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporter_rates e JOIN 
+                tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id AND b.client_id = c.id AND b.destination_state_id = d.regional_state_id AND b.exact_location_id = e.transporter_destination AND b.transporter_id = f.id AND b.truck_id = g.id AND g.truck_type_id = h.id AND b.product_id = i.id WHERE b.advance_paid = true AND a.trip_id = '.$paymentRequestId.' ORDER BY b.trip_id ASC LIMIT 1'
+            )
+        );
+        return $answer;
+    }
+
+    public function updateTransporterAccountDetails(Request $request, $id) {
+        $transporterInfo = transporter::findOrFail($id);
+        $transporterInfo->bank_name = $request->bankName;
+        $transporterInfo->account_name = $request->accountName;
+        $transporterInfo->account_number = $request->accountNumber;
+        $transporterInfo->save();
+        return 'updated';
     }
 }
