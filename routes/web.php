@@ -158,7 +158,14 @@ Route::group(['middleware' => 'auth'], function() {
     Route::resource('trucks', 'trucksController');
     Route::resource('drivers', 'driversController');
     Route::resource('assign-driver-truck', 'truckDriverController');
+    Route::get('request-transporter-payment', 'transporterController@requestForPayment');
+    Route::get('advance-request-payment', 'transporterController@advanceRequestPayment');
+    Route::get('balance-request-payment', 'transporterController@balanceRequestPayment');
+    Route::post('upload-collected-waybill-proof', 'transporterController@uploadCollectedWaybillProof');
+    Route::get('transporter-account-update/{id}', 'transporterController@updateTransporterAccountDetails');
+    
 
+    
     Route::resource('cargo-availability', 'cargoAvailabilityController');
     Route::resource('kaya-target', 'targetController');
 
@@ -225,6 +232,9 @@ Route::group(['middleware' => 'auth'], function() {
     Route::post('remove-adhoc-clerk-region', 'offloadingClerkController@removeRegionFromUsers');
     Route::patch('update-trip-event-offloading-clerk', 'offloadingClerkController@offloadingClerkEventUpdate');
     Route::get('offloading-clerk-notification', 'offloadingClerkController@offloadingClerkNotification');
+
+    Route::post('update-outstanding-balance', 'paymentExceptionController@updateOutstandingBalance');
+
 
 });
 

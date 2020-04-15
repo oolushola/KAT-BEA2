@@ -23,6 +23,8 @@ use App\transporterRate;
 use App\tripPayment;
 use App\bulkPayment;
 use Mail;
+use App\offloadWaybillRemark;
+use App\PaymentHistory;
 
 class overviewController extends Controller
 {
@@ -58,12 +60,17 @@ class overviewController extends Controller
     public function paymentRequest() {
         $allpendingadvanceRequests = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, a.advance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, f.transporter_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id WHERE advance_paid = false ORDER BY b.trip_id ASC'
+                'SELECT a.id, a.advance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, f.transporter_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product, j.first_name, j.last_name FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i JOIN users j ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id AND j.id = b.advance_requested_by WHERE a.advance_paid = false ORDER BY b.trip_id ASC'
             )
         );
         $allpendingbalanceRequests = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, a.advance, a.balance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, f.transporter_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id WHERE advance_paid = TRUE and balance_paid = FALSE ORDER BY b.trip_id ASC'
+                'SELECT a.id, b.id AS tripid, a.advance, a.balance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, f.transporter_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product, j.first_name, j.last_name FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i JOIN users j ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id WHERE b.balance_requested_by = j.id AND b.advance_paid = TRUE and b.balance_request = TRUE AND a.balance_paid = FALSE ORDER BY b.trip_id ASC'
+            )
+        );
+        $allPendingOutstandingBalance = DB::SELECT(
+            DB::RAW(
+                'SELECT a.id, a.advance, a.balance, a.outstanding_balance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, f.transporter_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id WHERE a.advance_paid = TRUE and a.balance_paid = TRUE and a.outstanding_balance > 0 ORDER BY b.trip_id ASC'
             )
         );
         $waybillInfos = tripWaybill::GET();
@@ -72,6 +79,9 @@ class overviewController extends Controller
         $states = DB::SELECT(DB::RAW($statesQuery));
         $waybillStatus = tripWaybillStatus::GET();
 
+
+        $offloadedWaybill = offloadWaybillRemark::GET();
+
         return view('finance.payment-request', 
             compact(
                 'allpendingadvanceRequests',
@@ -79,7 +89,9 @@ class overviewController extends Controller
                 'waybillInfos',
                 'chunkPayments',
                 'states',
-                'waybillStatus'
+                'waybillStatus',
+                'allPendingOutstandingBalance',
+                'offloadedWaybill'
             )
         );   
     }
@@ -141,8 +153,6 @@ class overviewController extends Controller
 
         return 'approved';
     }
-
-
 
     public function initiateBalance(Request $request, $id) {
         return 'here';
@@ -217,7 +227,17 @@ class overviewController extends Controller
                 $updateAccountBalance->save();
             }
             $recid->save();
+            $getTrip = trip::findOrFail($recid->trip_id);
+            $getTrip->advance_paid = TRUE;
+            $getTrip->save();
+
+            //create a payment history log here.
+            $payment = PaymentHistory::CREATE(['trip_id' => $recid->trip_id]);
+            $payment->amount = $advance;
+            $payment->payment_mode = 'Advance';
+            $payment->save();
         }
+
         return 'approved';
     }
 
@@ -227,6 +247,16 @@ class overviewController extends Controller
             DB::RAW(
                 'SELECT a.id, a.advance, a.standard_advance_rate, b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, e.transporter_destination, f.transporter_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporter_rates e JOIN 
                 tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id AND b.exact_location_id = e.transporter_destination and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id WHERE advance_paid = false AND a.id = '.$paymentRequestId.' ORDER BY b.trip_id ASC '
+            )
+        );
+        return $answer;
+    }
+
+    function transactQueryBalance($paymentRequestId) {
+        $answer = DB::SELECT(
+            DB::RAW(
+                'SELECT a.id, a.advance, a.balance, a.standard_balance_rate,  b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, e.transporter_destination, f.transporter_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporter_rates e JOIN 
+                tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id AND b.client_id = c.id AND b.destination_state_id = d.regional_state_id AND b.exact_location_id = e.transporter_destination AND b.transporter_id = f.id AND b.truck_id = g.id AND g.truck_type_id = h.id AND b.product_id = i.id WHERE advance_paid = true AND a.id = '.$paymentRequestId.' ORDER BY b.trip_id ASC '
             )
         );
         return $answer;

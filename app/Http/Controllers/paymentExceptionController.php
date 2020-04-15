@@ -12,12 +12,11 @@ use App\bulkPayment;
 use App\tripWaybill;
 use Mail;
 use App\transporter;
+use App\PaymentHistory;
 
 class paymentExceptionController extends Controller
 {
-    public function advanceException(Request $request) {
-        //return $request->all();
-        
+    public function advanceException(Request $request) {        
         $validatedata = $request->validate([
             'advance_exception' => 'required',
             'total_amount' => 'required',
@@ -54,10 +53,21 @@ class paymentExceptionController extends Controller
             $recid->advance = $request->total_amount;
             $recid->remark = $request->fullpayment_remarks;
             $recid->balance = 0;
-            $recid->balance = true;
+            $recid->balance_paid = true;
             $recid->exception = $advanceExceptionType;
             $recid->save();
             return 'updated';
+        }
+
+        if($advanceExceptionType == 4) {
+            $validatedata = $request->validate([
+                'advanceTobeManuallyPaid' => 'required | string' 
+            ]);
+           $recid->advance = $request->advanceTobeManuallyPaid;
+           $recid->balance = $request->probableBalance;
+           $recid->save();
+
+           return 'updated';
         }
     }
 
@@ -80,41 +90,67 @@ class paymentExceptionController extends Controller
     }
 
     public function balanceException(Request $request) {
+        
         $recid = tripPayment::findOrFail($request->balanceTripId);
         $newRateToBeUsed = $request->newTransportRateAmount;
         $advancePaidBefore = $request->advancePaid;
         $trip_id = str_replace("KAID", "", $request->trip_id);
         $transporter_id = $request->transporter_id;
-        if($newRateToBeUsed < $advancePaidBefore) {
-            $indebtedBalance = $newRateToBeUsed - $advancePaidBefore;
-            $recid->remark = 'Full payment! Transporter to refund '.abs($indebtedBalance);
-            $recid->exception = '3';
-            $recid->balance = 0;
-            $recid->balance_paid = true;
-            $recid->amount = $newRateToBeUsed;
-            $recid->standard_advance_rate = 0.7 * $newRateToBeUsed;
-            $recid->standard_balance_rate = 0.3 * $newRateToBeUsed;
-            $recid->save();
+        if($request->balanceExceptionChecker == 1){
+            if($newRateToBeUsed < $advancePaidBefore) {
+                $indebtedBalance = $newRateToBeUsed - $advancePaidBefore;
+                $recid->remark = 'Full payment! Transporter to refund '.abs($indebtedBalance);
+                $recid->exception = '3';
+                $recid->balance = 0;
+                $recid->balance_paid = true;
+                $recid->amount = $newRateToBeUsed;
+                $recid->standard_advance_rate = 0.7 * $newRateToBeUsed;
+                $recid->standard_balance_rate = 0.3 * $newRateToBeUsed;
+                $recid->save();
 
-            $tripRecord = trip::findOrFail($trip_id);
-            $tripRecord->exact_location_id = $request->exact_location_id;
-            $tripRecord->destination_state_id = $request->state_id;
-            $tripRecord->save();
+                $tripRecord = trip::findOrFail($trip_id);
+                $tripRecord->exact_location_id = $request->exact_location_id;
+                $tripRecord->destination_state_id = $request->state_id;
+                $tripRecord->save();
 
-        } else {
-            $newUpdatedBalance = $newRateToBeUsed - $advancePaidBefore;
-            $recid->amount = $newRateToBeUsed;
-            $recid->standard_advance_rate = 0.7 * $newRateToBeUsed;
-            $recid->standard_balance_rate = 0.3 * $newRateToBeUsed;
-            $recid->balance = $newUpdatedBalance;
-            $recid->exception = '4';
-            $recid->save();
-            $tripRecord = trip::findOrFail($trip_id);
-            $tripRecord->exact_location_id = $request->exact_location_id;
-            $tripRecord->destination_state_id = $request->state_id;
-            $tripRecord->save();
+            } else {
+                $newUpdatedBalance = $newRateToBeUsed - $advancePaidBefore;
+                $recid->amount = $newRateToBeUsed;
+                $recid->standard_advance_rate = 0.7 * $newRateToBeUsed;
+                $recid->standard_balance_rate = 0.3 * $newRateToBeUsed;
+                $recid->balance = $newUpdatedBalance;
+                $recid->exception = '4';
+                $recid->save();
+                $tripRecord = trip::findOrFail($trip_id);
+                $tripRecord->exact_location_id = $request->exact_location_id;
+                $tripRecord->destination_state_id = $request->state_id;
+                $tripRecord->save();
+            }
         }
-        return 'updated';
+
+        if($request->balanceExceptionChecker == 2) {
+            $actualBalanceBalance = $request->actualBalanceAmount;
+            $balanceBitPartPay = $request->balancePartPayment;
+            $outstandingBalance = $request->outstandingBalance;
+            $actualBalanceBalance.' '.$balanceBitPartPay.' '.$outstandingBalance;
+            
+            $recid->balance = $balanceBitPartPay;
+            $recid->outstanding_balance = $outstandingBalance;
+            $recid->save();
+
+            if($outstandingBalance < 0) {
+                $bulkPayment = bulkPayment::WHERE('transporter_id', $transporter_id)->first();
+                if($bulkPayment) {
+                    $bulkPayment->balance = $bulkPayment->balance + $outstandingBalance;
+                    $bulkPayment->save();
+                } else {
+                    $bulkPayment = bulkPayment::CREATE(['transporter_id' => $transporter_id, 'balance' => $outstandingBalance, 'amount_credited' => $outstandingBalance, 'date_uploaded' => date('Y-m-d, h:i A'), 'date_approved' => date('Y-m-d, h:i A'), 'approval_status' => true]);
+                }
+
+            }
+            
+        }
+        return 'saved';
     }
 
     public function balanceInitiation(Request $request) {
@@ -206,6 +242,12 @@ class paymentExceptionController extends Controller
                 $updateAccountBalance->save();
             }
             $recid->save();
+
+            //create a payment history log here.
+            $payment = PaymentHistory::CREATE(['trip_id' => $recid->trip_id]);
+            $payment->amount = $balance;
+            $payment->payment_mode = 'Balance';
+            $payment->save();
         }
         return 'approved';
     }
@@ -218,5 +260,34 @@ class paymentExceptionController extends Controller
             )
         );
         return $answer;
+    }
+
+    public function updateOutstandingBalance(Request $request) {
+        $recid = tripPayment::findOrFail($request->outstandingBalanceId);
+        if($request->outstandBalanceChecker == 2){
+            $previousBalance = $recid->balance;
+            $recid->balance += $request->outstandingPartPayment; 
+            $recid->outstanding_balance -= $request->outstandingPartPayment;
+            $recid->remark = 'outstanding of '.$request->newOutstanding;
+            $recid->save();
+        }
+        if($request->outstandBalanceChecker == 1) {
+            $recid->balance += $request->outstandingBalanceUpdate;
+            $recid->outstanding_balance = NULL;
+            $recid->remark = NULL;
+            $recid->save();
+        }
+        //create a payment history log here.
+        $payment = PaymentHistory::CREATE(['trip_id' => $recid->trip_id]);
+        if($request->outstandBalanceChecker == 1){
+            $payment->amount = $request->outstandingBalanceUpdate;
+        }
+        else{
+            $payment->amount = $request->outstandingPartPayment;
+        }
+        $payment->payment_mode = 'Outstanding Balance';
+        $payment->save();
+
+        return 'saved';
     }
 }

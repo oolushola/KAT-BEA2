@@ -16,6 +16,7 @@
 	<link href="{{URL::asset('assets/css/layout.min.css')}}" rel="stylesheet" type="text/css">
 	<link href="{{URL::asset('assets/css/components.min.css')}}" rel="stylesheet" type="text/css">
 	<link href="{{URL::asset('assets/css/colors.min.css')}}" rel="stylesheet" type="text/css">
+    <link rel="shortcut icon" href="{{URL::asset('/assets/img/kaya/kaya-africa-techonology-nig-ltd.PNG')}}" />
 </head>
 <body style="background:url('{{url('/assets/img/login-background.jpg')}}'); background-size:cover;">
 

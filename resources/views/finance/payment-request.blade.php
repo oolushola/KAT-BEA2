@@ -44,17 +44,7 @@ function getPaymentInitiator($arrayRecord, $master) {
             <a href="#" class="header-elements-toggle text-default d-md-none"><i class="icon-more"></i></a>
         </div>
 
-        <div class="header-elements d-none">
-            <div class="d-flex justify-content-center">
-                <button class="btn btn-success font-weight-semibold" disabled>
-                    <i class="icon-coins ml-2"></i><br>₦294,000.00<br>Total Advance Payment Request
-                </button>&nbsp;
-                        
-                <button class="btn btn-primary font-weight-semibold" disabled>
-                    <i class="icon-coins ml-2"></i><br>₦126,000.00<br>Total Balance Payment Request 
-                </button>                  
-            </div>
-        </div>
+        
     </div>
 </div>
 
@@ -63,79 +53,188 @@ function getPaymentInitiator($arrayRecord, $master) {
     &nbsp;
 
         <div class="card">
-            <div class="card-header header-elements-inline">
+            <div class='row card-header header-elements-inline'>
                 <h6 class="card-title font-weight-semibold">Advance Payment Request Log</h6>
             </div>
 
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead class="table-info font-weight-semibold">
-                        <tr style="font-size:10px;">
-                            <th>KAID</th>
-                            <th>INVOICE NO.</th>
-                            <th>S.O. NUMBER</th>
-                            <th>DESTINATION</th>
-                            <th>TRANSPORTER</th>
-                            <th>TRUCK NO.</th>
-                            <th>PRODUCT</th>
-                            <th>AMOUNT</th>
-                            <th>ACTION</th>
-                            <th class="text-center">PAID?</th>
-                        </tr>
-                    </thead>
-                        
-                    <tbody>
-                        <?php $counter = 0; ?>
-                        @if(count($allpendingadvanceRequests))
-                            @foreach($allpendingadvanceRequests as $key => $advancePayment)
-                            <?php
-                                $counter++;
-                                $counter % 2 == 0 ? $css = '' : $css = 'table-success';
-                            ?>
-                                <tr class="{{$css}} font-weight-semibold" style="font-size:10px;">
-                                    <td>{{$advancePayment->trip_id}}</td>
-                                    <td>{{getFieldValue($waybillInfos, $advancePayment, 'invoice_no')}}</td>
-                                    <td>{{getFieldValue($waybillInfos, $advancePayment, 'sales_order_no')}}</td>
-                                    <td>{{$advancePayment->exact_location_id}}, {{$advancePayment->state}}</td>
-                                    <td>{{$advancePayment->transporter_name}}</td>
-                                    <td>{{$advancePayment->truck_no}}</td>
-                                    <td>{{$advancePayment->product}}</td>
-                                    <td>
-                                        &#x20a6;{{number_format($advancePayment->advance, 2)}}
-                                        {!! getPaymentInitiator($chunkPayments, $advancePayment) !!}
+            <div class="row">
+                @if(count($allpendingadvanceRequests))
+                <?php $advanceIterator = 1; ?>
+                    @foreach($allpendingadvanceRequests as $key => $advancePayment)
+                        <section class="col-md-4  mt-2 col-sm-12 col-12 mb-4">
+                            <span class="bg-danger font-weight-bold" style="border-radius:100%; padding:15px; margin-left:-20px;">{{ $advanceIterator++ }}</span>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="2"><strong>Requested by</strong>: {{ucfirst($advancePayment->first_name)}} {{ucfirst($advancePayment->last_name)}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-primary"><span class="d-block font-size-sm font-weight-bold text-danger">
+                                                <span class="d-block">Amount Requested</span>
+                                                <p class="text-primary d-block font-weight-bold">&#x20a6;{!! number_format($advancePayment->advance, 2) !!} </p>
+                                            </td>
+                                            <td class="text-primary"><span class="d-block font-size-sm font-weight-bold text-danger">Destination</span>
+                                            <p class="text-primary d-block font-weight-bold">{!! $advancePayment->exact_location_id !!}, {!! $advancePayment->state !!}</p>
+                                        </td>
+                                        <tr>
+                                        <tr>
+                                            <td class="font-weight-bold">Trip Details</td>
+                                            <td>
+                                                <span class="defaultInfo">
+                                                    <span class="font-weight-bold">{!! $advancePayment->trip_id !!}</span>  
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-weight-bold">Truck Details</td>
+                                            <td>
+                                            <h6 class="mb-0">
+                                                <span class="defaultInfo">
+                                                    <span class="text-primary">{!! $advancePayment->truck_no !!}</span>
+                                                    <span class="d-block font-size-sm "><strong>Tonnage</strong>: {!! $advancePayment->tonnage/1000 !!}T</span>
+                                                    <span class="d-block font-size-sm "><strong>Product</strong>: {!! $advancePayment->product !!}</span>
+                                                </span>
+                                            </h6>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-weight-bold" colspan="2">
+                                                <span class="d-block font-size-sm text-danger"  style="text-decoration:underline">Transporter Details</span>
+                                                <h6 class="mb-0">
+                                                    <span class="defaultInfo">
+                                                        <span class="text-primary">{!! $advancePayment->transporter_name !!}</span>
+                                                    </span>
+                                                </h6>
+                                            </td>
+                                        </tr>
+                                        
+                                        <tr>
+                                            <td>
+                                                <a href="#advancePaymentExceptionModal" class="badge btn-warning except pointer align-right ml-auto" role="{{$advancePayment->trip_id}}" value="{{$advancePayment->amount}}" id="{{$advancePayment->id}}" data-toggle="modal">Exception</a>
+                                            </td>
+                                            <td class="font-size-sm font-weight-bold"  style="font-size:9px;"><input type="checkbox" value="{{$advancePayment->id}}" name="approveAdvance[]"> Mark as paid</td>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    @endforeach
+                    <span class="col-md-12 d-block">
+                        <button class=" d-block btn btn-primary font-size-sm font-weight-bold ml-3 mb-3" id="approveAdvancePayment"><i class="icon-checkmark2"></i>Complete all advance payment</button>
+                    </span> 
 
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-blue-400 pointer initiatePayment align-right ml-auto" value="{{$advancePayment->id}}" name="">Initiate</span>
-                                        
-                                        <a href="#advancePaymentExceptionModal" class="badge except bg-warning pointer align-right ml-auto" role="{{$advancePayment->trip_id}}" value="{{$advancePayment->amount}}" id="{{$advancePayment->id}}" data-toggle="modal">Exception</a>
-                                        
-                                    </td>
-                                    <td class="text-center">
-                                        <input type="checkbox" value="{{$advancePayment->id}}" name="approveAdvance[]">
-                                    </td>
-                                </tr>
-                            @endforeach
-                                <tr class="table-info">
-                                    <td colspan="8"><span class="float-right" id="advanceLoader"></span></td>
-                                    <td></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-primary" id="approveAdvancePayment">Yes!</button>
-                                    </td>
-                                </tr>
-                        @else
-                        <tr>
-                            <td colspan="15" class="table-success">No pending payment request</td>
-                        </tr>
-                        @endif
-                    </tbody>
-                    
-                    
-                </table>
+                @else
+                    <p class="ml-3 mb-3 font-weight-bold text-danger">You currently do not have any advance payment to approve.</p>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+    &nbsp;
+
+        <div class="card">
+            <div class='card-header header-elements-inline'>
+                    <h6 class="card-title font-weight-semibold">Balance Payment Request Log</h6>
+                
             </div>
 
-            
+            <div class="row">
+                
+                @if(count($allpendingbalanceRequests))
+                    <?php $balanceIterator = 1; ?>
+                    @foreach($allpendingbalanceRequests as $key => $balancePayment)
+                        <section class="col-md-4  mt-2 col-sm-12 col-12 mb-4">
+                            <span class="bg-danger font-weight-bold" style="border-radius:100%; padding:15px; margin-left:-20px;">{{ $balanceIterator++ }}</span>
+
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="2"><strong>Requested by</strong>: {{ucfirst($balancePayment->first_name)}} {{ucfirst($balancePayment->last_name)}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2"><strong class="text-warning font-size-sm">View proof of Waybill Uploaded</strong>
+                                                <span class="d-block">
+                                                    <?php $count = 0; ?>
+                                                    @foreach($offloadedWaybill as $offloadWaybill)
+                                                    
+                                                        @if($offloadWaybill->trip_id == $balancePayment->tripid)
+                                                        <?php $count++; ?>
+                                                            <a class="badge bg-primary" href="{{URL('/assets/img/signedwaybills/'.$offloadWaybill->received_waybill)}}" alt="{{$offloadWaybill->received_waybill}}" target="_blank"><i class="icon-file-eye"></i> Waybill {{$count}}</a>
+                                                        @endif
+                                                    @endforeach
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-primary"><span class="d-block font-size-sm font-weight-bold text-danger">
+                                                <span class="d-block">Amount Requested</span>
+                                                <p class="text-primary d-block font-weight-bold">&#x20a6;{{number_format($balancePayment->balance, 2)}} {!! getPaymentInitiator($chunkPayments, $balancePayment) !!} </p>
+                                            </td>
+                                            <td class="text-primary"><span class="d-block font-size-sm font-weight-bold text-danger">Destination</span>
+                                            <p class="text-primary d-block font-weight-bold">{!! $balancePayment->exact_location_id !!}, {!! $balancePayment->state !!}</p>
+                                        </td>
+                                        <tr>
+                                        <tr>
+                                            <td class="font-weight-bold">Trip Details</td>
+                                            <td>
+                                                <span class="defaultInfo">
+                                                    <span class="font-weight-bold">{!! $balancePayment->trip_id !!}</span>  
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-weight-bold">Truck Details</td>
+                                            <td>
+                                            <h6 class="mb-0">
+                                                <span class="defaultInfo">
+                                                    <span class="text-primary">{!! $balancePayment->truck_no !!}</span>
+                                                    <span class="d-block font-size-sm "><strong>Tonnage</strong>: {!! $balancePayment->tonnage/1000 !!}T</span>
+                                                    <span class="d-block font-size-sm "><strong>Product</strong>: {!! $balancePayment->product !!}</span>
+                                                </span>
+                                            </h6>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-weight-bold" colspan="2">
+                                                <span class="d-block font-size-sm text-danger"  style="text-decoration:underline">Transporter Details</span>
+                                                <h6 class="mb-0">
+                                                    <span class="defaultInfo">
+                                                        <span class="text-primary">{!! $balancePayment->transporter_name !!}</span>
+                                                    </span>
+                                                </h6>
+                                            </td>
+                                        </tr>
+                                        
+                                        <tr>
+                                            <td>
+                                                <a href="#balancePaymentExceptionModal" class="badge balanceExcept bg-warning pointer align-right ml-auto" role="{{$balancePayment->trip_id}}" value="{{$balancePayment->exact_location_id}},{{$balancePayment->advance}},{{$balancePayment->balance}},{{$balancePayment->transporter_id}},{{$balancePayment->trip_id}}" id="{{$balancePayment->id}}" data-toggle="modal">Exception</a>
+                                            </td>
+                                            <td class="font-weight-sm font-weight-bold" style="font-size:9px;"><input type="checkbox" value="{{$balancePayment->id}}" name="approveBalance[]"> Mark as paid</td>
+                                    </tbody>
+                                    
+                                </table>
+                                
+                            </div>
+                            
+                        </section>
+                    @endforeach
+                    <span class="col-md-12 d-block">
+                        <button class="btn btn-primary font-size-sm font-weight-bold ml-3 mb-3" id="approveBalancePayment"><i class="icon-checkmark2"></i>Complete Balance Payment</button>
+                    </span>
+
+                @else
+                    <p class="ml-4 mb-3 font-weight-bold text-danger">You currently do not have any balance payment to approve.</p>
+                @endif
+                
+            </div>
+
+           
         </div>
+
 
     </div>
 </div>
@@ -147,7 +246,7 @@ function getPaymentInitiator($arrayRecord, $master) {
 
         <div class="card">
             <div class="card-header header-elements-inline">
-                <h6 class="card-title font-weight-semibold">Balance Payment Request Log </h6>
+                <h6 class="card-title font-weight-semibold">Outstanding Balance Payment Request Log </h6>
             </div>
 
             <div class="table-responsive">
@@ -155,57 +254,47 @@ function getPaymentInitiator($arrayRecord, $master) {
                     <thead class="table-info">
                         <tr style="font-size:10px;">
                             <th>KAID</th>
-                            <th>INVOICE NO.</th>
-                            <th>S.O. NUMBER</th>
                             <th>DESTINATION</th>
                             <th>TRANSPORTER</th>
                             <th>TRUCK NO.</th>
                             <th>PRODUCT</th>
-                            <th>AMOUNT</th>
+                            <th>OUTSTANDING</th>
                             <th>ACTION</th>
-                            <th>PAID?</th>
                         </tr>
                     </thead>
 
                     <tbody>
                         
                         <?php $counter = 0; ?>
-                        @if(count($allpendingbalanceRequests))
-                            @foreach($allpendingbalanceRequests as $key => $balancePayment)
+                        @if(count($allPendingOutstandingBalance))
+                            @foreach($allPendingOutstandingBalance as $key => $outstandingPayment)
                             <?php
                                 $counter++;
                                 $counter % 2 == 0 ? $css = '' : $css = 'table-success';
 
                             ?>
                                 <tr class="{{$css}} font-weight-semibold" style="font-size:10px;">
-                                    <td>{{$balancePayment->trip_id}}</td>
-                                    <td>{{getFieldValue($waybillInfos, $balancePayment, 'invoice_no')}}</td>
-                                    <td>{{getFieldValue($waybillInfos, $balancePayment, 'sales_order_no')}}</td>
-                                    <td>{{$balancePayment->exact_location_id}}, {{$balancePayment->state}}</td>
-                                    <td>{{$balancePayment->transporter_name}}</td>
-                                    <td>{{$balancePayment->truck_no}}</td>
-                                    <td>{{$balancePayment->product}}</td>
+                                    <td>{{$outstandingPayment->trip_id}}</td>
+                                    <td>{{$outstandingPayment->exact_location_id}}, {{$outstandingPayment->state}}</td>
+                                    <td>{{$outstandingPayment->transporter_name}}</td>
+                                    <td>{{$outstandingPayment->truck_no}}</td>
+                                    <td>{{$outstandingPayment->product}}</td>
                                     <td>
-                                        &#x20a6;{{number_format($balancePayment->balance, 2)}}
-                                        {!! getPaymentInitiator($chunkPayments, $balancePayment) !!}
+                                        &#x20a6;{{number_format($outstandingPayment->outstanding_balance, 2)}}
+                                        {!! getPaymentInitiator($chunkPayments, $outstandingPayment) !!}
 
                                     </td>
                                     <td>
-                                        <a href="#balancePaymentModal" class="badge balanceInitiator bg-blue-400 pointer align-right ml-auto" value="{{$balancePayment->trip_id}}"  id="{{$balancePayment->id}}" data-toggle="modal">Initiate</a>
                                         
-                                        <a href="#balancePaymentExceptionModal" class="badge balanceExcept bg-warning pointer align-right ml-auto" role="{{$balancePayment->trip_id}}" value="{{$balancePayment->exact_location_id}},{{$balancePayment->advance}},{{$balancePayment->balance}},{{$balancePayment->transporter_id}},{{$balancePayment->trip_id}}" id="{{$balancePayment->id}}" data-toggle="modal">Exception</a>
+                                        <a href="#outstandingPaymentModal" class="badge payoutstandingBalance bg-warning pointer align-right ml-auto" role="{{$outstandingPayment->trip_id}}" value="{{$outstandingPayment->outstanding_balance}}, {{$outstandingPayment->trip_id}}" id="{{$outstandingPayment->id}}" data-toggle="modal">Pay Now</a>
 
                                     </td>
-                                    <td>
-                                        <input type="checkbox" value="{{$balancePayment->id}}" name="approveBalance[]">
-                                    </td>
+                                   
                                 </tr>
                             @endforeach
                                 <tr class="table-info">
-                                    <td colspan="9"><span class="float-right" id="balanceLoader"></span></td>
-                                    <td>
-                                        <button class="btn btn-primary" id="approveBalancePayment">Pay</button>
-                                    </td>
+                                    <td colspan="7"><span class="float-right" id="outstandbalanceLoading"></span></td>
+                                    
                                 </tr>
                         @else
                         <tr>
@@ -221,6 +310,7 @@ function getPaymentInitiator($arrayRecord, $master) {
 
     </div>
 </div>
+
 </form>
 
     
@@ -237,10 +327,13 @@ function getPaymentInitiator($arrayRecord, $master) {
                 
                 <div class="modal-body">
                     <span id="exceptionLoader"></span>
-                    <ul style="margin:0; padding:0;">
-                        <li class="exception exception-default" id="percentageDifference">% Difference</li>
-                        <li class="exception" id="fullPayment">Full Payment</li>
-                        <input type="text" value="2" name="advance_exception" id="advanceNavigator">
+                    <ul style="margin:0; padding:0;" class="row">
+                        <li class="col-md-4 exception exception-default" id="percentageDifference">Use Different % Rate </li>
+                        <li class="col-md-4 exception" id="fullPayment">Full Payment</li>
+                        <li class="col-md-4 exception" id="manualAdvanceInput">Enter Amount</li>
+                        
+                        <input type="hidden" value="2" name="advance_exception" id="advanceNavigator">
+
                     </ul>
 
                     <div class="row ml-3 mr-3 mt-3 show" id="percentHolder">
@@ -248,8 +341,8 @@ function getPaymentInitiator($arrayRecord, $master) {
                             <div class="form-group">
                                 <label class="font-weight-semibold">Amount (₦)</label>
                                 <input type="text" class="form-control" id="totalAmountHolder" disabled>
-                                <input type="text" id="totalAmount_" name="total_amount" value="" >
-                                <input type="text" value="" id="payid" name="payid" >
+                                <input type="hidden" id="totalAmount_" name="total_amount" value="" >
+                                <input type="hidden" value="" id="payid" name="payid" >
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -288,7 +381,7 @@ function getPaymentInitiator($arrayRecord, $master) {
                         <div class="form-group">
                             <label class="font-weight-semibold">Pay in Full? &nbsp; &nbsp;</label>
                             <input type="checkbox" class="form-control" id="payInFull">
-                            <input type="text" name="pay_in_full" id="pay_in_full" value="0" >
+                            <input type="hidden" name="pay_in_full" id="pay_in_full" value="0" >
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -302,6 +395,35 @@ function getPaymentInitiator($arrayRecord, $master) {
                         <div class="form-group">
                             <label class="font-weight-semibold">&nbsp; &nbsp;</label>
                             <button type="submit" class="btn btn-primary" id="updateFullPayment">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row ml-3 mr-3 mt-3 hidden" id="manualAdvancwPaymentHolder">
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="font-weight-semibold">Actual Amount</label>
+                            <input type="text" class="form-control" name="actual_amount" id="actualAmount">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="font-weight-semibold">Amount to be Paid </label>
+                            <input type="text" class="form-control" name="advanceTobeManuallyPaid" id="advanceTobePaid">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="font-weight-semibold">Balance</label>
+                            <input type="text" class="form-control" name="probableBalance" id="probableBabalance" onclick="keyupanalyser()">
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="font-weight-semibold">&nbsp; &nbsp;</label>
+                            <button type="submit" class="btn btn-primary" id="manualAmountProceed">Save Changes</button>
                         </div>
                     </div>
                 </div>
@@ -322,6 +444,7 @@ function getPaymentInitiator($arrayRecord, $master) {
                     <h5 class="modal-title">Balance Exception for TRIP: <span id="balanceTripIdHolder"></span></h5>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
+                
 
                 <input type="hidden" name="balanceTripId" id="balanceTripId">
                 <input type="hidden" name="transporter_id" id="transporterId" >
@@ -329,7 +452,13 @@ function getPaymentInitiator($arrayRecord, $master) {
                 
                 <div class="modal-body">
                     <span id="exceptionBalanceLoader"></span>
-                    <div class="row ml-3 mr-3 mt-3 show" id="percentHolder">
+
+                    <div class="ml-4">
+                        <input type="checkbox" id="bitPartBalance" >
+                         <span class="font-weight-bold text-danger">Pay Part Amount of Balance</span>
+                    </div>
+
+                    <div class="row ml-3 mr-3 mt-3 show" id="wrongRouteHolder">
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label class="font-weight-semibold">Destination</label>
@@ -388,6 +517,38 @@ function getPaymentInitiator($arrayRecord, $master) {
                         </div>
 
                     </div>
+                    
+                    <div class="row ml-3 mr-3 mt-3 hidden" id="bitPaymentHolder">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="font-weight-semibold">Actual Balance</label>
+                                <input type="text" class="form-control" name="actualBalanceAmount" id="actualBalanceAmount">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="font-weight-semibold">Pay Part Payment of:</label>
+                                <input type="text" class="form-control" name="balancePartPayment" id="balancePartPayment">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="font-weight-semibold">Outstanding Balance</label>
+                                <input type="text" class="form-control" name="outstandingBalance" id="outstandingBalance">
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="font-weight-semibold">&nbsp; &nbsp;</label>
+                                <button type="submit" class="btn btn-primary" id="updateBalanceRequest">Update Changes</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="balanceExceptionChecker" id="balanceExceptionChecker" value="1">
+
+
                 </div>
 
                 
@@ -396,44 +557,63 @@ function getPaymentInitiator($arrayRecord, $master) {
     </form>
 </div>
 
-<!-- Modal HTML for Initiating Balance Request -->
-<div id="balancePaymentModal" class="modal fade">
-    @csrf
-    <form method="POST" name="frmInitiateBalance" id="frmInitiateBalance">
+<!-- Outstanding payment modal -->
+<div id="outstandingPaymentModal" class="modal fade">
+    <form method="POST" name="frmOutstandingBalance" id="frmOutstandingBalance">
         @csrf
         
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Balance<span></span></h5>
+                    <h5 class="modal-title">Outstanding Balance for TRIP: <span id="outstandBalanceTripHolder"></span></h5>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
+                
 
-                <input type="hidden" name="tripIdofBalanceInitiate" id="tripIdofBalanceInitiate" >
-                <input type="hidden" name="balanceInitiateId" id="balanceInitiateId" >
-                <input type="hidden" name="proceed_confirmation" id="confirmProceed" value="">
+                <input type="hidden" name="outstandingBalanceTripId" id="outstandingBalanceTripId">
+                <input type="hidden" name="outstandingBalanceId" id="outstandingBalanceId" >
                 
                 <div class="modal-body">
-                    <div class="row ml-3 mr-3 mt-3 show">
-                        <div class="col-md-12" id="waitLoader"></div>
-                        <div class="col-md-6">
+                    <span id="outstandlingBalanceLoader"></span>
+
+                    <div class="ml-4">
+                        <input type="checkbox" id="payalloutstanding" >
+                         <span class="font-weight-bold text-danger">Pay Part Payment</span>
+                    </div>
+
+                    
+                    
+                    <div class="row ml-3 mr-3 mt-3">
+                        <div class="col-md-4">
                             <div class="form-group">
-                                <label class="font-weight-semibold">&nbsp; &nbsp;</label>
-                                <button type="submit" class="btn btn-lg btn-primary" id="proceedBalancePayment">Proceed to Payment</button><br>
-                                <section class="hidden" id="proceedAnywayConfirmation">
-                                    <input type="checkbox" id="confirmCheck" style="margin-left:5px;" > <span style="font-size:9px;">Confirm to proceed to payment initation</span>
-                                    
-                                <section>
+                                <label class="font-weight-semibold">Outstanding Balance</label>
+                                <input type="text" class="form-control" name="outstandingBalanceUpdate" id="outstandingBalanceUpdate">
                             </div>
                         </div>
-                        
-                        <div class="col-md-6">
+                        <div class="col-md-4 hidden partPaymentofOutstanding">
+                            <div class="form-group">
+                                <label class="font-weight-semibold">Pay Part Payment of:</label>
+                                <input type="text" class="form-control" name="outstandingPartPayment" id="outstandingPartPayment">
+                            </div>
+                        </div>
+                        <div class="col-md-4 hidden partPaymentofOutstanding">
+                            <div class="form-group">
+                                <label class="font-weight-semibold">Outstanding Balance</label>
+                                <input type="text" class="form-control" name="newOutstanding" id="newOutstanding">
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
                             <div class="form-group">
                                 <label class="font-weight-semibold">&nbsp; &nbsp;</label>
-                                <button type="submit" class="btn btn-lg btn-danger" id="abortOperation">Abort Operation</button>
+                                <button type="submit" class="btn btn-primary" id="updateOutstandingBalanceRequest">Update Changes</button>
                             </div>
                         </div>
                     </div>
+
+                    <input type="hidden" name="outstandBalanceChecker" id="outstandBalanceChecker" value="1">
+
+
                 </div>
 
                 
@@ -441,6 +621,8 @@ function getPaymentInitiator($arrayRecord, $master) {
         </div>  
     </form>
 </div>
+
+
 
 
 @stop
