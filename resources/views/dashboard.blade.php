@@ -18,6 +18,11 @@
 input, select{
     outline:none
 }
+.waybillStatus .table td, .table.th{
+    padding:3px;
+    font-weight:bold;
+    
+}
 </style>
 @stop
 
@@ -28,6 +33,8 @@ input, select{
 @include('_partials.current-gate-out-view')
 @include('_partials.current_trip_status')
 @include('_partials.truck-availability')
+@include('_partials.waybill_report')
+@include('_partials.specific_date_range_trip')
 
 <div class="content-wrapper">
     <?php
@@ -38,8 +45,35 @@ input, select{
                     echo '<option value="'.$month.'">'.$month.'</option>';
             }
         }
+
+        function waybillByCategory($yetTobeInvoicedWaybill) {
+            $counter = 1;
+            $healthy = 0;
+            $warning = 0;
+            $danger = 0;
+            foreach($yetTobeInvoicedWaybill as $object){
+                
+                $now = time();
+                $gatedOut = strtotime($object->gated_out);;
+                $datediff = $gatedOut - $now;
+                $numberofdays = (floor($datediff / (60 * 60 * 24)) * -1) -1;
+                
+
+                if($numberofdays >=0 && $numberofdays <= 3  ){
+                    $healthy += 1;
+                }
+                else if(($numberofdays > 3) && ($numberofdays <=7)){
+                    $warning += 1;
+                }
+                else{
+                    $danger += 1;
+                }
+            }
+            return $waybillStatusCount = array($healthy, $warning, $danger);
+        }
         
     ?>
+
 
     <!-- Page header -->
     <div class="page-header page-header-light">
@@ -183,10 +217,12 @@ input, select{
 
     <div class="row mt-3">
         <div class="col-md-4 mb-2">
-            <div class="dashboardbox">
+            <div class="dashboardbox" data-toggle="modal" href="#waybillReportStatus">
                 <canvas id="waybillChart"  height="200"></canvas>
             </div>
+            <?php $waybillCategories = waybillByCategory($tripWaybillYetToReceive); ?>
         </div>
+
         <div class="col-md-4 mb-2" id="placeholderForWeek">
             <div class="dashboardbox">
                 <input type="hidden" id="currentWeekInView" value="{{date('Y/m/d', strtotime('last sunday'))}}">
@@ -194,11 +230,12 @@ input, select{
                 <input type="hidden" id="gatedOutForTheWeekValue" value="{{$noOfGatedOutTripForCurrentWeek[0]->weeklygateout}}">
 
 
-                <canvas id="gatedOutForTheWeek" height="200"></canvas>
+                <canvas id="gatedOutForTheWeek" height="200" data-toggle="modal" href="#specificDateRangeInformation"></canvas>
                 
                 <input class="font-weight-semibold" type="date" style="margin-top:10px;" name="week_one" id="weekOne" value="{{date('Y-m-d', strtotime('last sunday'))}}">
                 <input  class="font-weight-semibold" type="date" name="week_two" id="weekTwo" value="{{date('Y-m-d')}}">
                 <span><button id="searchByWeek" style="font-size:10px;" class="font-weight-semibold">GO</button></span>
+                <span class="d-block font-size-sm" id="dateRangeLoader"></span>
             </div>
         </div>
 
@@ -386,8 +423,7 @@ input, select{
 
 <script>
     $('.container').hide();
-    $('#gate-in-container').show();
-    $('.btn-group button').click(function(){
+    $('button').click(function(){
         var target = "#" + $(this).data("target");
         $(".container").not(target).hide();
         $(target).show();
@@ -403,8 +439,9 @@ input, select{
         $(`${dataSetId} tr`).filter(function() {
             $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
         });
-    });
+        });
     }
+    $("#extremeValuation").html('&#x20a6;'+$('#calculatedValuation').val())
 </script>
 
 
@@ -496,13 +533,14 @@ input, select{
 <!-- Chart for waybill Process -->
 <script>
     var ctx = document.getElementById('waybillChart');
+    var waybillStatusCategory = <?php echo json_encode($waybillCategories); ?>;
     var myChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: ['Good', 'Warning', 'Danger'],
             datasets: [{
                 label: 'Waybill Status',
-                data: [10, 8, 5],
+                data: waybillStatusCategory,
                 backgroundColor: [
                     'rgb(0,128,0, 1)',
                     'rgb(255,255,0, 1)',

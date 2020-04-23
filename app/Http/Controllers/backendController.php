@@ -79,11 +79,8 @@ class backendController extends Controller
         $lastOneWeek = date('Y-m-d', strtotime('last sunday'));
         $currentDate = date('Y-m-d');
 
-        $noOfGatedOutTripForCurrentWeek = DB::SELECT(
-            DB::RAW(
-                'select COUNT(*) as weeklygateout  from tbl_kaya_trips where Date(gated_out) between "'.$lastOneWeek.'" and "'.$currentDate.'" and tracker >= 5'
-            )
-        );
+        $noOfGatedOutTripForCurrentWeek = $this->specificDateRangeCount('COUNT(*)',  'weeklygateout', $lastOneWeek, $currentDate);
+        $specificDataRecord = $this->specificDateRangeData($lastOneWeek, $currentDate);
 
         $allLoadingSites = loadingSite::SELECT('id', 'loading_site')->ORDERBY('loading_site', 'ASC')->GET();
 
@@ -124,6 +121,9 @@ class backendController extends Controller
             $noOfTripsPerDay[] = trip::whereDATE('gated_out',  $newDate)->GET()->COUNT();
         }
         while($count <= $todaysDate);
+        
+         $tripEventListing = tripEvent::ORDERBY('current_date', 'DESC')->GET();
+       
 
         $availableTrucks = DB::SELECT(
             DB::RAW(
@@ -131,8 +131,12 @@ class backendController extends Controller
             )
         );
 
+        $tripWaybillYetToReceive = DB::SELECT(
+            DB::RAW('SELECT a.*, b.comment, c.loading_site, d.transporter_name, e.product, f.truck_no FROM tbl_kaya_trips a JOIN tbl_kaya_trip_waybill_statuses b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f ON a.id = b.trip_id AND a.loading_site_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id WHERE b.waybill_status = FALSE AND a.trip_status = 1'
+            )
+        );
 
-        return view('dashboard', compact('getGatedOutByMonth', 'allTrips', 'monthlyTarget', 'onJourney', 'atDestination', 'offloadedTrips',  'numberofdailygatedout', 'gatedOutForTheMonth', 'countDailyTripByLoadingSite', 'loading_sites', 'noOfGatedOutTripForCurrentWeek', 'loadingBay', 'gateIn', 'allclients', 'departedLoadingBay', 'currentGateOutRecord', 'tripWaybills', 'gateInData', 'atloadingbayData', 'departedLoadingBayData', 'onJourneyData', 'atDestinationData', 'offloadedData', 'tripRecordsForTheMonth', 'totalGateOuts', 'noOfTripsPerDay', 'availableTrucks'));
+        return view('dashboard', compact('getGatedOutByMonth', 'allTrips', 'monthlyTarget', 'onJourney', 'atDestination', 'offloadedTrips',  'numberofdailygatedout', 'gatedOutForTheMonth', 'countDailyTripByLoadingSite', 'loading_sites', 'noOfGatedOutTripForCurrentWeek', 'loadingBay', 'gateIn', 'allclients', 'departedLoadingBay', 'currentGateOutRecord', 'tripWaybills', 'gateInData', 'atloadingbayData', 'departedLoadingBayData', 'onJourneyData', 'atDestinationData', 'offloadedData', 'tripRecordsForTheMonth', 'totalGateOuts', 'noOfTripsPerDay', 'availableTrucks', 'tripEventListing', 'tripWaybillYetToReceive', 'specificDataRecord'));
     }
 
     function displayRecordOfTrips($fieldValue, $currentDate) {
@@ -238,12 +242,85 @@ class backendController extends Controller
     public function gatedOutSelectedWeek(Request $request){
         $from = $request->from;
         $to = $request->to;
-        
-        return [$selectedWeeklyCountRange] = DB::SELECT(
+        $specificDataRecord = $this->specificDateRangeData($from, $to);
+        [$selectedWeeklyCountRange] = $this->specificDateRangeCount('COUNT(gated_out)', 'TotalWeekly', $from, $to);
+        $tripWaybills = tripWaybill::GET();
+
+
+        $data = '<table class="table table-striped table-hover">
+            <thead class="table-success" style="font-size:10px;">
+            <tr>
+                <th>SN</th>
+                <th width="20%" class="text-center font-weight-bold">GATE OUT DETAILS</th>
+                <th width="30%" class="font-weight-bold">TRUCK</th>
+                <th width="20%" class="font-weight-bold">WAYBILL DETAILS</th>
+                <th width="30%" class="font-weight-bold">CONSIGNEE DETAILS</th>
+            </tr>
+            </thead>
+            <tbody id="currentGateOutData" style="font-size:10px;">';
+                if(count($specificDataRecord)) {
+                    $count = 1;
+                    foreach($specificDataRecord as $specificRecord) {
+                    $data.='<tr>
+                        <td>('.$count++.')</td>
+                        <td class="text-center">
+                            <p class="font-weight-bold" style="margin:0">'.$specificRecord->trip_id.'</p>
+                            <p>'.$specificRecord->loading_site.' <br> '.date('d-m-Y', strtotime($specificRecord->gated_out)).' <br> '.date('h:i A', strtotime($specificRecord->gated_out)).'</p>
+                        </td>
+                        <td>
+                            <span class="text-primary"><b>'.$specificRecord->truck_no.'</b></span>
+                            <p style="margin:0"><b>Truck Type</b>: '.$specificRecord->truck_type.' '.($specificRecord->tonnage/1000).'T</p>
+                            <p style="margin:0"><b>Transporter</b>: '.$specificRecord->transporter_name.', '.$specificRecord->phone_no.'</p>
+                        </td>';
+                        
+                        $data.='<td>';
+                            foreach($tripWaybills as $tripWaybill) {
+                                if($specificRecord->id == $tripWaybill->trip_id) {
+                                    $data.='<span class="d-block font-weight-sm">'.$tripWaybill->invoice_no.' '.$tripWaybill->sales_order_no.'</a></span>';
+                                }
+                            }
+                        $data.='</td>';
+
+                        $data.='<td>
+                            <p class="font-weight-bold" style="margin:0">'.$specificRecord->customers_name.'</p>
+                            <p  style="margin:0">Location: '.$specificRecord->exact_location_id.'</p>
+                            <p  style="margin:0">Product: '.$specificRecord-> product.'</p>
+
+                        </td>
+                    </tr>';
+                    }
+                } else {
+                    $data.='<tr><td colspan="4">No record is available.</td></tr>';
+                }
+                
+                
+            $data.='</tbody>
+        </thead>
+    </table>';
+
+
+
+        return $record=[$data, $selectedWeeklyCountRange];
+    }
+
+
+    function specificDateRangeCount($condition, $alias, $start, $finish){
+        return DB::SELECT(
             DB::RAW(
-                'SELECT count(gated_out) AS TotalWeekly FROM tbl_kaya_trips WHERE Date(gated_out) BETWEEN  "'.$from.'" AND "'.$to.'" AND tracker >= 5'
+                'SELECT '.$condition.' as '.$alias.'  FROM tbl_kaya_trips WHERE DATE(gated_out) BETWEEN "'.$start.'" and "'.$finish.'" and tracker >= 5'
             )
         );
     }
+
+    function specificDateRangeData($start, $finish) {
+        $specificDateRecord = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND DATE(gated_out) BETWEEN "'.$start.'" AND "'.$finish.'" ORDER BY a.trip_id DESC'
+            )
+        );
+        return $specificDateRecord;
+    }
 }
+
+//'SELECT COUNT(*) as weeklygateout  FROM tbl_kaya_trips WHERE DATE(gated_out) BETWEEN "'.$lastOneWeek.'" and "'.$currentDate.'" and tracker >= 5'
 
