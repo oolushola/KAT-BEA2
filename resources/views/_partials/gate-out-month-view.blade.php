@@ -15,7 +15,7 @@
 
                         <table class="table table-striped table-hover">
                             <div class="table-responsive">
-                            <thead>
+                            <thead style="font-size:10px;">
                                 <tr class="table-success">
                                     <th>SN</th>
                                     <th>GATE OUT DETAILS</th>
@@ -24,7 +24,7 @@
                                     <th>CONSIGNEE DETAILS</th>
                                 </tr>
                             </thead>
-                            <tbody id="monthlyGatedOutData" style="font-size:10px; font-family:tahoma">
+                            <tbody id="monthlyGatedOutData"  style="font-size:10px;">
                                 <?php $count = 1; ?>
                                 @if(count($tripRecordsForTheMonth))
                                     @foreach($tripRecordsForTheMonth as $gateOutForTheMonth)
@@ -52,7 +52,6 @@
                                             
                                         </td>
                                         <td>
-                                            
                                             <p class="font-weight-bold" style="margin:0">{{ $gateOutForTheMonth->customers_name }}</p>
                                             <p  style="margin:0">Location: {{ $gateOutForTheMonth->exact_location_id }}</p>
                                             <p  style="margin:0">Product: {{ $gateOutForTheMonth->product }}</p>

@@ -149,8 +149,14 @@ $(function() {
     $('#searchByWeek').click(function(){
         $currentWeekInView = $('#currentWeekInView').val();
         $presentDay = $('#presentDay').val();
+        $("#dateRangeLoader").html("<i class='spinner icon-spinner2'></i> Please wait...").addClass('mt-2 font-weight-semibold text-primary')
         $.get('/gatedout-selected-week', {from:$currentWeekInView, to:$presentDay}, function(data){
-            graphWeeklyDisplay($currentWeekInView, $presentDay, data[0].TotalWeekly);
+            $dataArrayRecord = data[0];
+            $dataArrayCount = data[1];
+            $("#specificDataRangeRecord").html($dataArrayRecord);
+            graphWeeklyDisplay($currentWeekInView, $presentDay, data[1].TotalWeekly);
+            $("#dateRangeLoader").html("");
+
         })
 
     });
@@ -200,7 +206,7 @@ $(function() {
                         }
                     }]
                 }
-            }
+            },
         });
     }
 
