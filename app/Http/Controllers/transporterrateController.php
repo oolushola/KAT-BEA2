@@ -7,6 +7,7 @@ use App\Http\Requests;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\HttpResponse;
 use App\transporterRate;
+use App\parentClient;
 
 class transporterrateController extends Controller
 {
@@ -26,14 +27,16 @@ class transporterrateController extends Controller
 
     public function index() {
         $states = DB::SELECT(DB::RAW('SELECT * FROM tbl_regional_state WHERE regional_country_id = \'94\' ORDER BY state ASC '));
+        $superClients = parentClient::ORDERBY('parent_name', 'ASC')->GET();
         $transporterRates = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.state FROM `tbl_kaya_transporter_rates` a JOIN tbl_regional_state b ON a.transporter_to_state_id = b.regional_state_id'
+                'SELECT a.*, b.state, c.parent_name FROM `tbl_kaya_transporter_rates` a JOIN tbl_regional_state b JOIN tbl_kaya_parent_clients c ON a.transporter_to_state_id = b.regional_state_id AND a.transporter_from_state_id = c.id'
             )
         );
         return view('finance.transporter-rate.create',
             compact(
                 'states',
+                'superClients',
                 'transporterRates'
             )
         );
@@ -98,14 +101,16 @@ class transporterrateController extends Controller
     public function edit($id) {
         $recid = transporterRate::findOrFail($id);
         $states = DB::SELECT(DB::RAW('SELECT * FROM tbl_regional_state WHERE regional_country_id = \'94\' ORDER BY state ASC '));
+        $superClients = parentClient::ORDERBY('parent_name', 'ASC')->GET();
         $transporterRates = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.state FROM `tbl_kaya_transporter_rates` a JOIN tbl_regional_state b ON a.transporter_to_state_id = b.regional_state_id'
+                'SELECT a.*, b.state, c.parent_name FROM `tbl_kaya_transporter_rates` a JOIN tbl_regional_state b JOIN tbl_kaya_parent_clients c ON a.transporter_to_state_id = b.regional_state_id AND a.transporter_from_state_id = c.id'
             )
         );
 
         return view('finance.transporter-rate.create',
             compact(
+                'superClients',
                 'states',
                 'transporterRates',
                 'recid'

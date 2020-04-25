@@ -235,6 +235,7 @@ Route::group(['middleware' => 'auth'], function() {
 
     Route::post('update-outstanding-balance', 'paymentExceptionController@updateOutstandingBalance');
 
+    Route::resource('super-client', 'superClientController');
 
 });
 

@@ -69,18 +69,24 @@ $(function() {
             $("#loader").html('<i class="icon-spinner2 spinner mr-2"></i>Please Wait...').addClass('error');
             $.post(uri, $(frmName).serialize(), function(response) {
                 if(response === 'exists') {
-                    $("#loader").html('Sorry, this trip has already been entered.').addClass("error", "font-weight-semibold")
+                    $("#loader").html('Operation Aborted. The last trip made by this truck has not been marked offloaded. Please contact the visibility team').addClass("error", "font-weight-semibold")
                     return;
                 }
                 else {
                     if((response === 'saved') || response === ('updated')) {
                         $("#loader").html(`Trip successfully ${response}`).addClass("error", "font-weight-semibold");
                         window.location = pageReloadUrl
-
                     }
                     else {
-                        $("#loader").html(`Downtime Server Error, If this persists, please consult the administrator`).addClass("error");
-                        return; 
+                        if(response === "transporterNumberExists"){
+                            $("#loader").html(`Transporter already exist. Two different transporters cannot share the same phone number.`).addClass("error");
+                            return;
+                        }
+                        else if(response === "driversNumberExists"){
+                            $("#loader").html(`Driver phone number already exist.`).addClass("error");
+                            return;
+                        }
+                         
                     }
                 }
 
@@ -159,29 +165,35 @@ $(function() {
              errorDisplay('#loader', 'The date and time for gate in is required.', 'error');
              return false;
          }
+         $client = $("#clientId").val();
+         if($client == "") {
+             errorDisplay('#loader', 'Choose a client.', 'error');
+             return false;
+         }
          $loadingSite = $("#loadingSite").val();
          if($loadingSite == "") {
              errorDisplay('#loader', 'Choose a loading site', 'error');
              return false;
          }
-         $transporterId = $("#transporter").val();
-         if($transporterId == "") {
-             errorDisplay('#loader', 'Choose a transporter', 'error');
-             return false;
-         }
-         $truckId = $("#truckId").val();
+         $truckId = $("#searchTruckNo").val();
          if($truckId == "") {
-             errorDisplay('#loader', 'Choose a truck', 'error');
+             errorDisplay('#loader', 'Enter the truck number or choose from the pop up list', 'error');
              return false;
          }
-         $driverId = $("#driverId").val();
+         $transporterId = $("#searchTransporter").val();
+         if($transporterId == "") {
+             errorDisplay('#loader', 'Enter transporter information or choose from the pop up list', 'error');
+             return false;
+         }
+         
+         $driverId = $("#searchDriver").val();
          if($driverId == "") {
-             errorDisplay('#loader', 'Choose a driver.', 'error');
+             errorDisplay('#loader', 'Enter the driver information or choose from the pop up list', 'error');
              return false;
          }
          $productId = $("#productId").val();
          if($productId == "") {
-             errorDisplay('#loader', 'Please, choose a product', 'error');
+             errorDisplay('#loader', 'Choose a product', 'error');
              return false;
          }
          $destinationState = $("#destinationState").val();
