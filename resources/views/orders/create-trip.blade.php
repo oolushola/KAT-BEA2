@@ -324,15 +324,16 @@
             <div class="col-md-4">
                 <div class="form-group" id="exactLocationHolder">
                     <label class="font-weight-semibold">Destination *</label>
+                    {{ $recid[0]->exact_location_id }}
                     <select class="form-control" name="exact_location_id" id="exactLocation">
                         <option value="">Exact destination</option>
                         @if(isset($recid))
                             @foreach($exactdestinations as $destination)
                                 @if($destination->transporter_to_state_id == $recid[0]->destination_state_id)
-                                    @if($recid[0]->exact_location_id == $destination->transporter_destination)
+                                    @if(trim($recid[0]->exact_location_id) == trim($destination->transporter_destination))
                                     <option value="{{$destination->transporter_destination}}" selected>{{$destination->transporter_destination}}</option>
                                     @else
-                                    <option value="{{$destination->id}}">{{$destination->transporter_destination}}</option>
+                                    <option value="{{$destination->transporter_destination}}">{{$destination->transporter_destination}}</option>
                                     @endif
                                 @endif
                             @endforeach

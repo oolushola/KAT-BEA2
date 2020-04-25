@@ -56,13 +56,13 @@
                     <div id="singleEntryForm">
                         <div class="form-group">
                             <label>From</label>
-                            <select class="form-control form-control-select2" name="transporter_from_state_id" id="fromStateId">
+                            <select class="form-control form-control-select2" name="transporter_from_state_id" id="fromClientId">
                                 <option value="0">Choose Starting Point</option>
-                                @foreach($states as $state)
-                                @if(isset($recid) && ($recid->transporter_from_state_id == $state->regional_state_id))
-                                    <option value="{{$state->regional_state_id}}" selected>{{$state->state}}</option>
+                                @foreach($superClients as $client)
+                                @if(isset($recid) && ($recid->transporter_from_state_id == $client->id))
+                                    <option value="{{$client->id}}" selected>{{$client->parent_name}}</option>
                                 @else
-                                    <option value="{{$state->regional_state_id}}">{{$state->state}}</option>
+                                    <option value="{{$client->id}}">{{$client->parent_name}}</option>
                                 @endif
                                 @endforeach
                             </select>
@@ -89,7 +89,7 @@
 
                         <div class="form-group">
                             <label>Tonnage</label>
-                            <input type="number" class="form-control" placeholder="Tonnage(Kg)" name="transporter_tonnage" id="tonnage" value="<?php if(isset($recid)){ echo $recid->transporter_tonnage; }?>">
+                            <input type="number" class="form-control" placeholder="Tonnage(Kg)" name="transporter_tonnage" id="tonnage" value="<?php if(isset($recid)){ echo $recid->transporter_tonnage; } else { echo 30000; }?>">
                         </div>
 
                         <div class="form-group">
@@ -129,6 +129,7 @@
                     <thead class="table-info">
                         <tr style="font-size:9px;">
                             <th>#</th>
+                            <th>From</th>
                             <th>Destination</th>
                             <th>State on AX</th>
                             <th>Tons</th>
@@ -145,6 +146,7 @@
                             ?>
                             <tr class="{{$css}}" style="font-size:8px;">
                                 <td>{{$counter}}</td>
+                                <td>{{ $transporterrate->parent_name }}</td>
                                 <td>{{$transporterrate->transporter_destination}}</td>
                                 <td>{{$transporterrate->state}}</td>
                                 <td>{{$transporterrate->transporter_tonnage}}</td>

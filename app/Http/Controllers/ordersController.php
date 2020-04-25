@@ -79,7 +79,7 @@ class ordersController extends Controller
     public function clientLoadingSite(Request $request) {
         $answer = '<label class="font-weight-semibold">Loading Site</label>
                     <select class="form-control" name="loading_site_id" id="loadingSite">
-                        <option value="0">View all loading site</option>';
+                        <option value="">View all loading site</option>';
         
         $loadingsites = DB::SELECT(
             DB::RAW(
@@ -129,7 +129,7 @@ class ordersController extends Controller
     public function getExactDestination(request $request) {
         $answer = '<label class="font-weight-semibold">Destination</label>
                     <select class="form-control" name="exact_location_id" id="exactLocation">
-                        <option value="0">Exact destination</option>';
+                        <option value="">Exact destination</option>';
         
         $exactdestions = transporterRate::SELECT('transporter_destination')->WHERE('transporter_to_state_id', $request->state_id)->distinct()->GET();
         foreach($exactdestions as $destination){
@@ -332,7 +332,7 @@ class ordersController extends Controller
                 $request->driver_id = $addNewDriver->id;
             }
         }
-        $check = trip::WHERE('gate_in', $request->gate_in)->WHERE('loading_site_id', $request->loading_site_id)->exists();
+        $check = trip::WHERE('truck_id', $request->truck_id)->WHERE('tracker', '<', 8)->WHERE('trip_status', '!=', 0)->exists();
         if($check) {
             return 'exists';
         }
@@ -383,7 +383,7 @@ class ordersController extends Controller
         $transporterNumber = transporter::findOrFail($recid[0]->transporter_id);
         $getTruckTypeId = trucks::SELECT('truck_type_id')->WHERE('id', $recid[0]->truck_id)->GET();
         $truckType = truckType::findOrFail($getTruckTypeId)->last();
-        $exactdestinations = transporterRate::ORDERBY('transporter_destination', 'ASC')->GET();
+        $exactdestinations = transporterRate::SELECT('transporter_destination', 'transporter_to_state_id')->ORDERBY('transporter_destination', 'ASC')->DISTINCT()->GET();
         $driver = drivers::findOrFail($recid[0]->driver_id);
         $truckTypes = truckType::SELECT('truck_type')->ORDERBY('truck_type', 'ASC')->DISTINCT()->GET();
         
@@ -449,7 +449,7 @@ class ordersController extends Controller
             ]);  
         }
 
-        $check = trip::WHERE('gate_in', $request->gate_in)->WHERE('loading_site_id', $request->loading_site_id)->WHERE('id', '<>', $id)->exists();
+        $check = trip::WHERE('truck_id', $request->truck_id)->WHERE('tracker', '<', 8)->WHERE('trip_status', '!=', 0)->WHERE('id', '<>', $id)->exists();
         if($check) {
             return 'exists';
         }
@@ -461,6 +461,8 @@ class ordersController extends Controller
                 $stateId = loadingSite::SELECT('state_domiciled')->WHERE('id', $loading_site_id)->GET();
                 $parentCompany = client::findOrFail($request->client_id);
 
+                $parentId = $parentCompany->super_client_id;
+
                 $clientRateForSelectedTrip = clientFareRate::SELECT('amount_rate')->WHERE('client_id', $parentCompany->parent_company_id)->WHERE('from_state_id', $stateId[0]->state_domiciled)->WHERE('to_state_id', $request->destination_state_id)->WHERE('tonnage', $request->tonnage)->WHERE('destination', $request->exact_location_id)->GET();
 
                 if(sizeof($clientRateForSelectedTrip)>0){
@@ -469,7 +471,7 @@ class ordersController extends Controller
                     $client_rate = 0;
                 }
 
-                $transporterRateforSelectedTrip = transporterRate::SELECT('transporter_amount_rate')->WHERE('transporter_from_state_id', $stateId[0]->state_domiciled)->WHERE('transporter_to_state_id', $request->destination_state_id)->WHERE('transporter_tonnage', $request->tonnage)->WHERE('transporter_destination', $request->exact_location_id)->GET();
+                $transporterRateforSelectedTrip = transporterRate::SELECT('transporter_amount_rate')->WHERE('transporter_from_state_id', $parentId)->WHERE('transporter_to_state_id', $request->destination_state_id)->WHERE('transporter_tonnage', $request->tonnage)->WHERE('transporter_destination', $request->exact_location_id)->GET();
 
                 if(sizeof($transporterRateforSelectedTrip)>0) {
                     $transporter_rate = $transporterRateforSelectedTrip[0]->transporter_amount_rate;
