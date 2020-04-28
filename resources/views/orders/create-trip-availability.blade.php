@@ -107,7 +107,7 @@
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <!-- <div class="col-md-4">
                 <div class="form-group">
                     <label class="font-weight-semibold">Transporter Name *</label>
                     <input type="text" value="{{$recid[0]->transporter_name}}" name="transporter_name" id="searchTransporter" class="form-control">
@@ -132,7 +132,24 @@
                     </table>
                 </div>
                 
+            </div> -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="font-weight-semibold">Transporter Name *</label>
+                    <select name="transporter_id" id="transporterIdValue" class="form-control">
+                        <option value="">Choose a Transporter</option>
+                        @foreach($transporters as $transporter)
+                            @if(isset($recid) && $recid[0]->transporter_id == $transporter->id)
+                            <option value="{{$transporter->id}}" selected>{{ucwords($transporter->transporter_name)}}</option>
+                            @else
+                            <option value="{{$transporter->id}}">{{ucwords($transporter->transporter_name)}}</option>
+                            @endif
+                        @endforeach
+                    </select>
+                </div>
+                
             </div>
+
             <div class="col-md-4" id="transporterPhoneNumber">
                 <div class="form-group">
                     <label class="font-weight-semibold">Transporter's Phone Number *</label>
@@ -229,10 +246,10 @@
                         @if(isset($recid))
                             @foreach($exactdestinations as $destination)
                                 @if($destination->transporter_to_state_id == $recid[0]->destination_state_id)
-                                    @if($recid[0]->exact_location_id == $destination->transporter_destination)
+                                    @if(trim($recid[0]->exact_location_id) == trim($destination->transporter_destination))
                                     <option value="{{$destination->transporter_destination}}" selected>{{$destination->transporter_destination}}</option>
                                     @else
-                                    <option value="{{$destination->id}}">{{$destination->transporter_destination}}</option>
+                                    <option value="{{$destination->transporter_destination}}">{{$destination->transporter_destination}}</option>
                                     @endif
                                 @endif
                             @endforeach

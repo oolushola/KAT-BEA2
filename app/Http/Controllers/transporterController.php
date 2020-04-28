@@ -23,14 +23,17 @@ use Mail;
 use App\offloadWaybillRemark;
 use App\tripWaybill;
 use App\PaymentHistory;
+use App\User;
 
 class transporterController extends Controller
 {
     public function index() {
-        $transporters = transporter::ORDERBY('transporter_name')->PAGINATE(50);
+        $transporters = transporter::ORDERBY('transporter_name')->GET();
+        $users = User::WHERE('role_id', 6)->ORWHERE('role_id', 4)->GET();
         return view('transportation.transporter', 
             compact(
-                'transporters'
+                'transporters',
+                'users'
             )
         );
     }
@@ -67,14 +70,16 @@ class transporterController extends Controller
     }
 
     public function edit($id) {
-        $transporters = transporter::ORDERBY('transporter_name')->PAGINATE(50);
+        $transporters = transporter::ORDERBY('transporter_name')->GET();
         $transporterDocuments = transporterDocuments::WHERE('transporter_id', $id)->GET(); 
+        $users = User::WHERE('role_id', 6)->ORWHERE('role_id', 4)->GET();
         $recid = transporter::findOrFail($id);
         return view('transportation.transporter', 
             compact(
                 'transporters',
                 'recid',
-                'transporterDocuments'
+                'transporterDocuments',
+                'users'
             )
         );
     }
@@ -85,29 +90,32 @@ class transporterController extends Controller
             return 'exists';
         }
         else {
+            $recid = transporter::findOrFail($id);
+            $recid->UPDATE($request->all());
 
             $documents = $request->file('document');
             $documentDescriptions = $request->description;
 
+            if($documentDescriptions){
+                foreach($documentDescriptions as $key => $descriptions){
+                    if(isset($descriptions) && $descriptions != ''){
+                        $recid = transporterDocuments::firstOrNew(['description' => $descriptions]);
+                        $recid->transporter_id = $id;
+                        $recid->description = $descriptions;     
+                        $recid->save();
+                    }
 
-            foreach($documentDescriptions as $key => $descriptions){
-                if(isset($descriptions) && $descriptions != ''){
-                    $recid = transporterDocuments::firstOrNew(['description' => $descriptions]);
-                    $recid->transporter_id = $id;
-                    $recid->description = $descriptions;     
-                    $recid->save();
-                }
-
-                if($request->hasFile('document')) {
-                    if(isset($request->document[$key]) && $request->document[$key] != ''){
-                        $updateRecord = transporterDocuments::firstOrNew(['description' => $descriptions]);
-                        $updateRecord->transporter_id = $id;
-                        $name = base64_encode($id).'-'.str_slug($descriptions).'.'.$request->document[$key]->getClientOriginalExtension();
-                        $documents_path = public_path('assets/img/transporters/documents');
-                        $documentPath = $documents_path.'/'.$name;
-                        $request->document[$key]->move($documents_path, $name);
-                        $updateRecord->document = $name;
-                        $updateRecord->save();
+                    if($request->hasFile('document')) {
+                        if(isset($request->document[$key]) && $request->document[$key] != ''){
+                            $updateRecord = transporterDocuments::firstOrNew(['description' => $descriptions]);
+                            $updateRecord->transporter_id = $id;
+                            $name = base64_encode($id).'-'.str_slug($descriptions).'.'.$request->document[$key]->getClientOriginalExtension();
+                            $documents_path = public_path('assets/img/transporters/documents');
+                            $documentPath = $documents_path.'/'.$name;
+                            $request->document[$key]->move($documents_path, $name);
+                            $updateRecord->document = $name;
+                            $updateRecord->save();
+                        }
                     }
                 }
             }
@@ -338,5 +346,20 @@ class transporterController extends Controller
         $transporterInfo->account_number = $request->accountNumber;
         $transporterInfo->save();
         return 'updated';
+    }
+
+    public function updateTripAccountOfficerId() {
+       
+       $alltrips = DB::SELECT(
+           DB::RAW(
+               'SELECT a.id, a.transporter_id, a.account_officer_id, b.assign_user_id from tbl_kaya_trips a JOIN tbl_kaya_transporters b ON a.transporter_id = b.id'
+           )
+        );
+        foreach($alltrips as $key=> $recid){
+            $recordUpdate = trip::findOrFail($recid->id);
+            $recordUpdate->account_officer_id = $recid->assign_user_id;
+            $recordUpdate->save();            
+        }
+        return 'completed...';
     }
 }

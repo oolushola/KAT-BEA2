@@ -79,6 +79,19 @@ td{
                         <div class="basicInfoDetails show">
                             <div class="form-group">
                                 <label>Transport Name</label>
+                                <select class="form-control" name="assign_user_id" id="asssignUserId">
+                                    <option value="">Assigned Person</option>
+                                    @foreach($users as $user)
+                                        @if(isset($recid) && $recid->assign_user_id == $user->id)
+                                        <option value="{{$user->id}}" selected>{{ ucwords($user->first_name)}} {{ ucwords($user->last_name) }}</option>
+                                        @else
+                                        <option value="{{$user->id}}">{{ ucwords($user->first_name)}} {{ ucwords($user->last_name) }}</option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Transport Name</label>
                                 <input type="text" class="form-control" placeholder="Sinotrucks" name="transporter_name" id="transporterName" value="<?php if(isset($recid)){ echo $recid->transporter_name; }  ?>" >
                             </div>
 
@@ -207,10 +220,10 @@ td{
         <div class="card">
             <div class="card-header header-elements-inline">
                 <h5 class="card-title">Preview Pane of Transporter</h5>
-                {{$transporters->links()}}
+                
             </div>
 
-            <div class="table-responsive">
+            <div class="table-responsive" style="max-height:670px;">
                 <table class="table table-bordered">
                     <thead class="table-info">
                         <tr style="font-size:11px;">
@@ -249,6 +262,7 @@ td{
                             <td colspan="6" class="table-success">You've not added any transporter for kaya.</td>
                         </tr>
                     @endif
+                        
                         
                         
                     </tbody>

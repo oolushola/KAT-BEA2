@@ -21,7 +21,7 @@
     
 
     <input type="hidden" name="truckNumberChecker" id="truckNumberChecker" value="<?php if(isset($recid)){ echo 1; } else { echo 0; } ?>">
-    <input type="hidden" name="transporterChecker" id="transporterChecker" value="<?php if(isset($recid)){ echo 1; } else{ echo 0; } ?>">
+    <!-- <input type="hidden" name="transporterChecker" id="transporterChecker" value="<?php if(isset($recid)){ echo 1; } else{ echo 0; } ?>"> -->
     <input type="hidden" name="driverChecker" id="driverChecker" value="<?php if(isset($recid)) { echo 1; } else { echo 0; } ?>">
 
 
@@ -204,32 +204,20 @@
             <div class="col-md-4">
                 <div class="form-group">
                     <label class="font-weight-semibold">Transporter Name *</label>
-                    <input type="text" value="<?php if(isset($recid)){ echo $recid[0]->transporter_name; } else echo ''; ?>" name="transporter_name" id="searchTransporter" class="form-control">
-                    <input type="hidden" name="transporter_id" id="transporterIdValue" value="<?php if(isset($recid)){ echo $recid[0]->transporter_id; } else echo ''; ?>">
-                </div>
-
-                <div class="table-responsive hidden" style="position:absolute; background:#f1f1f1; max-height:350px; border-radius:5px; margin-top:-20px; box-shadow:2px 2px 2px #ccc; z-index:10; font-size:11px; width:290px;" id="transporterList">
-
-                <section id="closeTransporterBank" style="font-size:11px; tect-decoration:underline; padding:5px; text-align:right; background:#fbfbfb; color:red; cursor:pointer; font-weight:bold; font-family:tahoma; font-size:10px;">Close</section>
-
-                    <table class="table table-stripped" id="transporterBank">
-                        <tbody>
-                            @if(count($transporters))
-                            <?php $iterator = 0; ?>
-                                @foreach($transporters as $transporter)
-                                    <?php $iterator+=1; 
-                                        $iterator % 2 == 0 ? $css_style = 'table-success' : $css_style='';
-                                    ?>
-                                    <tr class="hover font-weight-semibold">
-                                        <td id="{{$transporter->id}}" class="transporters">{{$transporter->transporter_name}}</td>
-                                    </tr>
-                                @endforeach
+                    <select name="transporter_id" id="transporterIdValue" class="form-control">
+                        <option value="">Choose a Transporter</option>
+                        @foreach($transporters as $transporter)
+                            @if(isset($recid) && $recid[0]->transporter_id == $transporter->id)
+                            <option value="{{$transporter->id}}" selected>{{ucwords($transporter->transporter_name)}}</option>
+                            @else
+                            <option value="{{$transporter->id}}">{{ucwords($transporter->transporter_name)}}</option>
                             @endif
-                        </tbody>
-                    </table>
+                        @endforeach
+                    </select>
                 </div>
                 
             </div>
+            
             <div class="col-md-4" id="transporterPhoneNumber">
                 <div class="form-group">
                     <label class="font-weight-semibold">Transporter's Phone Number *</label>
@@ -324,7 +312,6 @@
             <div class="col-md-4">
                 <div class="form-group" id="exactLocationHolder">
                     <label class="font-weight-semibold">Destination *</label>
-                    {{ $recid[0]->exact_location_id }}
                     <select class="form-control" name="exact_location_id" id="exactLocation">
                         <option value="">Exact destination</option>
                         @if(isset($recid))
@@ -341,6 +328,8 @@
                     </select>
                 </div>
             </div>
+
+            
 
             <div class="col-md-4">
                 <div class="form-group">

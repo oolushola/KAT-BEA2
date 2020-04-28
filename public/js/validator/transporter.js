@@ -64,6 +64,14 @@ $(function(){
 
     function validateTransporter() {
         $("#loader").removeClass('error').html('');
+
+        $asssignUserId = $("#asssignUserId").val();
+            if($asssignUserId == '') {
+                $("#loader").html('Choose who is responsible for this transporter').addClass('error');
+                $("#asssignUserId").addClass('element-error').focus();
+                return;
+            }
+
         $transporterName = $("#transporterName").val();
             if($transporterName == '') {
                 $("#loader").html('Transporter Name is required.').addClass('error');

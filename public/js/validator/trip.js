@@ -14,8 +14,8 @@ $(function() {
      * @return {Object}
      */
 
-    $("#transporter").change(function() {
-        $transporter_id = $("#transporter").val();
+    $("#transporterIdValue").change(function() {
+        $transporter_id = $("#transporterIdValue").val();
         $.get('/transporter-phone', {transporter_id:$transporter_id}, function(data){
             $("#transporterNumber").val(data[0].phone_no);
         });
@@ -180,7 +180,7 @@ $(function() {
              errorDisplay('#loader', 'Enter the truck number or choose from the pop up list', 'error');
              return false;
          }
-         $transporterId = $("#searchTransporter").val();
+         $transporterId = $("#transporterIdValue").val();
          if($transporterId == "") {
              errorDisplay('#loader', 'Enter transporter information or choose from the pop up list', 'error');
              return false;

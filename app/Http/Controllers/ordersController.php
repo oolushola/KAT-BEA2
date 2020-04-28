@@ -153,7 +153,7 @@ class ordersController extends Controller
             )
         );
         $truckAvailabilityId = base64_decode($availabilityId);
-        $exactdestinations = transporterRate::ORDERBY('transporter_destination', 'ASC')->GET();
+        $exactdestinations = transporterRate::SELECT('transporter_destination', 'transporter_to_state_id')->ORDERBY('transporter_destination', 'ASC')->DISTINCT()->GET();
         $truckTypes = truckType::SELECT('truck_type')->ORDERBY('truck_type', 'ASC')->DISTINCT()->GET();
 
         $recid = DB::SELECT(
@@ -192,18 +192,6 @@ class ordersController extends Controller
             'exact_location_id' => 'required | string',
         ]);
 
-        $transporterChecker = $request->transporterChecker;
-        if($transporterChecker != 1) {
-            $checkTransporter = transporter::WHERE('phone_no', $request->transporter_phone_no)->exists();
-            if($checkTransporter){
-                return 'transporterNumberExists';
-            }
-            else{
-                $addasNewTransporter = transporter::firstOrNew(['transporter_name' => $request->transporter_name, 'phone_no' => $request->transporter_phone_no]);
-                $addasNewTransporter->save();
-                $request->transporter_id = $addasNewTransporter->id;
-            }
-        }
 
         $truckNumberChecker = $request->truckNumberChecker;
         if($truckNumberChecker != 1){
@@ -262,6 +250,11 @@ class ordersController extends Controller
             $id = $trip->id;
             $recid = $trip::findOrFail($id);
             $recid->trip_id = $kaya_id;
+
+            $transporterRecord = transporter::findOrFail($recid->transporter_id);
+            $userIdentity = $transporterRecord->assign_user_id;
+            $recid->account_officer_id = $userIdentity;
+
             $recid->save();
 
             $updateTruckAvailabilityStatus = truckAvailability::findOrFail($request->truck_availability_id);
@@ -279,19 +272,6 @@ class ordersController extends Controller
             'destination_state_id' => 'required | integer',
             'exact_location_id' => 'required | string',
         ]);
-
-        $transporterChecker = $request->transporterChecker;
-        if($transporterChecker != 1) {
-            $checkTransporter = transporter::WHERE('phone_no', $request->transporter_phone_no)->exists();
-            if($checkTransporter){
-                return 'transporterNumberExists';
-            }
-            else{
-                $addasNewTransporter = transporter::firstOrNew(['transporter_name' => $request->transporter_name, 'phone_no' => $request->transporter_phone_no]);
-                $addasNewTransporter->save();
-                $request->transporter_id = $addasNewTransporter->id;
-            }
-        }
 
         $truckNumberChecker = $request->truckNumberChecker;
         if($truckNumberChecker != 1){
@@ -343,6 +323,9 @@ class ordersController extends Controller
             $counter = intval('0000') + intval($lastTripId) + 1;
             $kaya_id = sprintf('%04d', $counter);
 
+            $transporterRecord = transporter::findOrFail($request->transporter_id);
+            $userIdentity = $transporterRecord->assign_user_id;
+
             $addNewTrip = trip::firstOrNew(['gate_in' => $request->gate_in, 'client_id' => $request->client_id, 'loading_site_id' => $request->loading_site_id]);
             $addNewTrip->truck_id = $request->truck_id;
             $addNewTrip->transporter_id = $request->transporter_id;
@@ -355,6 +338,8 @@ class ordersController extends Controller
             $addNewTrip->account_officer = $request->account_officer;
             $addNewTrip->tracker = $request->tracker;
             $addNewTrip->trip_status = TRUE;
+            $addNewTrip->account_officer_id = $userIdentity;
+
             $addNewTrip->save();
 
             $changes = tripChanges::CREATE(['trip_id' => $addNewTrip->id, 'user_id' => $request->user_id, 'changed_keys' => 1, 'changed_values' => 'Created']);

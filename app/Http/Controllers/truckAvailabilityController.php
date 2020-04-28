@@ -57,19 +57,6 @@ class truckAvailabilityController extends Controller
             'truck_status' => 'required'
         ]);
 
-        $transporterChecker = $request->transporterChecker;
-        if($transporterChecker != 1) {
-            $checkTransporter = transporter::WHERE('phone_no', $request->transporter_phone_no)->exists();
-            if($checkTransporter){
-                return 'transporterNumberExists';
-            }
-            else{
-                $addasNewTransporter = transporter::firstOrNew(['transporter_name' => $request->transporter_name, 'phone_no' => $request->transporter_phone_no]);
-                $addasNewTransporter->save();
-                $request->transporter_id = $addasNewTransporter->id;
-            }
-        }
-
         $truckNumberChecker = $request->truckNumberChecker;
         if($truckNumberChecker != 1){
             $getTruckTypeId = truckType::SELECT('id')->WHERE('tonnage', $request->tonnage)->WHERE('truck_type', $request->truck_type)->GET();

@@ -49,14 +49,8 @@ $(function(){
         });
     });
 
-    $(document).on('click', '.transporters', function(){
-        $transporter_id = $(this).attr('id');
-        $text = $(this).html();
-        $('#searchTransporter').val($text);
-        $('#transporterIdValue').val($transporter_id);
-        $("#transporterList").addClass("hidden");
-        $('#transporterChecker').val(1);
-
+    $(document).on('change', '#transporterIdValue', function(){
+        $transporter_id = $(this).val();
         $.get('/transporter-phone', {transporter_id:$transporter_id}, function(data){
             $("#transporterNumber").val(data[0].phone_no);
         });
@@ -149,7 +143,7 @@ $(function(){
             messageDisplayer('#errorMessage', 'Tonnage is required.', 'error')
             return false
         }
-        let transporter = $('#searchTransporter').val();
+        let transporter = $('#transporterIdValue').val();
         if(transporter == '') {
             messageDisplayer('#errorMessage', 'Transporter is required.', 'error')
             return false

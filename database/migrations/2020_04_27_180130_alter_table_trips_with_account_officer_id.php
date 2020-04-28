@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AlterTableClientsWithSuperId extends Migration
+class AlterTableTripsWithAccountOfficerId extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AlterTableClientsWithSuperId extends Migration
      */
     public function up()
     {
-        Schema::table('tbl_kaya_clients', function (Blueprint $table) {
-            $table->integer('super_client_id')->after('id');
+        Schema::table('tbl_kaya_trips', function (Blueprint $table) {
+            $table->integer('account_officer_id')->after('account_officer')->nullable();
         });
     }
 
@@ -25,8 +25,8 @@ class AlterTableClientsWithSuperId extends Migration
      */
     public function down()
     {
-        Schema::table('tbl_kaya_clients', function (Blueprint $table) {
-            $table->dropColumn('super_client_id')->after('super_client_id');
+        Schema::table('tbl_kaya_trips', function (Blueprint $table) {
+            $table->dropColumn('account_officer_id');
         });
     }
 }
