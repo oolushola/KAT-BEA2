@@ -8,6 +8,7 @@ class transporter extends Model
 {
     protected $table = 'tbl_kaya_transporters';
     protected $fillable = [
+        'assign_user_id',
         'transporter_name',
         'email',
         'phone_no',

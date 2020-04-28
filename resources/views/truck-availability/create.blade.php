@@ -6,7 +6,7 @@
 <form method="POST" name="frmTruckAvailability" id="frmTruckAvailability">
     @csrf
     <input type="hidden" name="truckNumberChecker" id="truckNumberChecker" value="0">
-    <input type="hidden" name="transporterChecker" id="transporterChecker" value="0">
+    <!-- <input type="hidden" name="transporterChecker" id="transporterChecker" value="0"> -->
     <input type="hidden" name="driverChecker" id="driverChecker" value="0">
     
     <div class="card">
@@ -105,26 +105,16 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <label class="font-weight-semibold">Transporter Name *</label>
-                        <input type="text" name="transporter_name" id="searchTransporter" class="form-control">
-                        <input type="hidden" name="transporter_id" id="transporterIdValue">
-                    </div>
-
-                    <div class="table-responsive hidden" style="position:absolute; background:#f1f1f1; max-height:350px; border-radius:5px; margin-top:-20px; box-shadow:2px 2px 2px #ccc; z-index:10; font-size:11px; width:290px;" id="transporterList">
-                        <table class="table table-stripped" id="transporterBank">
-                            <tbody>
-                                @if(count($transporters))
-                                <?php $iterator = 0; ?>
-                                    @foreach($transporters as $transporter)
-                                        <?php $iterator+=1; 
-                                            $iterator % 2 == 0 ? $css_style = 'table-success' : $css_style='';
-                                        ?>
-                                        <tr class="hover font-weight-semibold">
-                                            <td id="{{$transporter->id}}" class="transporters">{{$transporter->transporter_name}}</td>
-                                        </tr>
-                                    @endforeach
+                        <select name="transporter_id" id="transporterIdValue" class="form-control">
+                            <option value="">Choose a Transporter</option>
+                            @foreach($transporters as $transporter)
+                                @if(isset($recid) && $recid[0]->transporter_id == $transporter->id)
+                                <option value="{{$transporter->id}}" selected>{{ucwords($transporter->transporter_name)}}</option>
+                                @else
+                                <option value="{{$transporter->id}}">{{ucwords($transporter->transporter_name)}}</option>
                                 @endif
-                            </tbody>
-                        </table>
+                            @endforeach
+                        </select>
                     </div>
                     
                 </div>
