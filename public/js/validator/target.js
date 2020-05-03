@@ -1,16 +1,41 @@
 $(function(){
     $("#addTarget").click(function(e) {
         e.preventDefault();
-        validateMonthlyTarget('/kaya-target');
+        validateMonthlyTarget('/kaya-target', '/kaya-target');
     });
 
     $("#updateTarget").click(function(e) {
         e.preventDefault();
         $id = $("#id").val();
-        validateMonthlyTarget(`/kaya-target/${$id}`);
+        validateMonthlyTarget(`/kaya-target/${$id}`, '/kaya-target');
+    });
+
+    //Business unit target
+
+    $('#addMonthlyBuhTarget').click(function(e) {
+        e.preventDefault();
+        $userId = $('#userId').val();
+        if($userId == '') {
+            $("#loader").html('Choose the user you want to assign the target to').addClass('error');
+            $("#userId").focus();
+            return false;
+        }
+        validateMonthlyTarget('/buh-target', '/buh-target')
     })
 
-    function validateMonthlyTarget(url) {
+    $('#updateMonthlyBuhTarget').click(function(e) {
+        e.preventDefault();
+        $id = $('#id').val();
+        $userId = $('#userId').val();
+        if($userId == '') {
+            $("#loader").html('Choose the user you want to assign the target to').addClass('error');
+            $("#userId").focus();
+            return false;
+        }
+        validateMonthlyTarget('/buh-target/'+$id, '/buh-target')
+    })
+
+    function validateMonthlyTarget(url, pageReloadUrl) {
         $("#loader").removeClass('error').html('');
         $target = $("#monthlyTarget").val();
             if($target == "") {
@@ -27,7 +52,7 @@ $(function(){
             else {
                 if(data === 'saved' || data == 'updated') {
                     $("#loader").html(`Target for the month ${data} successfully.`).addClass('error').fadeIn(3000).fadeOut(5000);
-                    $pageReload = '/kaya-target';
+                    $pageReload = pageReloadUrl;
                     window.location=$pageReload;
                 }
             }

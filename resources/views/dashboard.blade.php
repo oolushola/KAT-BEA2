@@ -1,8 +1,17 @@
+
 @if(!isset(Auth::user()->email))
 <script>window.location.href="/"</script>
 
-@elseif(Auth::user()->role_id == 5 || Auth::user()->role_id  == 6)
+@elseif(Auth::user()->role_id == 5)
 <script>window.location.href='/update-trip'</script>
+
+@elseif(Auth::user()->role_id == 6)
+<?php 
+    $roleId = sha1(Auth::user()->role_id);
+    $user_id = base64_encode(Auth::user()->id);
+    $url = '/performance-metrics/'.$roleId.'/'.$user_id;
+?>
+<script>window.location.href=<?php echo json_encode($url); ?>;</script>
 
 @elseif(Auth::user()->role_id == 7)
 <script>window.location.href='/offloading/my-trips-view'</script>
