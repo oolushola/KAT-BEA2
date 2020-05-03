@@ -1,9 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="description" content="Welcome to Kaya Africa.">
+    <meta name="keywords" content="Transportation, Logistics, Confectionaries, Finance, Transport, Service, Cargo, Automation, Trucks">
+    <meta name="author" content="Kaya Africa Technology">
+
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>@yield('title')</title>
 	<noscript>Hey, you need to enable javascript before using this application</noscript>
@@ -19,15 +22,20 @@
 	<link href="{{URL::asset('assets/css/colors.min.css')}}" rel="stylesheet" type="text/css">
 	<link rel="stylesheet" href="{{URL::asset('css/custom.css')}}" type="text/css" />
 	<link rel="stylesheet" href="{{URL::asset('css/print-master.css')}}" type="text/css" media="all" />
-    <link rel="shortcut icon" href="{{URL::asset('/assets/img/kaya/kaya-africa-techonology-nig-ltd.PNG')}}" />
-	@yield('css')
+	<link rel="shortcut icon" href="{{URL::asset('/assets/img/kaya/kaya-africa-techonology-nig-ltd.PNG')}}" />
+	<link rel="apple-touch-icon-precomposed" href="{{URL::asset('/assets/img/kaya/kaya-africa-techonology-nig-ltd.PNG')}}">
 
+	@yield('css')
 
 </head>
 
 <body>
 @if(Auth::user())
-<?php $auth = Auth::user()->role_id; ?>
+<?php 
+	$auth = Auth::user()->role_id; 
+	$usertIdentity = base64_encode(Auth::user()->id);
+	$userRole = sha1($auth);
+?>
 	<!-- Main navbar -->
 	<div class="navbar navbar-expand-md navbar-dark">
 		<p style="font-size:20px; margin:0; padding:0; margin-top:8px;">Káyá Africa Technology</p>
@@ -166,8 +174,8 @@
 									@if(Auth::user()->role_id == 3) Finance Officer @endif
 									@if(Auth::user()->role_id == 4) Visibility Officer @endif
 									@if(Auth::user()->role_id == 5) Field Ops Officer @endif
-									@if(Auth::user()->role_id == 6 && Auth::user()->email=='success.iziomo@kayaafrica.co') Transport Manager @endif
-									@if(Auth::user()->role_id == 6) Transport Supervisor @endif
+									@if(Auth::user()->role_id == 6 && Auth::user()->email=='success.iziomo@kayaafrica.co') Transport Manager
+									@elseif(Auth::user()->role_id == 6) Transport Supervisor @endif
 									@if(Auth::user()->role_id == 7) Ad-hoc Staff @endif
 								</div>
 							</div>
@@ -191,89 +199,14 @@
 						</li>
 						@endif
 
-						@if($auth == 1 || $auth == 2)
-						<li class="nav-item-header"><div class="text-uppercase font-size-xs line-height-xs">Administrative Purpose</div> <i class="icon-menu" title="Main"></i></li>
-
-						<li class="nav-item nav-item-submenu">
-							<a href="#" class="nav-link"><i class="icon-cog"></i> <span>Preference Settings</span></a>
-
-							<ul class="nav nav-group-sub" data-submenu-title="Starter kit">
-								<li class="nav-item"><a href="{{URL('companies-profile')}}" class="nav-link active">Kaya Profile</a></li>
-								<li class="nav-item"><a href="{{URL('product-category')}}" class="nav-link">Product Category</a></li>
-								<li class="nav-item">
-                                    <a href="{{URL('products')}}" class="nav-link">Products</a>
-                                </li>
-								<li class="nav-item">
-									<a href="{{URL('truck-types')}}" class="nav-link">Truck Types</a>
-								</li>
-								<li class="nav-item">
-									<a href="{{URL('loading-sites')}}" class="nav-link">Loading Sites</a>
-								</li>
-								<li class="nav-item">
-									<a href="{{URL('cargo-availability')}}" class="nav-link">Available Cargo</a>
-								</li>
-								<li class="nav-item">
-									<a href="{{URL('kaya-target')}}" class="nav-link">Targets</a>
-								</li>
-								<li class="nav-item">
-									<a href="{{URL('invoice-subheading')}}" class="nav-link">Invoice Subheading</a>
-								</li>
-							</ul>
-						</li>
-						@endif
-
-						@if($auth == 1 || $auth == 4 || $auth == 7)  
-						<li class="nav-item-header">
-                            <div class="text-uppercase font-size-xs line-height-xs">FOR AD-HOC STAFFS</div> 
-                            <i class="icon-menu" title="Forms"></i>
-                        </li>
-                        
+						
 						<li class="nav-item">
-							<a href="{{URL('offloading/my-trips-view')}}" class="nav-link">
-								<i class="icon-truck"></i>
-								<span>My Trips</span>
-								<span class="badge bg-success align-self-center ml-auto"></span>
-							</a>
-						</li>
-						@endif
-
-
-						@if($auth == 1 || $auth == 2)
-						<li class="nav-item-header">
-                            <div class="text-uppercase font-size-xs line-height-xs">Users</div> 
-                            <i class="icon-menu" title="Forms"></i>
-                        </li>
-                        
-						<li class="nav-item">
-							<a href="{{URL('user-registration')}}" class="nav-link">
-								<i class="icon-user-plus"></i>
-								<span>Register User</span>
-								<span class="badge bg-success align-self-center ml-auto"></span>
-							</a>
-						</li>
-
-						<li class="nav-item">
-							<a href="{{URL('users/assign-adhoc-staff-to-region')}}" class="nav-link">
-								<i class="icon-users2"></i>
-								<span>Assign an ad-hoc to a region</span>
-								<span class="badge bg-success align-self-center ml-auto"></span>
+							<a href="{{URL('performance-metrics/'.$userRole.'/'.$usertIdentity)}}" class="nav-link">
+								<i class="icon-stats-bars2"></i>
+								<span>Performance Metric</span>
 							</a>
 						</li>
 						
-						<li class="nav-item-header">
-                            <div class="text-uppercase font-size-xs line-height-xs">Our Clients</div> 
-                            <i class="icon-menu" title="Forms"></i>
-                        </li>
-
-						<li class="nav-item">
-							<a href="{{URL('clients')}}" class="nav-link">
-								<i class="icon-list-ordered"></i>
-								<span>Clients</span>
-								<span class="badge bg-success align-self-center ml-auto">{!! Session::get('client') !!} Active Clients</span>
-							</a>
-						</li>
-
-						@endif
 
 						<li class="nav-item-header">
                             <div class="text-uppercase font-size-xs line-height-xs">TRIPS
@@ -410,80 +343,96 @@
 
 									</ul>
 								</li>
-								
-								
 							</ul>
 						</li>
+						@endif
+
+						@if($auth == 1 || $auth == 4 || $auth == 7)  
+						<li class="nav-item-header">
+                            <div class="text-uppercase font-size-xs line-height-xs">FOR AD-HOC STAFFS</div> 
+                            <i class="icon-menu" title="Forms"></i>
+                        </li>
                         
-						<!-- <li class="nav-item">
-							<a href="{{URL('financials/overview')}}" class="nav-link">
-								<i class="icon-eye"></i>
-								<span>Overview</span>
-							</a>
-						</li>
 						<li class="nav-item">
-							<a href="{{URL('financials/dashboard')}}" class="nav-link">
-								<i class="icon-coins"></i>
-								<span>Financials</span>
+							<a href="{{URL('offloading/my-trips-view')}}" class="nav-link">
+								<i class="icon-truck"></i>
+								<span>My Trips</span>
+								<span class="badge bg-success align-self-center ml-auto"></span>
 							</a>
 						</li>
-						<li class="nav-item">
-							<a href="{{URL('transporter-rate')}}" class="nav-link">
-								<i class="icon-calculator3"></i>
-								<span>Transporter Rate</span>
-							</a>
-						</li>
+						@endif
 
-                        <li class="nav-item">
-							<a href="{{URL('payment-request')}}" class="nav-link">
-								<i class="icon-git-pull-request"></i>
-								<span>Payment Request</span>
-								<span class="badge bg-danger align-self-center ml-auto">
-									{!! Session::get('payment_request') !!} Pending
-								</span>
+
+						@if($auth == 1 || $auth == 2)
+						<li class="nav-item-header">
+                            <div class="text-uppercase font-size-xs line-height-xs">Users</div> 
+                            <i class="icon-menu" title="Forms"></i>
+                        </li>
+                        
+						<li class="nav-item">
+							<a href="{{URL('user-registration')}}" class="nav-link">
+								<i class="icon-user-plus"></i>
+								<span>Register User</span>
+								<span class="badge bg-success align-self-center ml-auto"></span>
 							</a>
 						</li>
 
 						<li class="nav-item">
-							<a href="{{URL('invoices')}}" class="nav-link">
-								<i class="icon-pencil3"></i>
-								<span>Invoices</span>
+							<a href="{{URL('users/assign-adhoc-staff-to-region')}}" class="nav-link">
+								<i class="icon-users2"></i>
+								<span>Assign an ad-hoc to a region</span>
+								<span class="badge bg-success align-self-center ml-auto"></span>
 							</a>
 						</li>
+						
+						<li class="nav-item-header">
+                            <div class="text-uppercase font-size-xs line-height-xs">Our Clients</div> 
+                            <i class="icon-menu" title="Forms"></i>
+                        </li>
+
 						<li class="nav-item">
-							<a href="{{URL('all-invoiced-trips')}}" class="nav-link">
-								<i class="icon-coins"></i>
-								<span>Invoiced</span>
+							<a href="{{URL('clients')}}" class="nav-link">
+								<i class="icon-list-ordered"></i>
+								<span>Clients</span>
+								<span class="badge bg-success align-self-center ml-auto">{!! Session::get('client') !!} Active Clients</span>
 							</a>
 						</li>
 
-						<li class="nav-item">
-							<a href="{{URL('bulk-payment')}}" class="nav-link">
-								<i class="icon-spray"></i>
-								<span>Bulk Payment</span>
-							</a>
-						</li>
+						@endif
 
-						<li class="nav-item">
-							<a href="{{URL('incentives')}}" class="nav-link">
-								<i class="icon-spray"></i>
-								<span>Incentives</span>
-							</a>
-						</li>
 
-						<li class="nav-item">
-							<a href="{{URL('local-purchase-order')}}" class="nav-link">
-								<i class="icon-feed"></i>
-								<span>L.P.O.</span>
-							</a>
-						</li>
+						@if($auth == 1 || $auth == 2)
+							<li class="nav-item-header"><div class="text-uppercase font-size-xs line-height-xs">Administrative Purpose</div> <i class="icon-menu" title="Main"></i></li>
 
-						<li class="nav-item">
-							<a href="{{URL('vat-rate')}}" class="nav-link">
-								<i class="icon-coins"></i>
-								<span>Vat Rate</span>
-							</a>
-						</li> -->
+							<li class="nav-item nav-item-submenu">
+								<a href="#" class="nav-link"><i class="icon-cog"></i> <span>Preference Settings</span></a>
+
+								<ul class="nav nav-group-sub" data-submenu-title="Starter kit">
+									<li class="nav-item"><a href="{{URL('companies-profile')}}" class="nav-link active">Kaya Profile</a></li>
+									<li class="nav-item"><a href="{{URL('product-category')}}" class="nav-link">Product Category</a></li>
+									<li class="nav-item">
+										<a href="{{URL('products')}}" class="nav-link">Products</a>
+									</li>
+									<li class="nav-item">
+										<a href="{{URL('truck-types')}}" class="nav-link">Truck Types</a>
+									</li>
+									<li class="nav-item">
+										<a href="{{URL('loading-sites')}}" class="nav-link">Loading Sites</a>
+									</li>
+									<li class="nav-item">
+										<a href="{{URL('cargo-availability')}}" class="nav-link">Available Cargo</a>
+									</li>
+									<li class="nav-item">
+										<a href="{{URL('kaya-target')}}" class="nav-link">Targets</a>
+									</li>
+									<li class="nav-item">
+										<a href="{{URL('invoice-subheading')}}" class="nav-link">Invoice Subheading</a>
+									</li>
+									<li class="nav-item">
+										<a href="{{URL('buh-target')}}" class="nav-link">BUH Monthly Target</a>
+									</li>
+								</ul>
+							</li>
 						@endif
 
 						
@@ -515,6 +464,7 @@
 							</a>
 						</li>
 						@endif
+
 					</ul>
 				</div>
 			</div>			

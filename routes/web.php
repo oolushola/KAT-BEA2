@@ -238,6 +238,14 @@ Route::group(['middleware' => 'auth'], function() {
     Route::resource('super-client', 'superClientController');
     Route::get('update-account-officer-id-column', 'transporterController@updateTripAccountOfficerId');
 
+    Route::group(['middleware' => 'bussinessUnitHead'], function() {
+        Route::get('performance-metrics', 'performanceMetricController@performanceMetrics');
+        Route::get('performance-metrics/{userid}/{role_id}', 'performanceMetricController@businessUnitHead');
+        Route::post('update-client-rate', 'performanceMetricController@updateClientRate');
+    });
+
+    Route::resource('buh-target', 'buhTargetMonthlyController');
+
 });
 
 
