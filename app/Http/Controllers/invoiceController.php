@@ -265,22 +265,24 @@ class invoiceController extends Controller
 
     public function singleInvoice($invoiceNumber) {
         $getTripById = completeInvoice::SELECT('trip_id', 'created_at', 'paid_status')->WHERE('completed_invoice_no', $invoiceNumber)->GET();
-        foreach($getTripById as $specificTrip)
-        [$trucksAndKaidArray[]] = DB::SELECT(
-            DB::RAW(
-                'SELECT a.*, b.truck_no FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b ON a.truck_id = b.id WHERE a.id = '.$specificTrip->trip_id.' '
-            )
-        );
-        
+        foreach($getTripById as $specificTrip) {
+            [$trucksAndKaidArray[]] = DB::SELECT(
+                DB::RAW(
+                    'SELECT a.*, b.truck_no FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b ON a.truck_id = b.id WHERE a.id = '.$specificTrip->trip_id.' '
+                )
+            );
+        }
 
         foreach($getTripById as $orderId) {
             $trip_id = $orderId->trip_id;
             [$completedInvoice[]] = DB::SELECT(
                 DB::RAW(
-                    'SELECT b.id, b.client_rate, b.transporter_rate, b.trip_id, b.client_id, b.customers_name, b.exact_location_id, b.gated_out, c.truck_no, c.truck_type_id, d.product, e.truck_type, e.tonnage, f.state, i.company_name, i.phone_no, i.email, i.address FROM tbl_kaya_trip_waybill_statuses a JOIN tbl_kaya_trips b JOIN tbl_kaya_trucks c JOIN tbl_kaya_products d JOIN tbl_kaya_truck_types e JOIN tbl_regional_state f JOIN tbl_kaya_clients i ON a.trip_id = b.id AND c.id = b.truck_id AND b.product_id = d.id AND c.truck_type_id = e.id AND b.destination_state_id = f.regional_state_id AND b.client_id = i.id  WHERE waybill_status = TRUE AND comment = \'Recieved\' AND invoice_status = TRUE AND b.id = '.$trip_id.' ORDER BY a.trip_id ASC'
+                    'SELECT b.id, b.loaded_weight, b.client_rate, b.transporter_rate, b.trip_id, b.client_id, b.customers_name, b.exact_location_id, b.gated_out, c.truck_no, c.truck_type_id, d.product, e.truck_type, e.tonnage, f.state, i.company_name, i.phone_no, i.email, i.address FROM tbl_kaya_trip_waybill_statuses a JOIN tbl_kaya_trips b JOIN tbl_kaya_trucks c JOIN tbl_kaya_products d JOIN tbl_kaya_truck_types e JOIN tbl_regional_state f JOIN tbl_kaya_clients i ON a.trip_id = b.id AND c.id = b.truck_id AND b.product_id = d.id AND c.truck_type_id = e.id AND b.destination_state_id = f.regional_state_id AND b.client_id = i.id  WHERE waybill_status = TRUE AND comment = \'Recieved\' AND invoice_status = TRUE AND b.id = '.$trip_id.' ORDER BY a.trip_id ASC'
                 )
             );
         }
+
+        $preferedBankDetails = client::findOrFail($completedInvoice[0]->client_id);
 
 
         $tripRecord = trip::findOrFail($trip_id);
@@ -304,6 +306,8 @@ class invoiceController extends Controller
         $clientList = client::ORDERBY('company_name', 'ASC')->GET();
 
         $invoiceSpecialRemark = invoiceSpecialRemark::WHERE('invoice_no', $invoiceNumber)->GET()->FIRST();
+        
+        $incentives = incentives::GET();
 
         return view('finance.invoice.invoice-reprint', 
             array(
@@ -323,7 +327,9 @@ class invoiceController extends Controller
                 'invoiceList' => $invoiceList,
                 'clientList' => $clientList,
                 'waybillinfos' => $waybillinfos,
-                'invoiceSpecialRemark' => $invoiceSpecialRemark
+                'invoiceSpecialRemark' => $invoiceSpecialRemark,
+                'incentives' => $incentives,
+                'preferedBankDetails' => $preferedBankDetails
                
             )
         );
@@ -627,6 +633,93 @@ class invoiceController extends Controller
         $storeData->save();
 
         return 'saved';
-        
     }
+
+    public function updateTripIncentive(Request $request) {
+        $incentive = incentives::findOrFail($request->incentive_id);
+        $tripIncentive = tripIncentives::firstORNEW(['trip_id' => $request->trip_id]);
+        $tripIncentive->incentive_description = $incentive->incentive_description;
+        $tripIncentive->amount = $incentive->amount;
+        $tripIncentive->save();
+        return 'added';
+    }
+
+    public function updateInvoiceNumberAndDate(Request $request) {
+        $newInvoiceNo = $request->complete_invoice_no;
+        $newInvoiceDate = str_replace('T', ' ', $request->date_invoiced);
+        $previousInvoiceNo = $request->previos_invoice_no;
+
+        $invoiceNo = explode('-', $newInvoiceNo);
+        $specificInvoiceNo = abs($invoiceNo[2]);
+
+        $checkInvoiceNoValidity = completeInvoice::WHERE('invoice_no', $specificInvoiceNo)->exists();
+        if($checkInvoiceNoValidity) {
+            //change the date only.
+            DB::UPDATE(
+                DB::RAW(
+                    'UPDATE tbl_kaya_complete_invoices SET created_at = "'.$newInvoiceDate.'", updated_at = "'.$newInvoiceDate.'" WHERE completed_invoice_no = "'.$previousInvoiceNo.'"  '
+                )
+            );
+            return 'invoiceNoExists';
+        }
+        else {
+            DB::UPDATE(
+                DB::RAW(
+                    'UPDATE tbl_kaya_complete_invoices SET invoice_no = "'.$specificInvoiceNo.'", completed_invoice_no = "'.$newInvoiceNo.'", created_at = "'.$newInvoiceDate.'", updated_at = "'.$newInvoiceDate.'" WHERE completed_invoice_no = "'.$previousInvoiceNo.'"  '
+                )
+            );
+            
+            return 'updated';
+        }
+    }
+
+
+    public function invoiceCollage($invoiceNumber) {
+        $companyProfile = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.first_name, b.last_name, b.phone_no, b.email FROM tbl_kaya_company_profiles a JOIN users b ON a.authorized_user_id = b.id'
+            )
+        );
+        $vatRate = vatRate::first();
+        $dateInvoiced = completeInvoice::SELECT('created_at')->WHERE('completed_invoice_no', $invoiceNumber)->FIRST();
+
+        $billingTo = DB::SELECT(
+            DB::RAW('SELECT * FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c ON a.trip_id = b.id AND b.client_id = c.id WHERE a.completed_invoice_no = "'.$invoiceNumber.'" LIMIT 1 ')
+        );
+
+        
+
+
+        $tripCounts = completeInvoice::WHERE('completed_invoice_no', $invoiceNumber)->GET()->COUNT();
+
+
+        $tripsOrginRateAndWeight = DB::SELECT(
+            DB::RAW(
+                'SELECT DISTINCT c.loading_site, b.loaded_weight, client_rate  FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_loading_sites c ON a.trip_id = b.id AND b.loading_site_id = c.id WHERE a.completed_invoice_no = "'.$invoiceNumber.'"'
+            )
+        );
+
+        foreach($tripsOrginRateAndWeight as $something) {
+            [$noOfUnits[]] = DB::SELECT(
+                DB::RAW(
+                    'SELECT COUNT(*) AS no_of_unit FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_loading_sites c ON a.trip_id = b.id AND b.loading_site_id = c.id WHERE a.completed_invoice_no = "'.$invoiceNumber.'" AND c.loading_site = "'.$something->loading_site.'" AND b.loaded_weight = "'.$something->loaded_weight.'" '
+                )
+            );
+        }
+
+        return view('finance.invoice.invoice-collage',
+            array(
+                'companyProfile' => $companyProfile,
+                'invoice_no' => $invoiceNumber,
+                'vatRateInfos' => $vatRate,
+                'dateInvoiced' => $dateInvoiced,
+                'biller' => $billingTo,
+                'tripsOrginRateAndWeight' => $tripsOrginRateAndWeight,
+                'noOfUnits' => $noOfUnits
+            
+            )
+        );
+    }
+
+    
 }

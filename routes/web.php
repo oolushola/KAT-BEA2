@@ -162,7 +162,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('advance-request-payment', 'transporterController@advanceRequestPayment');
     Route::get('balance-request-payment', 'transporterController@balanceRequestPayment');
     Route::post('upload-collected-waybill-proof', 'transporterController@uploadCollectedWaybillProof');
-    Route::get('transporter-account-update/{id}', 'transporterController@updateTransporterAccountDetails');
+//    Route::get('transporter-account-update/{id}', 'transporterController@updateTransporterAccountDetails');
     
 
     
@@ -245,7 +245,34 @@ Route::group(['middleware' => 'auth'], function() {
     });
 
     Route::resource('buh-target', 'buhTargetMonthlyController');
+    
+    Route::get('update-transporter-rate/{tripId}', 'transporterController@updateTrRate');
+    Route::get('update-client-rate/{tripId}', 'overviewController@updateClientRate');
+    Route::get('finance-update-transporter-rate/{tripId}', 'overviewController@updateTransporterRate');
+    Route::get('update-balance-payment', 'overviewController@updateTransporterRateOnBalance');
 
+    Route::get('update/invoice-incentive', 'invoiceController@updateTripIncentive');
+    Route::get('update-invoice-number-and-date', 'invoiceController@updateInvoiceNumberAndDate');
+
+    
+    
+    // Financial Record Filtering...
+    Route::get('client-loading-site-finance', 'financialController@loadingSiteOnFinance');
+    Route::get('client-loading-site-invoice-status', 'FinanceSortController@clientLoadingSiteInvoiceStatus');
+    Route::get('client-invoice-status', 'FinanceSortController@clientAndInvoiceStatus');
+    Route::get('finance-client-loading-site', 'FinanceSortController@financeClientLoadingSite');
+    Route::get('finance-client-destination', 'FinanceSortController@clientDestination');
+    Route::get('finance-invoice', 'FinanceSortController@financeInvoice');
+    Route::get('finance-date-range', 'FinanceSortController@financeDateRange');
+    Route::get('finance-client-date-range', 'FinanceSortController@financeClientDateRange');
+    Route::get('finance-client-invoice-payment', 'FinanceSortController@financeClientInvoicePayment');
+    Route::get('finance-payment-status', 'FinanceSortController@financePaymentStatus');
+    Route::get('finance-client-invoice-date-range', 'FinanceSortController@financeClientInvoiceDateRange');
+
+    //finance-client-invoice-payment
+
+    Route::get('invoice-collage/{invoiceNumber}', 'invoiceController@invoiceCollage');
+    
 });
 
 

@@ -21,10 +21,11 @@
                                     <th class="bg-primary">VALUED AT: <span id="extremeValuation"></span></th>
                                     <th colspan="3"></th>
                                 </tr> -->
-                                <tr class="text-center bg-success" style="font-size:10px;" >
+                                <tr class=" bg-success" style="font-size:10px;" >
                                     <td>SN</td>
-                                    <td class="text-center font-weight-bold">KAID</td>
-                                    <td class="font-weight-bold text-center">WAYBILL DETAILS</td>
+                                    <td class="font-weight-bold">KAID</td>
+                                    <td class="font-weight-bold">GATE OUT</td>
+                                    <td class="font-weight-bold">WAYBILL DETAILS</td>
                                     <td class="text-center">TRUCK NO.</td>
                                     <td>DESTINATION</td>
                                     <td>LOADED AT</td>
@@ -33,7 +34,9 @@
                                     <td>WAYBILL STATUS</td>
                                     <td class="text-center">NO OF DAYS</td>
                                     <td>TRANSPORTER</td>
+                                    <td>CUSTOMER</td>
                                 </tr>
+                                </thead>
                                 <tbody id="currentGateOutData">
                                     <?php $count = 0; $extremeWaybillValuation = 0; ?>
                                     @if(count($tripWaybillYetToReceive))
@@ -43,41 +46,62 @@
                                             $now = time();
                                             $gatedOut = strtotime($specificRecord->gated_out);;
                                             $datediff = $gatedOut - $now;
-                                            $numberofdays = (floor($datediff / (60 * 60 * 24)) * -1) -1;
+                                            $numberofdays = floor($datediff / (60 * 60 * 24)) * -1;
 
                                             if($numberofdays >=0 && $numberofdays <= 3){
                                                 $bgcolor = '#008000';
                                                 $color = '#fff';
+                                                $checker = '';
                                             }
                                             elseif($numberofdays >=4 && $numberofdays <= 7){
                                                 $bgcolor = '#FFBF00';
                                                 $color = '#000';
+                                                $checker = '';
                                             }
                                             else{
                                                 $bgcolor = '#FF0000';
                                                 $extremeWaybillValuation += $specificRecord->client_rate;
                                                 $color = '#000';
+                                                $checker = '';
                                             }
+
+                                            if($specificRecord->tracker == 8){
+                                                    $indicator ='<i class="icon-checkmark2" title="Offloaded"></i>';
+                                                } elseif($specificRecord->tracker == 7) {
+                                                    $checker = '<i class="icon-truck" title="Arrived Destination"></i>';
+                                                }
+                                                else{
+                                                    if($specificRecord->tracker == 6 || $specificRecord->tracker == 5) {
+                                                        $checker = '<i class="spinner icon-spinner3" title="Still On Journey"></i>'; 
+                                                    }
+                                                }
                                         ?>
-                                        <tr style="font-size:11px; color:{{ $color }}; background-color:{{ $bgcolor }}" class="text-center">
+                                        <tr style="font-size:11px; color:{{ $color }}; background-color:{{ $bgcolor }}; cursor:pointer">
                                             <td>({{ $count }})</td>
-                                            <td style="padding:0;" class="text-center">{{ $specificRecord->trip_id }}</td>
+                                            <td width="7%">
+                                                {{ $specificRecord->trip_id }} {!! $checker !!}
+                                                
+                                            </td>
+                                            <td width="7%" style="padding:0;" class="text-center">
+                                                {{ date('d-M-Y', strtotime($specificRecord->gated_out)) }}
+                                            </td>
                                             <td class="text-center">
                                                 @foreach($tripWaybills as $tripWaybill)
                                                     @if($specificRecord->id == $tripWaybill->trip_id)
-                                                    <span class="mb-2 d-block">{{$tripWaybill->sales_order_no}} {{$tripWaybill->invoice_no}}</span>
+                                                    <span class="mb-2 d-block">{{strtoupper($tripWaybill->sales_order_no)}}<br> {{ strtoupper($tripWaybill->invoice_no) }}</span>
                                                     @endif
                                                 @endforeach
                                             </td>
-                                            <td class="text-center">{{$specificRecord->truck_no}}</b></span></td>
-                                            <td>{{$specificRecord->exact_location_id}}</td>
+                                            <td class="text-center">{{ strtoupper($specificRecord->truck_no) }}</b></span></td>
+                                            <td>{{ ucwords($specificRecord->exact_location_id) }}</td>
 
                                             <td>{{ $specificRecord->loading_site }}</td>
                                             <td>{{ $specificRecord->product }}</td>
                                             <!-- <td>{{ number_format($specificRecord->client_rate, 2) }}</td> -->
-                                            <td>{{ $specificRecord->comment }}</td>
+                                            <td>{{ ucfirst($specificRecord->comment) }}</td>
                                             <td>@if($numberofdays <= 0) < A Day @elseif($numberofdays == 1) 1 Day @else {{$numberofdays}} Days @endif</td>
-                                            <td>{{ $specificRecord->transporter_name }}</td>
+                                            <td>{{ ucwords($specificRecord->transporter_name) }}</td>
+                                            <td>{{ ucwords($specificRecord->customers_name) }}</td>
                                         </tr>
                                         @endforeach
                                     @else
@@ -86,12 +110,7 @@
                                     
                                     <input type="hidden" value="{{ number_format($extremeWaybillValuation,2) }}" id="calculatedValuation">
                                 </tbody>
-                            </thead>
                         </table>
-                       
-                       
-
-                       
                        
                    </div>
                 </div>

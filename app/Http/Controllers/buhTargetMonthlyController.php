@@ -10,7 +10,7 @@ use App\User;
 class buhTargetMonthlyController extends Controller
 {
     public function index() {
-        $buhs = User::ORDERBY('first_name', 'ASC')->WHERE('role_id', 4)->orWhere('role_id', 6)->GET();
+        $buhs = User::ORDERBY('first_name', 'ASC')->WHERE('role_id', 4)->orWhere('role_id', 6)->orWHERE('email', 'timi@kayaafrica.co')->GET();
         $buhTargets = DB::SELECT(
             DB::RAW(
                 'SELECT a.*, b.first_name, b.last_name FROM tbl_kaya_buh_monthly_targets a JOIN users b ON a.user_id = b.id ORDER BY a.current_month, a.target ASC'
@@ -33,7 +33,6 @@ class buhTargetMonthlyController extends Controller
             buhMonthlyTarget::CREATE($request->all());
             return 'saved';
         }
-        
         
     }
 

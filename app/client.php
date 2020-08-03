@@ -17,6 +17,9 @@ class client extends Model
         'email',
         'country_id',
         'state_id',
-        'address'
+        'address',
+        'bank_name_payment',
+        'account_name_payment',
+        'account_no_payment'
     ];
 }

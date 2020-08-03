@@ -1,6 +1,6 @@
 @extends('layout')
 
-@section('title')Kaya ::. {{$invoice_no}} @stop
+@section('title')Kaya ::. Moving Africa @stop
 
 @section('css')
 <style>
@@ -82,6 +82,10 @@ input{
 					<div class="card-body" style="font-family:tahoma; font-size:12px;">
 						<div class="row">
 							<div class="col-md-6">
+								@if($completedInvoice[0]->company_name == 'APMT')
+								<a href="{{URL('invoice-collage/'.$invoice_no)}}">Collage This Invoice</a>
+								@endif
+
 								<div class="mb-4">
 									<img src="{{URL::asset('/assets/img/kaya/'.$companyProfile[0]->company_logo)}}" class="mb-3 mt-2" alt="company's Logo" style="width: 100px;">
 									<ul class="list list-unstyled mb-0">
@@ -98,16 +102,25 @@ input{
 							<div class="col-md-6">
 								<div class="mb-4" style="float:right">
 									<div class="text-sm-right">
-										<h2 class="text-primary mb-2 mt-md-2">Invoice No: {!! $invoice_no !!}</h2>
-										<ul class="list list-unstyled mb-0">
-											<li>Date: <span  class="font-weight-bold">
-												<?php
-													$array = explode(" ", $dateInvoiced[0]->created_at);
-													echo ltrim(date('dS \of F, Y', strtotime($array[0])), '0');
-												?>
-											</span></li>
-										</ul>
-									</div>
+										<span id="defaultInvoiceNoAndDate">
+											<h2 class="text-primary mb-2 mt-md-2">Invoice No: {!! $invoice_no !!}</h2>
+											<ul class="list list-unstyled mb-0">
+												<li>Date: <span  class="font-weight-bold">
+													<?php
+														$array = explode(" ", $dateInvoiced[0]->created_at);
+														echo ltrim(date('dS \of F, Y', strtotime($array[0])), '0');
+													?>
+												</span></li>
+											</ul>
+										</span>
+										<span id="alterInvoiceNoAndDate" class="hidden">
+											<h2 class="text-primary mb-2 mt-md-2">Invoice No: <input type="text" value="{{ $invoice_no }}" id="completeInvoiceNo" class="changeInvNoDate"></h2>
+											<span class="d-block">Date: <input type="datetime-local" value="{{ date('Y-m-d\TH:i') }}" id="dateInvoicedCompleted" class="changeInvNoDate">
+												<input type="hidden" value="{{ $invoice_no }}" id="previousInvoiceNo">
+											</span>
+											<span class="d-block" id="dateAndInvoicePlaceholder"></span>
+										</span>
+									</div> 
 								</div>
 							</div>
 						</div>
@@ -186,9 +199,16 @@ input{
 										</li>
 										<li><h6 class="font-weight-bold my-1">&#x20a6;<span id="amountPayable"></span></h6>
 										</li>
-										<li><span class="">{!! $companyProfile[0]->bank_name !!}</span></li>
-										<li>{!! $companyProfile[0]->account_name !!}</li>
-										<li>{!! $companyProfile[0]->account_no !!}</li>
+										
+										<li>@if($preferedBankDetails->bank_name_payment) <span class="">{!! $preferedBankDetails->bank_name_payment !!}</span>
+											@else <span class="">{!! $companyProfile[0]->bank_name !!}</span> @endif
+										</li>
+										<li>@if($preferedBankDetails->account_name_payment) <span class="">{!! $preferedBankDetails->account_name_payment !!}</span>
+											@else <span class="">{!! $companyProfile[0]->account_name !!}</span> @endif
+										</li>
+										<li>@if($preferedBankDetails->account_no_payment) <span class="">{!! $preferedBankDetails->account_no_payment !!}</span>
+											@else <span class="">{!! $companyProfile[0]->account_no !!}</span> @endif
+										</li>
 										<li>Nigeria</li>
 										<li><span >{!! $companyProfile[0]->tin !!}</span></li>
 									</ul>
@@ -198,9 +218,9 @@ input{
 					</div>
 
 					<div class="table-responsive">
-						<table class="table table-striped">
+						<table class="table table-striped" >
 							<thead>
-								<tr style="font-size:12px; font-family:tahoma; font-weight:bold">
+								<tr style="font-size:12px; font-family:tahoma; font-weight:bold" >
 									<th><b>Invoice Date</b></th>
 									<th><b>Customer</b></th>
 									<th><b>Product</b></th>
@@ -248,9 +268,9 @@ input{
 											<td>
 											<h6 class="mb-0">
 											<span class="defaultInfo">
-												<span class="text-primary">{!! $invoiceParams->customers_name  !!}</span>
+												<span class="text-primary">{!! ucwords($invoiceParams->customers_name) !!}</span>
 												<span class="d-block font-size-sm ">Destination: 
-													{!! $invoiceParams->state !!}, {!! $invoiceParams->exact_location_id !!}
+													{!! trim($invoiceParams->state) !!}, {!! $invoiceParams->exact_location_id !!}
 												</span>
 											</span>
 											<div class="bulkyAlter hidden">
@@ -259,6 +279,15 @@ input{
 											</div>
 											</h6>
 											<input type="hidden" name="trip_id[]" value="{!! $invoiceParams->id !!}">
+
+											@foreach($incentives as $key => $availableIncentive)
+												@if($invoiceParams->exact_location_id == $availableIncentive->exact_location)
+												<span class="font-size-sm hideOnPrint">
+													<button id="{{$availableIncentive->id}}" value="{{ $invoiceParams->id }}" class="addSpecificIncentive" style="font-size:10px; border:1px solid #000; border-radius:5px; cursor:pointer; padding:5px;">Incentive of <strong>&#x20a6;{{number_format($availableIncentive->amount,2)}}</button>
+												</span>
+												@endif
+												
+											@endforeach
 										</td>
 										<td>
 											<span class="defaultInfo">{!! $invoiceParams->product !!}</span>
@@ -276,7 +305,7 @@ input{
 											</div>
 										</td>
 										
-										<td>{!! $invoiceParams->truck_no !!}</td>
+										<td>{!! str_replace(' ', '', $invoiceParams->truck_no) !!}</td>
 										<td>
 											@foreach($waybillinfos as $waybilldetails)
 												@if($waybilldetails->trip_id == $invoiceParams->id)
@@ -628,7 +657,61 @@ input{
 				}
 			})
 		})
+
+		// Add specific incentive
+		$('.addSpecificIncentive').click(function($event) {
+			$event.preventDefault();
+			$incentiveId = $(this).attr('id')
+			$tripId = $(this).attr('value')
+			$(this).html('<i class="icon-spinner2 spinner"></i> Updating...')
+			$btn = $(this)
+			$.get('/update/invoice-incentive', { incentive_id: $incentiveId, trip_id: $tripId }, function(data) {
+				if(data === 'added') {
+					$btn.html('<i class="icon-checkmark2"></i> Updated')
+				}
+			})
+		})
+
+		// Make invoice no and date editable
+		$('#defaultInvoiceNoAndDate').dblclick(function(e) {
+			e.preventDefault()
+			$(this).addClass('hidden');
+			$('#alterInvoiceNoAndDate').removeClass('hidden')
+			$('#completeInvoiceNo').focus()
+		})
+
+		$('.changeInvNoDate').keypress(function(e) {			
+			$invoiceNo = $('#completeInvoiceNo').val();
+			$dateInvoice = $('#dateInvoicedCompleted').val();
+			$previousInvoiceNo = $('#previousInvoiceNo').val();
+			if(e.keyCode === 13) {
+				e.preventDefault();
+				$('#dateAndInvoicePlaceholder').html('<i class="icon-spinner2 spinner"></i> Please wait...')
+				$.get('/update-invoice-number-and-date', { complete_invoice_no: $invoiceNo, date_invoiced: $dateInvoice, previos_invoice_no: $previousInvoiceNo}, function(data) {
+					if(data === 'invoiceNoExists') {
+						$('#dateAndInvoicePlaceholder').html('<i class="icon-x"></i>Wrong!!! This invoice no is in use.')						
+						return false
+					}
+					else {
+						if(data === 'updated') {
+							$url = '/invoice-trip/'+$invoiceNo;
+							window.location.href = $url;
+						}
+					}
+
+				})
+			}
+			else {
+				if (e.keyCode == 27) {
+					$('#defaultInvoiceNoAndDate').removeClass('hidden')
+					$('#alterInvoiceNoAndDate').addClass('hidden')
+				}
+			}
+			
+		})
+		
 	});
+
 	
 	
 </script>

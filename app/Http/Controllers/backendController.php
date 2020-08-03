@@ -112,6 +112,17 @@ class backendController extends Controller
         $tripRecordsForTheMonth = $this->totalTripsForTheCurrentMonth();
         $totalGateOuts = trip::WHERE('gated_out', '<>', '')->WHERE('trip_status', '<>', 0)->GET()->COUNT();
 
+        foreach($tripRecordsForTheMonth as $key => $monthTripId) {
+            $monthlyGateOut[] = tripWaybill::SELECT('id', 'trip_id', 'sales_order_no', 'invoice_no', 'photo')->WHERE('trip_id', $monthTripId->id)->GET();
+        }
+
+        foreach($monthlyGateOut as $key => $values) {
+            foreach($values as $value) {
+                $monthWaybillRecord[] = $value;
+            }
+        }
+
+               
         $todaysDate = date('d');
         $count=1;
         $dateYearAndMonth = date('Y-m');
@@ -136,7 +147,7 @@ class backendController extends Controller
             )
         );
 
-        return view('dashboard', compact('getGatedOutByMonth', 'allTrips', 'monthlyTarget', 'onJourney', 'atDestination', 'offloadedTrips',  'numberofdailygatedout', 'gatedOutForTheMonth', 'countDailyTripByLoadingSite', 'loading_sites', 'noOfGatedOutTripForCurrentWeek', 'loadingBay', 'gateIn', 'allclients', 'departedLoadingBay', 'currentGateOutRecord', 'tripWaybills', 'gateInData', 'atloadingbayData', 'departedLoadingBayData', 'onJourneyData', 'atDestinationData', 'offloadedData', 'tripRecordsForTheMonth', 'totalGateOuts', 'noOfTripsPerDay', 'availableTrucks', 'tripEventListing', 'tripWaybillYetToReceive', 'specificDataRecord'));
+        return view('dashboard', compact('getGatedOutByMonth', 'allTrips', 'monthlyTarget', 'onJourney', 'atDestination', 'offloadedTrips',  'numberofdailygatedout', 'gatedOutForTheMonth', 'countDailyTripByLoadingSite', 'loading_sites', 'noOfGatedOutTripForCurrentWeek', 'loadingBay', 'gateIn', 'allclients', 'departedLoadingBay', 'currentGateOutRecord', 'tripWaybills', 'gateInData', 'atloadingbayData', 'departedLoadingBayData', 'onJourneyData', 'atDestinationData', 'offloadedData', 'tripRecordsForTheMonth', 'totalGateOuts', 'noOfTripsPerDay', 'availableTrucks', 'tripEventListing', 'tripWaybillYetToReceive', 'specificDataRecord', 'monthWaybillRecord'));
     }
 
     function displayRecordOfTrips($fieldValue, $currentDate) {
@@ -173,6 +184,13 @@ class backendController extends Controller
             )
         );
         return $query;
+    }
+
+    public function waybillDetails() {
+        $record = $this->totalTripsForTheCurrentMonth();
+        foreach($record as $data) {
+            echo $data;
+        }
     }
 
 

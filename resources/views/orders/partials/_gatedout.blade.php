@@ -40,7 +40,16 @@
         <div class="col-md-4">
             <div class="form-group">
                 <label class="font-weight-semibold">Loaded Weight<sub>(Kg)</sub></label>
-                <input type="text" class="form-control" name="loaded_weight" id="loadedWeight" value="<?php if(isset($recid)) { echo $recid[0]->loaded_weight; } ?>"> 
+                @if($recid[0]->truck_type == 'Flatbed')
+                    <select name="loaded_weight" id="loadedWeight" class="form-control">
+                        <option value="">Choose Weight</option>
+                        <option value="1 X 20FT">1 X 20FT</option>
+                        <option value="2 X 20FT">2 X 20FT</option>
+                        <option value="1 X 40FT">1 X 40FT</option>
+                    </select>
+                @else
+                <input type="text" class="form-control" name="loaded_weight" id="loadedWeight" value="<?php if(isset($recid)) { echo $recid[0]->loaded_weight; } ?>">
+                @endif
             </div>
         </div>
 

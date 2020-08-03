@@ -118,10 +118,6 @@ $(function(){
         $('#advanceLoader').html('<i class="icon-spinner3 spinner"></i> Processing...');
         submit('/approve-advance-payment', '#frmPayment', '/payment-request');
     });
-
-
-
-
     
     $(".except").click(function(){ 
         $amount = $(this).attr("value");
@@ -167,7 +163,6 @@ $(function(){
         $("#advanceNavigator").val(4);
     });
 
-    //Perform some functions here as regards totalAmountHolder
     $("#newAdvanceRate").keyup(function() {
         $getTotalAmount = $("#totalAmountHolder").val();
         $newAdvanceRate = $("#newAdvanceRate").val();
@@ -213,7 +208,7 @@ $(function(){
         }
     });
 
-    // use different difference
+    
     $("#updatePercentile").click(function(e) {
         e.preventDefault();
         $newAdvanceRate = $("#newAdvanceRate").val();

@@ -43,7 +43,7 @@ class performanceMetricController extends Controller
              $myGrossMargin[] = $myTotalRevenue - $myTotalTransporterRate;
              $myOutstanding[] = $myGrossMargin[$key] - $unitHeadSpecificTargets[$key];
 
-             if($myGrossMargin[$key] == 0){
+             if($myGrossMargin[$key] == 0 || $myTotalRevenue == 0){
                 $unitHeadCurrentMarkUp[] = number_format(0, 2);
              }
              else{
@@ -60,10 +60,10 @@ class performanceMetricController extends Controller
        $userId = base64_decode($userIdentity);
        $userRecord = User::findOrFail($userId);
        $role = $userRecord->role_id;
-       if($role >=1 && $role <=3){
-            return redirect('performance-metrics');
-        } 
-        else {
+    //    if($role == 1 || $role == 3 || $role == 6 ){
+    //         return redirect('performance-metrics');
+    //     } 
+        //else {
             $currentYear = date('Y');
             $currentMonth = date('F');
             
@@ -141,7 +141,7 @@ class performanceMetricController extends Controller
 
                 )
             );
-        }
+        //}
     }
 
     public function sumAndCounter($operation, $alias, $tableName, $user){

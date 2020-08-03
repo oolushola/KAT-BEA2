@@ -70,80 +70,96 @@ td{
                         <input type="hidden" name="parent_company_status" id="parent_company_status" value="@if(isset($recid)){{$recid->parent_company_status}} @endif" >
                     </div>
 
-                    <div id="parentCompanyContainer">
-                        <div class="form-group">
-                            <select class="form-control" id="parentCompany" name="parent_company_id">
-                                <option value="0">Choose Parent Company</option>
-                                @foreach($clients as $client)
-                                @if(isset($recid) && $recid->parent_company_status !=0 && $recid->parent_company_id == $client->id))
-                                <option value="{{$client->id}}" selected>{{$client->company_name}}</option>
-                                @else
-                                <option value="{{$client->id}}">{{$client->company_name}}</option>
-                                @endif
-                                @endforeach
-                            </select>
+                    <div class="row">
+                        <!-- <div id="parentCompanyContainer"> -->
+                            <div class="form-group col-md-6">
+                                <label>Parent Company</label>
+                                <select class="form-control" id="parentCompany" name="parent_company_id">
+                                    <option value="0">Choose Parent Company</option>
+                                    @foreach($clients as $client)
+                                    @if(isset($recid) && $recid->parent_company_status !=0 && $recid->parent_company_id == $client->id))
+                                    <option value="{{$client->id}}" selected>{{$client->company_name}}</option>
+                                    @else
+                                    <option value="{{$client->id}}">{{$client->company_name}}</option>
+                                    @endif
+                                    @endforeach
+                                </select>
+                            </div>
+                        <!-- </div> -->
+
+                        <div class="form-group col-md-6">
+                            <label>Company Name</label>
+                            <input type="text" class="form-control" placeholder="Kayaaafrica Technologies Nig. Limited" name="company_name" id="companyName" value="<?php if(isset($recid)) { echo $recid->company_name; } ?>">
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label>Company Name</label>
-                        <input type="text" class="form-control" placeholder="Kayaaafrica Technologies Nig. Limited" name="company_name" id="companyName" value="<?php if(isset($recid)) { echo $recid->company_name; } ?>">
-                    </div>
+                        <div class="form-group col-md-6">
+                            <label>Person of Contact</label>
+                            <input type="text" class="form-control" placeholder="John Doe" name="person_of_contact" id="personOfContact" value="<?php if(isset($recid)) { echo $recid->person_of_contact;} ?>"> 
+                        </div>
 
-                    <div class="form-group">
-                        <label>Person of Contact</label>
-                        <input type="text" class="form-control" placeholder="John Doe" name="person_of_contact" id="personOfContact" value="<?php if(isset($recid)) { echo $recid->person_of_contact;} ?>"> 
-                    </div>
+                        <div class="form-group col-md-6">
+                            <label>Phone Number</label>
+                            <input type="number" class="form-control" placeholder="+234-***-***-****" name="phone_no" id="phone_no" value="<?php if(isset($recid)) { echo $recid->phone_no; } ?>">
+                        </div>
 
-                    <div class="form-group">
-                        <label>Phone Number</label>
-                        <input type="number" class="form-control" placeholder="+234-***-***-****" name="phone_no" id="phone_no" value="<?php if(isset($recid)) { echo $recid->phone_no; } ?>">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="text" class="form-control" placeholder="johndoe@kayaafrica.co" name="email" id="email" value="<?php if(isset($recid)){ echo $recid->email; } ?>">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Country</label>
-                        <select class="form-control form-control-select2" name="country_id" id="country">
-                            <option value="0">Choose country of Operation</option>
-                            @foreach($countries as $country)
-                                @if(isset($recid))
-                                    @if($recid->country_id == $country->regional_country_id)
-                                    <option value="{{$country->regional_country_id}}" selected>{{$country->country}}</option>
+                        <div class="form-group col-md-6">
+                            <label>Email</label>
+                            <input type="text" class="form-control" placeholder="johndoe@kayaafrica.co" name="email" id="email" value="<?php if(isset($recid)){ echo $recid->email; } ?>">
+                        </div>
+                        
+                        <div class="form-group col-md-6">
+                            <label>Country</label>
+                            <select class="form-control form-control-select2" name="country_id" id="country">
+                                <option value="0">Choose country of Operation</option>
+                                @foreach($countries as $country)
+                                    @if(isset($recid))
+                                        @if($recid->country_id == $country->regional_country_id)
+                                        <option value="{{$country->regional_country_id}}" selected>{{$country->country}}</option>
+                                        @else
+                                        <option value="{{$country->regional_country_id}}">{{$country->country}}</option>
+                                        @endif
                                     @else
                                     <option value="{{$country->regional_country_id}}">{{$country->country}}</option>
                                     @endif
-                                @else
-                                <option value="{{$country->regional_country_id}}">{{$country->country}}</option>
-                                @endif
-                            @endforeach
-                        </select>
-                    </div>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    <div class="form-group" id="stateHolder">
-                        <label>State</label>
-                        <select class="form-control form-control-select2" name="state_id" id="state">
-                            <option value="1">State Domiciled</option>
-                            @if(isset($recid))
-                                    @foreach($states as $state)
-                                        @if($state->regional_country_id == $recid->country_id)
-                                            @if($state->regional_state_id == $recid->state_id)
-                                                <option value="{{$state->regional_state_id}}" selected>{{$state->state}}</option>
-                                            @else
-                                                <option value="{{$state->regional_state_id}}">{{$state->state}}</option>
+                        <div class="form-group col-md-6" id="stateHolder">
+                            <label>State</label>
+                            <select class="form-control form-control-select2" name="state_id" id="state">
+                                <option value="1">State Domiciled</option>
+                                @if(isset($recid))
+                                        @foreach($states as $state)
+                                            @if($state->regional_country_id == $recid->country_id)
+                                                @if($state->regional_state_id == $recid->state_id)
+                                                    <option value="{{$state->regional_state_id}}" selected>{{$state->state}}</option>
+                                                @else
+                                                    <option value="{{$state->regional_state_id}}">{{$state->state}}</option>
+                                                @endif
                                             @endif
-                                        @endif
-                                    @endforeach
-                            @endif
-                        </select>
-                    </div>
+                                        @endforeach
+                                @endif
+                            </select>
+                        </div>
 
-                    <div class="form-group">
-                        <label>Address</label>
-                        <textarea rows="3" cols="5" class="form-control" placeholder="23, Babatunde Jose, Victoria Island, Lagos." name="address" id="address"><?php if(isset($recid)) { echo $recid->address; } ?></textarea>
+                        <div class="form-group col-md-6">
+                            <label>Address</label>
+                            <textarea rows="1" class="form-control" placeholder="23, Babatunde Jose, Victoria Island, Lagos." name="address" id="address"><?php if(isset($recid)) { echo $recid->address; } ?></textarea>
+                        </div>
+                        <legend class="font-weight-semibold"><i class="icon-coins mr-2"></i>Pay kaya into this bank account</legend>
+                        <div class="form-group col-md-4">
+                            <label>Bank Name</label>
+                            <input type="text" class="form-control font-size-sm" placeholder="Sterling Bank Nig. Plc." name="bank_name_payment" value="<?php if(isset($recid)){ echo $recid->bank_name_payment; } ?>">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Account Name</label>
+                            <input type="text" class="form-control font-size-sm" placeholder="KAT" name="account_name_payment" value="<?php if(isset($recid)){ echo $recid->account_name_payment; } ?>">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Account No</label>
+                            <input type="text" class="form-control font-size-sm" placeholder="9876543210" name="account_no_payment" value="<?php if(isset($recid)){ echo $recid->account_name_payment; } ?>">
+                        </div>
                     </div>
 
                     <div class="text-right">
@@ -153,9 +169,10 @@ td{
                         @else
                         <button type="submit" class="btn btn-primary" id="addClientDetails">Save Client Details
                         @endif
-                          <i class="icon-paperplane ml-2"></i>
+                        <i class="icon-paperplane ml-2"></i>
                         </button>
                     </div>
+                    
                 </form>
             </div>
         </div>
@@ -191,7 +208,12 @@ td{
                     ?>
                         <tr class="{{$css}}" style="font-size:10px;">
                             <td>{{$counter}}</td>
-                            <td>{{strtoupper($client->company_name)}}</td>
+                            <td>
+                                {{strtoupper($client->company_name)}}<br>
+                                @if($client->account_no_payment)
+                                <span class="badge badge-primary">Pays to: {{ ucfirst($client->bank_name_payment) }}, {{ ucfirst($client->account_no_payment) }}</span>
+                                @endif
+                            </td>
                             <td>{{ucwords($client->person_of_contact)}}</td>
                             <td>{{$client->phone_no}}</td>
                             <td>

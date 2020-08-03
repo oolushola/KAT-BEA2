@@ -9,10 +9,14 @@ th {
 }
 td{
     white-space: nowrap;
+    padding: 5px;
 }
 input::placeholder{
     font-size:18px;
     font-weight:bold;
+}
+table {
+    display: table
 }
 </style>
 @stop
@@ -54,103 +58,110 @@ input::placeholder{
                     if($advanceRequest->tracker == 7) $status = 'Arrived destination';
                     if($advanceRequest->tracker == 8) $status = 'Offloaded';
                 ?>
-                    <section class="col-md-4  mt-2 col-sm-12 col-12 mb-4">
-                    <span class="bg-danger font-weight-bold" style="border-radius:100%; padding:15px; margin-left:-20px;">{{ $count }}</span>
-                        
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <span class="font-size-sm text-primary font-weight-bold changeAccountDetails" title="{{$advanceRequest->trip_id}}" style="cursor:pointer"><i class="icon-pencil6"></i> Edit Account Details</span>
-
-                                            <span class="hidden font-size-sm text-warning font-weight-bold closeAccountDetails" title="{{$advanceRequest->trip_id}}" style="cursor:pointer"><i class="icon-menu-close2"></i> Close Account Details</span>
+                    
+                    <section class="col-md-4 col-sm-12 col-12 mb-2">
+                    <span class="bg-danger font-weight-bold" style="border-radius:100%; padding:15px; margin-left:-20px; position:relative; z-index:1000">{{ $count }}</span>
+                        <div class="card">
+                            
+                            <div class="table-responsive">
+                                <table class="" width="100%" cellpadding="2">
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                
+                                            </td>
+                                            <td class="d-block font-size-sm font-weight-bold"> {!! $status !!}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-weight-bold">Trip Details</td>
+                                            <td>
+                                                <span class="defaultInfo">
+                                                    <span class="font-weight-bold">{!! $advanceRequest->trip_id !!}</span>  
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-primary"><span class="d-block font-size-sm font-weight-bold text-danger">
+                                                <span class="d-block">Rate <span id="loader{{$advanceRequest->trip_id}}"></span> </span>
+                                                <h4 class="text-primary d-block font-weight-bold changeRate" id="changeRate{{$advanceRequest->trip_id}}" value="{{$advanceRequest->trip_id}}">&#x20a6;{!! number_format($advanceRequest->transporter_rate, 2) !!} 
+                                                </h4>
+                                                <span class="hidden" id="updateTr{{$advanceRequest->trip_id}}">
+                                                    <input type="number" value="{!! $advanceRequest->transporter_rate !!}" id="newTrValue{{$advanceRequest->trip_id}}">
+                                                    <button class="btn btn-primary d-block mt-1 updateTrRate"  title="{{$advanceRequest->trip_id}}">Update</button>
+                                                </span>
+                                            </td>
+                                            <td class="text-primary"><span class="d-block font-size-sm font-weight-bold text-danger">Destination</span>
+                                            <h4 class="text-primary d-block font-weight-bold">{!! $advanceRequest->exact_location_id !!}</h4>
                                         </td>
-                                        <td class="d-block font-size-sm font-weight-bold"> {!! $status !!}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-weight-bold">Trip Details</td>
-                                        <td>
-                                            <span class="defaultInfo">
-                                                <span class="font-weight-bold">{!! $advanceRequest->trip_id !!}</span>  
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-primary"><span class="d-block font-size-sm font-weight-bold text-danger">
-                                            <span class="d-block">Rate</span>
-                                            <h4 class="text-primary d-block font-weight-bold">&#x20a6;{!! number_format($advanceRequest->transporter_rate, 2) !!} </h4>
-                                        </td>
-                                        <td class="text-primary"><span class="d-block font-size-sm font-weight-bold text-danger">Destination</span>
-                                        <h4 class="text-primary d-block font-weight-bold">{!! $advanceRequest->exact_location_id !!}</h4>
-                                    </td>
-                                    <tr>
-                                    
-                                    <tr>
-                                        <td class="font-weight-bold">Truck Details</td>
-                                        <td>
-                                        <h6 class="mb-0">
-                                            <span class="defaultInfo">
-                                                <span class="text-primary">{!! $advanceRequest->truck_no !!}</span>
-                                                <span class="d-block font-size-sm "><strong>Tonnage</strong>: {!! $advanceRequest->tonnage/1000 !!}T</span>
-                                                <span class="d-block font-size-sm "><strong>Product</strong>: {!! $advanceRequest->product !!}</span>
-                                            </span>
-                                        </h6>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-weight-bold" colspan="2">
-                                            <span class="d-block font-size-sm text-danger"  style="text-decoration:underline">Transporter Details</span>
+                                        <tr>
+                                        
+                                        <tr>
+                                            <td class="font-weight-bold">Truck Details</td>
+                                            <td>
                                             <h6 class="mb-0">
                                                 <span class="defaultInfo">
-                                                    <span class="text-primary">{!! $advanceRequest->transporter_name !!}</span>
-                                                    <span class="d-block font-size-sm "><strong>Phone No:</strong> {!! $advanceRequest->phone_no !!}</span>
+                                                    <span class="text-primary">{!! $advanceRequest->truck_no !!}</span>
+                                                    <span class="d-block font-size-sm "><strong>Tonnage</strong>: {!! $advanceRequest->tonnage/1000 !!}T</span>
+                                                    <span class="d-block font-size-sm "><strong>Product</strong>: {!! $advanceRequest->product !!}</span>
                                                 </span>
                                             </h6>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="font-weight-bold" colspan="2">
-                                            <span class="d-block font-size-sm text-danger" style="text-decoration:underline">Bank Details</span>
-                                        
-                                        <h6 class="mb-0">
-                                            <span class="defaultInfo" id="bankDetailsDefault{{$advanceRequest->trip_id}}">
-                                                <span class="text-primary font-weight-bold">{!! $advanceRequest->account_number !!}</span>
-                                                <span class="d-block font-size-sm "><strong>Account Name:</strong>{!! $advanceRequest->account_name !!}</span>
-                                                <span class="d-block font-size-sm "><strong>Bank Name</strong>: {!! $advanceRequest->bank_name !!}</span>
-                                            </span>
-                                            <span class="defaultInfo hidden" id="bankInformation{{$advanceRequest->trip_id}}">
-                                                <span class="text-primary font-weight-bold">
-                                                    <input type="text" value="{!! $advanceRequest->account_number !!}" name="account_number[]" class="accountNumber">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-weight-bold" colspan="2">
+                                                <span class="d-block font-size-sm text-danger"  style="text-decoration:underline">Transporter Details</span>
+                                                <h6 class="mb-0">
+                                                    <span class="defaultInfo">
+                                                        <span class="text-primary">{!! $advanceRequest->transporter_name !!}</span>
+                                                        <span class="d-block font-size-sm "><strong>Phone No:</strong> {!! $advanceRequest->phone_no !!}</span>
+                                                    </span>
+                                                </h6>
+                                            </td>
+                                        </tr>
+                                        <!-- <tr>
+                                            <td class="font-weight-bold" colspan="2">
+                                                <span class="d-block font-size-sm text-danger" style="text-decoration:underline">Bank Details</span>
+                                            
+                                            <h6 class="mb-0">
+                                                <span class="defaultInfo" id="bankDetailsDefault{{$advanceRequest->trip_id}}">
+                                                    <span class="text-primary font-weight-bold">{!! $advanceRequest->account_number !!}</span>
+                                                    <span class="d-block font-size-sm "><strong>Account Name:</strong>{!! $advanceRequest->account_name !!}</span>
+                                                    <span class="d-block font-size-sm "><strong>Bank Name</strong>: {!! $advanceRequest->bank_name !!}</span>
                                                 </span>
-                                                <span class="d-block font-size-sm ">
-                                                    <strong>Account Name:</strong>
-                                                        <input type="text" value="{!! $advanceRequest->account_name !!}" class="d-block accountName" name="account_name[]">
+                                                <span class="defaultInfo hidden" id="bankInformation{{$advanceRequest->trip_id}}">
+                                                    <span class="text-primary font-weight-bold">
+                                                        <input type="text" value="{!! $advanceRequest->account_number !!}" name="account_number[]" class="accountNumber">
+                                                    </span>
+                                                    <span class="d-block font-size-sm ">
+                                                        <strong>Account Name:</strong>
+                                                            <input type="text" value="{!! $advanceRequest->account_name !!}" class="d-block accountName" name="account_name[]">
+                                                    </span>
+                                                    <span class="d-block font-size-sm ">
+                                                        <strong>Bank Name: </strong>
+                                                        <input type="text" value="{!! $advanceRequest->bank_name !!}" class="d-block bankName" name="bank_name[]">
+                                                    </span>
+                                                    <button class="mt-1 font-size-sm btn btn-danger updateTransporterAccount" value="{{$advanceRequest->transporter_id}}" title="{{$advanceRequest->trip_id}}">Update Account</button>
+                                                    
                                                 </span>
-                                                <span class="d-block font-size-sm ">
-                                                    <strong>Bank Name: </strong>
-                                                    <input type="text" value="{!! $advanceRequest->bank_name !!}" class="d-block bankName" name="bank_name[]">
-                                                </span>
-                                                <button class="mt-1 font-size-sm btn btn-danger updateTransporterAccount" value="{{$advanceRequest->transporter_id}}" title="{{$advanceRequest->trip_id}}">Update Account</button>
-                                                
-                                            </span>
-                                        </h6>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="2">
-                                            @if($advanceRequest->advance_request == TRUE)
-                                            <button class="font-weight-bold font-size-sm btn btn-warning" disabled><i class="icon-checkmark2"></i> &#x20a6;{!! number_format($advanceRequest->transporter_rate * 0.7, 2) !!}<br> Advance Requested</button>
-                                            @else
-                                            <button title="&#x20a6;{!! number_format($advanceRequest->transporter_rate * 0.7, 2) !!}" class="btn btn-primary font-weight-bold font-size-sm advanceRequest" id="{{$advanceRequest->id}}" value="{{$advanceRequest->trip_id}}">REQUEST &#x20a6;{!! number_format($advanceRequest->transporter_rate * 0.7, 2) !!}<br>ADVANCE</button>
-                                            <span id="{{$advanceRequest->trip_id}}"></span>
-                                            @endif
-                                        </td>
-                                        
-                                </tbody>
-                            </table>
+                                            </h6>
+                                            </td>
+                                        </tr> -->
+                                        <tr>
+                                            <td colspan="2">
+                                                @if($advanceRequest->advance_request == TRUE)
+                                                    <button class="font-weight-bold font-size-sm btn btn-warning" disabled><i class="icon-checkmark2"></i> &#x20a6;{!! number_format($advanceRequest->transporter_rate * 0.7, 2) !!}<br> Advance Requested</button>
+                                                @else
+                                                    <button title="&#x20a6;{!! number_format($advanceRequest->transporter_rate * 0.7, 2) !!}" class="btn btn-primary font-weight-bold font-size-sm advanceRequest" id="{{$advanceRequest->id}}" value="{{$advanceRequest->trip_id}}">REQUEST &#x20a6;{!! number_format($advanceRequest->transporter_rate * 0.7, 2) !!}<br>ADVANCE</button>
+                                                    <span id="{{$advanceRequest->trip_id}}"></span>
+                                                @endif
+                                            </td>
+                                            
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </section>
+                    
                 @endforeach
             @else
                 <h2>There are no trip available.</h2>
@@ -223,7 +234,7 @@ input::placeholder{
                                         </h6>
                                     </td>
                                 </tr>
-                                <tr>
+                                <!-- <tr>
                                     <td class="font-weight-bold" colspan="2">
                                         <span class="d-block font-size-sm text-danger" style="text-decoration:underline">Bank Details</span>
                                     
@@ -235,17 +246,20 @@ input::placeholder{
                                         </span>
                                     </h6>
                                     </td>
-                                </tr>
+                                </tr> -->
                                 <tr>
                                     <td colspan="2">
                                         <form method="POST" class="balanceRequest" id="frm{{$balanceRequest->trip_id}}" enctype="multipart/form-data" action="{{URL('upload-collected-waybill-proof')}}">
                                             @csrf
 
-                                            <input type="checkbox" class="uploadWaybillProof" value="{{$balanceRequest->trip_id}}">Upload proof of waybill &nbsp; &nbsp;
+                                            <span class="uploadWait">
+                                                <i id="uploadWait{{$balanceRequest->trip_id}}"></i>
+                                            </span>
+                                            <input type="checkbox" class="uploadWaybillProof" value="{{$balanceRequest->trip_id}}">Upload proof of waybill &nbsp; &nbsp; 
                                             
                                             <input type="hidden" name="trip_id" value="{{$balanceRequest->tripid}}">
                                             <input type="hidden" name="name" value="{{Auth::user()->first_name}} {{Auth::user()->last_name}}">
-                                            <div id="{{$balanceRequest->trip_id}}" class="hidden">
+                                            <div id="{{$balanceRequest->trip_id}}" class="hidden moreImagesPanel">
                                                 Show proof of waybill <span class="addMoreProofofWaybill  font-size-sm font-weight-semibold " style="float:right; text-decoration:underline; cursor:pointer">Add more images</span>
                                                 <div>
                                                     <span class="d-block"><input type="file" name="file[]" style="font-size:10px;"></span>
@@ -288,4 +302,27 @@ input::placeholder{
 
 @section('script')
 <script src="{{URL('js/validator/transporter.js')}}" type="text/javascript"></script>
+<script type="text/javascript">
+    $('.changeRate').dblclick(function() {
+        var id = $(this).attr('id');
+        var tripId = $(this).attr('value');
+        $(`#${id}`).addClass('hidden').removeClass('d-block');
+        $(`#updateTr${tripId}`).removeClass('hidden');
+        $('.advanceRequest').addClass('hidden');
+    });
+
+    $('.updateTrRate').click(function(e) {
+        e.preventDefault();
+        $tripId = $(this).attr('title')
+        $transporterRate = $('#newTrValue'+$tripId).val();
+        $('#loader'+$tripId).html('<i class="spinner icon-spinner ml-2"></i> Please wait...');
+        $.get('/update-transporter-rate/'+$tripId, { newTrValue: $transporterRate }, function(data) {
+            if(data == 'updated') {
+                $('#loader').html('<i class="icon-checkmark2"></i> Completed.')
+                window.location.href=""
+            }
+        })
+        
+    })
+</script>
 @stop
