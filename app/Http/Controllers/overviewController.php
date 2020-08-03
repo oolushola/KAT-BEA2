@@ -60,26 +60,52 @@ class overviewController extends Controller
     public function paymentRequest() {
         $allpendingadvanceRequests = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, a.advance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, f.transporter_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product, j.first_name, j.last_name FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i JOIN users j ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id AND j.id = b.advance_requested_by WHERE a.advance_paid = false ORDER BY b.trip_id ASC'
+                'SELECT a.id, b.id AS tripid, a.advance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.advance_requested_at, b.destination_state_id, b.exact_location_id, b.customers_name, b.client_rate, b.transporter_rate, b.loaded_weight, c.company_name, d.state, f.account_number, f.transporter_name, f.bank_name, f.account_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product, j.first_name, j.last_name, k.loading_site FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i JOIN users j JOIN tbl_kaya_loading_sites k ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id AND j.id = b.advance_requested_by AND b.loading_site_id = k.id WHERE a.advance_paid = false ORDER BY b.trip_id DESC'
             )
         );
         $allpendingbalanceRequests = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, b.id AS tripid, a.advance, a.balance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, f.transporter_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product, j.first_name, j.last_name FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i JOIN users j ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id WHERE b.balance_requested_by = j.id AND b.advance_paid = TRUE and b.balance_request = TRUE AND a.balance_paid = FALSE ORDER BY b.trip_id ASC'
+                'SELECT a.id, b.id AS tripid, a.advance, a.balance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.trip_id, b.transporter_id, b.truck_id, b.balance_requested_at, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, b.transporter_rate, c.company_name, d.state, f.account_number, f.transporter_name, f.bank_name, f.account_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product, j.first_name, j.last_name, k.loading_site FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i JOIN users j JOIN tbl_kaya_loading_sites k ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id AND k.id = b.loading_site_id WHERE b.balance_requested_by = j.id AND b.advance_paid = TRUE and b.balance_request = TRUE AND a.balance_paid = FALSE ORDER BY b.trip_id DESC'
             )
         );
         $allPendingOutstandingBalance = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, a.advance, a.balance, a.outstanding_balance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, f.transporter_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id WHERE a.advance_paid = TRUE and a.balance_paid = TRUE and a.outstanding_balance > 0 ORDER BY b.trip_id ASC'
+                'SELECT a.id, a.advance, a.balance, a.outstanding_balance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, f.account_number, f.transporter_name, f.bank_name, f.account_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id WHERE a.advance_paid = TRUE and a.balance_paid = TRUE and a.outstanding_balance > 0 ORDER BY b.trip_id DESC'
             )
         );
+        
+        
+        $tripWaybills = [];
+        $advanceWaybillInfos = [];
+        
+        if(count($allpendingadvanceRequests)) {
+            foreach($allpendingadvanceRequests as $advanceRequest) {
+                $waybillCounter =  tripWaybill::WHERE('trip_id', $advanceRequest->tripid)->GET();
+                    $tripWaybills[] = $waybillCounter;
+            }
+        }
+        
+        foreach($tripWaybills as $waybills) {
+            foreach($waybills as $waybill) {
+                $advanceWaybillInfos[] = $waybill;
+            }
+        }
+        
+        
+        if(count($allpendingbalanceRequests)){
+            foreach($allpendingbalanceRequests as $balance) {
+                [$waybillStatuses[]] = tripWaybillStatus::WHERE('trip_id', $balance->tripid)->GET();
+            }
+        }
+        else{
+            $waybillStatuses = [];
+        }
+        
         $waybillInfos = tripWaybill::GET();
         $chunkPayments = bulkPayment::GET();
         $statesQuery = 'SELECT * FROM tbl_regional_state WHERE regional_country_id  = \'94\' ORDER BY state ASC ';
         $states = DB::SELECT(DB::RAW($statesQuery));
         $waybillStatus = tripWaybillStatus::GET();
-
-
         $offloadedWaybill = offloadWaybillRemark::GET();
 
         return view('finance.payment-request', 
@@ -91,7 +117,9 @@ class overviewController extends Controller
                 'states',
                 'waybillStatus',
                 'allPendingOutstandingBalance',
-                'offloadedWaybill'
+                'offloadedWaybill',
+                'advanceWaybillInfos',
+                'waybillStatuses'
             )
         );   
     }
@@ -155,7 +183,6 @@ class overviewController extends Controller
     }
 
     public function initiateBalance(Request $request, $id) {
-        return 'here';
         $salesOrderNo = '';
         $invoiceNo = '';
         $newChunkBalance = 0;
@@ -245,7 +272,7 @@ class overviewController extends Controller
     function transactQuery($paymentRequestId) {
         $answer = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, a.advance, a.standard_advance_rate, b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, e.transporter_destination, f.transporter_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporter_rates e JOIN 
+                'SELECT a.id, a.advance, a.standard_advance_rate, b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, e.transporter_destination, f.*, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporter_rates e JOIN 
                 tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id AND b.exact_location_id = e.transporter_destination and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id WHERE advance_paid = false AND a.id = '.$paymentRequestId.' ORDER BY b.trip_id ASC '
             )
         );
@@ -255,10 +282,49 @@ class overviewController extends Controller
     function transactQueryBalance($paymentRequestId) {
         $answer = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, a.advance, a.balance, a.standard_balance_rate,  b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, e.transporter_destination, f.transporter_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporter_rates e JOIN 
+                'SELECT a.id, a.advance, a.balance, a.standard_balance_rate,  b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, c.company_name, d.state, e.transporter_destination, f.*, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporter_rates e JOIN 
                 tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id AND b.client_id = c.id AND b.destination_state_id = d.regional_state_id AND b.exact_location_id = e.transporter_destination AND b.transporter_id = f.id AND b.truck_id = g.id AND g.truck_type_id = h.id AND b.product_id = i.id WHERE advance_paid = true AND a.id = '.$paymentRequestId.' ORDER BY b.trip_id ASC '
             )
         );
         return $answer;
+    }
+    
+    public function updateClientRate(Request $request, $tripId) {
+        $updateClientRate = trip::WHERE('trip_id', $tripId)->FIRST();
+        $updateClientRate->client_rate = $request->client_rate;
+        $updateClientRate->save();
+        return 'updated';
+    }
+
+    public function updateTransporterRate(Request $request, $tripId) {
+        $updateTransporterRate = trip::WHERE('trip_id', $tripId)->FIRST();
+        $updateTransporterRate->transporter_rate = $request->transporter_rate;
+
+        $updatedAdvance = 0.7 * $request->transporter_rate;
+        $updatedBalance = 0.3 * $request->transporter_rate;
+
+        $tripPaymentRecord = tripPayment::WHERE('trip_id', $updateTransporterRate->id)->FIRST();
+        $tripPaymentRecord->amount = $request->transporter_rate;
+        $tripPaymentRecord->advance = $updatedAdvance;
+        $tripPaymentRecord->balance = $updatedBalance;
+        $tripPaymentRecord->standard_advance_rate = $updatedAdvance;
+        $tripPaymentRecord->standard_balance_rate = $updatedBalance;
+        $tripPaymentRecord->save();
+        $updateTransporterRate->save();
+
+        return 'updated';
+    }
+
+    public function updateTransporterRateOnBalance(Request $request) {
+        $payment = tripPayment::findOrFail($request->payment_id);
+        $payment->balance = $request->transporter_rate - $payment->advance;
+
+        $trip = trip::findOrFail($payment->trip_id);
+        $trip->transporter_rate = $request->transporter_rate;
+        
+        $trip->save();
+        $payment->save();
+
+        return 'updated';
     }
 }

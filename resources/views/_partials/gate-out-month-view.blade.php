@@ -41,7 +41,7 @@
                                         </td>
                                         
                                         <td><p style="margin:0" class="font-weight-bold">
-                                            @foreach($tripWaybills as $tripWaybill)
+                                            @foreach($monthWaybillRecord as $tripWaybill)
                                                 @if($gateOutForTheMonth->id == $tripWaybill->trip_id)
                                                 <a href="{{URL::asset('assets/img/waybills/'.$tripWaybill->photo)}}" target="_blank" title="View waybill {{$tripWaybill->sales_order_no}}" >
                                                     <p class="mb-1">{{$tripWaybill->sales_order_no}} {{$tripWaybill->invoice_no}}</p>

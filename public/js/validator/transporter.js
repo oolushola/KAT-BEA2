@@ -352,22 +352,19 @@ $(function(){
          $event.preventDefault();
          $tripId = $(this).attr("value");
          $frmName = `#frm${$tripId}`;
+         $('#uploadWait'+$tripId).html('<i class="icon-spinner3 spinner"></i>')
          $($frmName).submit();
      });
 
      $(".balanceRequest").ajaxForm(function(data){
          if(data == "updated"){
-             window.location = '/request-transporter-payment';
+             $('.moreImagesPanel').addClass('hidden')
+             $('.requestForBalance').removeClass('hidden')
+             $('.uploadWaybillProof').prop('checked', false)
+             $('.uploadWait').addClass('hidden')
          }
          else{
              return false;
          }
      })
-
-     
-     
-
-    
-
-
 });

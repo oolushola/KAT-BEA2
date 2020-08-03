@@ -24,6 +24,7 @@ use App\offloadWaybillRemark;
 use App\tripWaybill;
 use App\PaymentHistory;
 use App\User;
+use Auth;
 
 class transporterController extends Controller
 {
@@ -138,9 +139,10 @@ class transporterController extends Controller
     }
 
     public function requestForPayment() {
+        $user = Auth::user();
         $advancePaymentRequest = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, d.bank_name, d.account_name, d.account_number, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id  WHERE  a.trip_status = \'1\' AND advance_paid = \'FALSE\' ORDER BY a.trip_id ASC LIMIT 100'
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, d.bank_name, d.account_name, d.account_number, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE  a.trip_status = \'1\' AND advance_paid = \'FALSE\'  ORDER BY a.trip_id ASC LIMIT 100'
             )
         );
         $allpendingbalanceRequests = DB::SELECT(
@@ -153,6 +155,7 @@ class transporterController extends Controller
     }
 
     public function advanceRequestPayment(Request $request) {
+        $advanceRequestedAt = date('d-m-Y, H:i:s A');
         $recid = trip::findOrFail($request->trip_id);
         $user_id = $request->user_id;
         $tripRate = $recid->transporter_rate;
@@ -162,6 +165,7 @@ class transporterController extends Controller
 
         $recid->advance_request = TRUE;
         $recid->advance_requested_by = $user_id;
+        $recid->advance_requested_at = $advanceRequestedAt;
         $recid->save();
 
         $transporterChunkPayment = bulkPayment::WHERE('transporter_id', $recid->transporter_id)->GET();
@@ -262,13 +266,15 @@ class transporterController extends Controller
     }
 
     public function balanceRequestPayment(Request $request) {
+        $balanceRequestedAt = date('d-m-Y, H:i:s A');
         $checkOffloadWaybill = offloadWaybillRemark::WHERE('trip_id', $request->trip_id)->GET()->COUNT();
-        // if($checkOffloadWaybill) {
+        if($checkOffloadWaybill) {
             $id = $request->trip_id;
 
             $balanceRequest = trip::findOrFail($id);
             $balanceRequest->balance_request = TRUE;
             $balanceRequest->balance_requested_by = $request->user_id;
+            $balanceRequest->balance_requested_at = $balanceRequestedAt;
             $balanceRequest->save();
 
             $newChunkBalance = 0;
@@ -324,9 +330,9 @@ class transporterController extends Controller
             //     $message->to('kayaafricafin@gmail.com', 'Finance')->subject('Payment for TRIP: '.$tripid);
             // });
             return 'requestSent';
-        //} else {
+        } else {
             return 'abort';
-        //}
+        }
     }
 
     function transactQueryBalance($paymentRequestId) {
@@ -361,5 +367,13 @@ class transporterController extends Controller
             $recordUpdate->save();            
         }
         return 'completed...';
+    }
+
+    public function updateTrRate(Request $request, $tripId) {
+        $transporter_rate = $request->newTrValue;
+        $tripDetails = trip::WHERE('trip_id', $tripId)->FIRST();
+        $tripDetails->transporter_rate = $transporter_rate;
+        $tripDetails->save();
+        return 'updated';
     }
 }

@@ -117,16 +117,16 @@ input, select{
             </div>
 
             <div class="header-elements d-none">
-                <div class="breadcrumb justify-content-center mr-2">
+                <div class="breadcrumb justify-content-center mr-3">
                     <a href="{{URL('view-trip-thread')}}" class="breadcrumb-elements-item">
                         <i class="icon-eye mr-2"></i>
                         View Trip Thread
                     </a>
                 </div>
-                <div class="breadcrumb justify-content-center">
+                <div class="breadcrumb justify-content-center text-danger">
                     <a href="#" class="breadcrumb-elements-item">
-                        <i class="icon-comment-discussion mr-2"></i>
-                        Support
+                        <i class="icon-flag4 mr-1 text-danger"></i>
+                        Flagged Trips
                     </a>
                 </div>
             </div>
@@ -460,8 +460,12 @@ input, select{
     var targetForTheMonth = <?php echo json_encode($targetforthemonth); ?>;
     var gateOutForTheMonth = <?php echo json_encode($gatedOutForTheMonth); ?>;
 
-    var remainderTarget = targetForTheMonth - gateOutForTheMonth;
-    var gateOutStatistics = [remainderTarget, gateOutForTheMonth];
+    // var remainderTarget = targetForTheMonth - gateOutForTheMonth;
+   
+    var remainderTarget = -10;
+
+    var gateOutStatistics = [remainderTarget, 200];
+    
 
     var currentMonth = $('#currentMonthInTheYear').val();
 
@@ -473,8 +477,8 @@ input, select{
                 label: 'Monthly Target Statistics',
                 data: gateOutStatistics,
                 backgroundColor: [
-                    'rgba(255, 0, 0, 0.7)',
-                    'rgba(54, 162, 235, 0.2)',
+                    // 'rgba(255, 0, 0, 0.7)',
+                    // 'rgba(54, 162, 235, 0.2)',
                     'rgba(255, 206, 86, 0.2)',
                     'rgba(75, 192, 192, 0.2)',
                     'rgba(153, 102, 255, 0.2)',

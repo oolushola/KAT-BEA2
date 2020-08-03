@@ -199,14 +199,21 @@
 						</li>
 						@endif
 
-						
+						@if($auth == 6)
 						<li class="nav-item">
 							<a href="{{URL('performance-metrics/'.$userRole.'/'.$usertIdentity)}}" class="nav-link">
 								<i class="icon-stats-bars2"></i>
-								<span>Performance Metric</span>
+								<span>My Performance Metric</span>
 							</a>
 						</li>
+						@endif
 						
+						<li class="nav-item">
+							<a href="{{URL('performance-metrics')}}" class="nav-link">
+								<i class="icon-stats-bars3"></i>
+								<span>Overall Metrics</span>
+							</a>
+						</li>
 
 						<li class="nav-item-header">
                             <div class="text-uppercase font-size-xs line-height-xs">TRIPS

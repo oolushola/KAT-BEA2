@@ -326,19 +326,36 @@ class ordersController extends Controller
             $transporterRecord = transporter::findOrFail($request->transporter_id);
             $userIdentity = $transporterRecord->assign_user_id;
 
-            $addNewTrip = trip::firstOrNew(['gate_in' => $request->gate_in, 'client_id' => $request->client_id, 'loading_site_id' => $request->loading_site_id]);
-            $addNewTrip->truck_id = $request->truck_id;
-            $addNewTrip->transporter_id = $request->transporter_id;
-            $addNewTrip->driver_id = $request->driver_id;
-            $addNewTrip->product_id = $request->product_id;
-            $addNewTrip->destination_state_id = $request->destination_state_id;
-            $addNewTrip->exact_location_id = $request->exact_location_id;
-            $addNewTrip->user_id = $request->user_id;
+            $addNewTrip = trip::CREATE([
+                'gate_in' => $request->gate_in, 'client_id' => $request->client_id, 'loading_site_id' => $request->loading_site_id,
+                'truck_id' => $request->truck_id,
+                'transporter_id' => $request->transporter_id,
+                'driver_id' => $request->driver_id,
+                'product_id' => $request->product_id,
+                'destination_state_id' => $request->destination_state_id,
+                'exact_location_id' => $request->exact_location_id,
+                'user_id' => $request->user_id,
+                'trip_id' => 'KAID'.$kaya_id,
+                'account_officer' => $request->account_officer,
+                'tracker' => $request->tracker,
+                'trip_status' => TRUE,
+                'account_officer_id' => $userIdentity
+            ]);
+
             $addNewTrip->trip_id = 'KAID'.$kaya_id;
-            $addNewTrip->account_officer = $request->account_officer;
-            $addNewTrip->tracker = $request->tracker;
-            $addNewTrip->trip_status = TRUE;
-            $addNewTrip->account_officer_id = $userIdentity;
+
+            // $addNewTrip->truck_id = $request->truck_id;
+            // $addNewTrip->transporter_id = $request->transporter_id;
+            // $addNewTrip->driver_id = $request->driver_id;
+            // $addNewTrip->product_id = $request->product_id;
+            // $addNewTrip->destination_state_id = $request->destination_state_id;
+            // $addNewTrip->exact_location_id = $request->exact_location_id;
+            // $addNewTrip->user_id = $request->user_id;
+            // $addNewTrip->trip_id = 'KAID'.$kaya_id;
+            // $addNewTrip->account_officer = $request->account_officer;
+            // $addNewTrip->tracker = $request->tracker;
+            // $addNewTrip->trip_status = TRUE;
+            // $addNewTrip->account_officer_id = $userIdentity;
 
             $addNewTrip->save();
 
@@ -429,7 +446,7 @@ class ordersController extends Controller
                 'customers_name' => 'required | string',
                 'customer_no' => 'required | string',
                 'loaded_quantity' => 'required | integer',
-                'loaded_weight' => 'required | integer',
+                'loaded_weight' => 'required',
                 'customer_address' => 'required | string',
             ]);  
         }
@@ -441,30 +458,16 @@ class ordersController extends Controller
         else{
             $recid = trip::findOrFail($id);
             if($request->tracker >= 3){
+                $previousTripRecord = trip::SELECT('client_rate', 'transporter_rate')->WHERE('client_id', $request->client_id)->WHERE('loading_site_id', $request->loading_site_id)->WHERE('destination_state_id', $request->destination_state_id)->WHERE('exact_location_id', $request->exact_location_id)->WHERE('trip_status', '!=', 0)->LATEST()->FIRST();
 
-                $loading_site_id = $recid->loading_site_id;
-                $stateId = loadingSite::SELECT('state_domiciled')->WHERE('id', $loading_site_id)->GET();
-                $parentCompany = client::findOrFail($request->client_id);
-
-                $parentId = $parentCompany->super_client_id;
-
-                $clientRateForSelectedTrip = clientFareRate::SELECT('amount_rate')->WHERE('client_id', $parentCompany->parent_company_id)->WHERE('from_state_id', $stateId[0]->state_domiciled)->WHERE('to_state_id', $request->destination_state_id)->WHERE('tonnage', $request->tonnage)->WHERE('destination', $request->exact_location_id)->GET();
-
-                if(sizeof($clientRateForSelectedTrip)>0){
-                    $client_rate = $clientRateForSelectedTrip[0]->amount_rate;
-                } else {
-                    $client_rate = 0;
+                if($previousTripRecord) {
+                    $recid->client_rate = $previousTripRecord->client_rate;
+                    $recid->transporter_rate = $previousTripRecord->transporter_rate;
                 }
-
-                $transporterRateforSelectedTrip = transporterRate::SELECT('transporter_amount_rate')->WHERE('transporter_from_state_id', $parentId)->WHERE('transporter_to_state_id', $request->destination_state_id)->WHERE('transporter_tonnage', $request->tonnage)->WHERE('transporter_destination', $request->exact_location_id)->GET();
-
-                if(sizeof($transporterRateforSelectedTrip)>0) {
-                    $transporter_rate = $transporterRateforSelectedTrip[0]->transporter_amount_rate;
-                } else {
-                    $transporter_rate = 0;
+                else {
+                    $recid->client_rate = 0;
+                    $recid->transporter_rate = 0;
                 }
-                    $recid->client_rate = $client_rate;
-                    $recid->transporter_rate = $transporter_rate;
             }
             $recid->UPDATE($request->all());
 
