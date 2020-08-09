@@ -24,6 +24,17 @@ class invoiceController extends Controller
         $invoiceList = $this->detailedInvoiceInformation();
         $clientList = client::ORDERBY('company_name', 'ASC')->GET();
         $waybillinfos = tripWaybill::SELECT('id', 'sales_order_no', 'trip_id', 'tons')->ORDERBY('trip_id', 'ASC')->GET();
+
+        foreach($invoiceList as $key => $tripsById) {
+            $waybills[] = tripWaybill::SELECT('id', 'sales_order_no', 'invoice_no', 'tons', 'trip_id')->WHERE('trip_id', $tripsById->id)->ORDERBY('trip_id', 'ASC')->GET();
+        }
+
+        foreach($waybills as $key => $waybillListings) {
+            foreach($waybillListings as $waybill) {
+                $waybillinfos[] = $waybill;
+            }
+        }
+
         return view('finance.invoice.invoice-archive',
             array(
                 'invoiceList' => $invoiceList,
@@ -293,7 +304,21 @@ class invoiceController extends Controller
                 'SELECT a.*, b.first_name, b.last_name, b.phone_no, b.email FROM tbl_kaya_company_profiles a JOIN users b ON a.authorized_user_id = b.id'
             )
         );
-        $waybillinfos = tripWaybill::SELECT('id', 'sales_order_no', 'invoice_no', 'tons', 'trip_id')->ORDERBY('trip_id', 'ASC')->GET();
+        
+        
+        foreach($getTripById as $key => $tripsById) {
+            $waybills[] = tripWaybill::SELECT('id', 'sales_order_no', 'invoice_no', 'tons', 'trip_id')->WHERE('trip_id', $tripsById->trip_id)->ORDERBY('trip_id', 'ASC')->GET();
+        }
+
+        foreach($waybills as $key => $waybillListings) {
+            foreach($waybillListings as $waybill) {
+                $waybillinfos[] = $waybill;
+            }
+        }
+
+
+
+
         $tripIncentives = tripIncentives::GET();
         //$vatRate = vatRate::first();
         $invoiceBiller = invoiceClientRename::WHERE('invoice_no', $invoiceNumber)->first();

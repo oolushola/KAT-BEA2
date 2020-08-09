@@ -272,6 +272,11 @@ Route::group(['middleware' => 'auth'], function() {
     //finance-client-invoice-payment
 
     Route::get('invoice-collage/{invoiceNumber}', 'invoiceController@invoiceCollage');
+    Route::get('financials/receivables-tracker', 'trackerController@receivables');
+    Route::resource('other-expenses', 'expensesController');
+
+    Route::get('/client-revenue', 'trackerController@clientRevenue');
+    Route::get('/client-margin-expense-gain', 'trackerController@clientMarginExpenseGain');
     
 });
 
