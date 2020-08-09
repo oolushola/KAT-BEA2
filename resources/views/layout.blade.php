@@ -284,7 +284,7 @@
 									<a href="#" class="nav-link font-weight-semibold"><i class="icon-credit-card"></i> Receivables</a>
 									<ul class="nav nav-group-sub" style="display: none;">
 										<li class="nav-item">
-											<a href="#" class="nav-link">
+											<a href="{{URL('financials/receivables-tracker')}}" class="nav-link">
 												<i class="icon-meter-slow"></i>
 												<span>Receivables Tracker</span>
 											</a>
@@ -345,6 +345,12 @@
 										<a href="{{URL('local-purchase-order')}}" class="nav-link">
 											<i class="icon-feed"></i>
 											<span>L.P.O.</span>
+										</a>
+									</li>
+									<li class="nav-item">
+										<a href="{{URL('other-expenses')}}" class="nav-link">
+											<i class="icon-pencil"></i>
+											<span>Expenses</span>
 										</a>
 									</li>
 
