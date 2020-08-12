@@ -274,10 +274,12 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('invoice-collage/{invoiceNumber}', 'invoiceController@invoiceCollage');
     Route::get('financials/receivables-tracker', 'trackerController@receivables');
     Route::resource('other-expenses', 'expensesController');
-
     Route::get('/client-revenue', 'trackerController@clientRevenue');
     Route::get('/client-margin-expense-gain', 'trackerController@clientMarginExpenseGain');
     
+    Route::get('transporter-log', 'transporterController@transporterLog');
+    Route::get('toggle-transporter-status', 'transporterController@transporterStatus');
+    Route::get('{transporter}/trip/log/{transporterId}', 'transporterController@transporterTripLog');
 });
 
 

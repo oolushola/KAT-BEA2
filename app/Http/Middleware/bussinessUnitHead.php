@@ -17,7 +17,7 @@ class bussinessUnitHead
     public function handle($request, Closure $next)
     {
         $user = Auth::user()->role_id;
-       if( ($user != 4) && ($user != 6) && ($user != 1) && ($user != 2) && ($user != 3)) {
+        if( ($user != 4) && ($user != 6) && ($user != 1) && ($user != 2) && ($user != 3)) {
             $location = '/dashboard';
         }
 

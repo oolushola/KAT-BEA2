@@ -90,11 +90,18 @@ class backendController extends Controller
         }
 
         $allclients = client::ORDERBY('company_name', 'ASC')->GET();
-        $paymentRequest = tripPayment::WHERE('advance_paid', FALSE)->ORWHERE('balance_paid', FALSE)->GET()->COUNT();
+
+        $advancePendingApproval = trip::WHERE('advance_request', TRUE)->WHERE('advance_paid', FALSE)->GET()->COUNT();
+        $balancePendingApproval = DB::SELECT(
+            DB::RAW(
+                'SELECT COUNT(*) as balancecount from tbl_kaya_trips a JOIN tbl_kaya_trip_payments b ON a.id = b.trip_id WHERE a.advance_paid = TRUE AND b.advance_paid = TRUE AND a.`balance_request` = TRUE AND b.`balance_paid` = FALSE'
+            )
+        );
+        $paymentRequested = $advancePendingApproval + $balancePendingApproval[0]->balancecount;
         $clients = client::WHERE('client_status', '1')->GET()->COUNT();
 
         Session::put([
-            'payment_request' => $paymentRequest,
+            'payment_request' => $paymentRequested,
             'on_journey' => $onJourney,
             'client' => $clients,
             'offloaded_trips' => $offloadedTrips
