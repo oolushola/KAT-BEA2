@@ -190,7 +190,7 @@
 				<div class="card card-sidebar-mobile">
 					<ul class="nav nav-sidebar" data-nav-type="accordion">
 
-						@if($auth >= 1 && $auth <=4)
+						@if(($auth >= 1 && $auth <=4) || Auth::user()->email == 'success.iziomo@kayaafrica.co')
 						<li class="nav-item">
 							<a href="{{URL('dashboard')}}" class="nav-link">
 								<i class="icon-home4"></i>
@@ -208,12 +208,14 @@
 						</li>
 						@endif
 						
+						@if($auth != 5 && $auth != 7)
 						<li class="nav-item">
 							<a href="{{URL('performance-metrics')}}" class="nav-link">
 								<i class="icon-stats-bars3"></i>
 								<span>Overall Metrics</span>
 							</a>
 						</li>
+						@endif
 
 						<li class="nav-item-header">
                             <div class="text-uppercase font-size-xs line-height-xs">TRIPS
@@ -372,6 +374,24 @@
 								<span>My Trips</span>
 								<span class="badge bg-success align-self-center ml-auto"></span>
 							</a>
+						</li>
+						@endif
+
+						@if($auth == 1 || $auth == 4)  
+						<li class="nav-item nav-item-submenu">
+							<a href="#" class="nav-link {{request()->is('view-orders') ? 'active' : ''}}"><i class="icon-cog"></i> <span>Operations</span></a>
+
+							<ul class="nav nav-group-sub" data-submenu-title="Starter kit">
+								<li class="nav-item">
+									<a href="{{URL('transporter-log')}}" class="nav-link"><i class="icon-folder2"></i>Transporters Log</a>
+								</li>
+								<li class="nav-item">
+									<a href="#" class="nav-link"><i class="icon-eye2"></i>Issue Types</a>
+								</li>
+								<li class="nav-item">
+									<a href="#" class="nav-link"><i class="icon-brain"></i>Issue Intelligence</a>
+								</li>
+							</ul>
 						</li>
 						@endif
 

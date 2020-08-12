@@ -348,15 +348,15 @@ $(function(){
       });
 
 
-     $('.uploadWaybillRemark').click(function($event){
+    $('.uploadWaybillRemark').click(function($event){
          $event.preventDefault();
          $tripId = $(this).attr("value");
          $frmName = `#frm${$tripId}`;
          $('#uploadWait'+$tripId).html('<i class="icon-spinner3 spinner"></i>')
          $($frmName).submit();
-     });
+    });
 
-     $(".balanceRequest").ajaxForm(function(data){
+    $(".balanceRequest").ajaxForm(function(data){
          if(data == "updated"){
              $('.moreImagesPanel').addClass('hidden')
              $('.requestForBalance').removeClass('hidden')
@@ -366,5 +366,33 @@ $(function(){
          else{
              return false;
          }
+    })
+
+    $('#allTransporter').on("change", function() {
+        var value = $(this).val().toLowerCase();
+        $("tbody tr").filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+    })
+
+
+     $('#searchBox').on("keyup", function() {
+        var value = $('#searchBox').val().toLowerCase()
+        $("tbody tr").filter(function() {
+          $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        }); 
+     });
+
+
+     $(".transporterStatus").click(function() {
+         $transporterId = $(this).attr("id");
+         $placeholder = $('#status'+$transporterId)
+         $($placeholder).html('<i class="spinner icon-spinner2"></i>')
+         $this = $(this)
+         $.get('/toggle-transporter-status', {id: $transporterId}, function(data) {
+             $($this).html('<i class="icon-checkmark2"></i>'+ data)
+         })
      })
+
+
 });

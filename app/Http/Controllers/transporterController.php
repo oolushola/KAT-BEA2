@@ -376,4 +376,64 @@ class transporterController extends Controller
         $tripDetails->save();
         return 'updated';
     }
+
+    public function transporterLog() {
+        $users = DB::SELECT(
+            DB::RAW(
+                'SELECT DISTINCT(assign_user_id), b.first_name, b.last_name from tbl_kaya_transporters a JOIN users b ON a.assign_user_id = b.id'
+            )
+        );
+        $transporters = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.first_name, b.last_name FROM tbl_kaya_transporters a JOIN users b ON a.assign_user_id = b.id ORDER BY transporter_name ASC'
+            )
+        );
+
+        foreach($transporters as $specificTransporter) {
+            [$transporterTripCount[]] = DB::SELECT(
+                DB::RAW(
+                    'SELECT COUNT(transporter_id) AS transporterTrips  FROM tbl_kaya_trips WHERE transporter_id = "'.$specificTransporter->id.'" AND trip_status = 1'
+                )
+            );
+
+            $tripDocuments[] = DB::SELECT(
+                DB::RAW(
+                    'SELECT * FROM tbl_kaya_transporter_documents WHERE transporter_id = "'.$specificTransporter->id.'"'
+                )
+            );
+        }
+
+        foreach($tripDocuments as $documents) {
+            foreach($documents as $document) {
+                $transporterVerification[] = $document;
+            }
+        }
+        return view('transportation.transporterlog', compact('transporters', 'transporterTripCount', 'transporterVerification', 'users'));
+    }
+
+
+    public function transporterStatus(Request $request) {
+        $transporter_id = $request->id;
+        $transporter = transporter::findOrFail($transporter_id);
+
+        $transporter->transporter_status = !$transporter->transporter_status;
+        $transporter->save();     
+        if($transporter->transporter_status == 0) {
+            return 'Blacklisted';
+        }
+        else {
+            return 'Activated';
+        }
+    }
+
+    public function transporterTripLog(Request $request, $transporter, $transporterId) {
+        $tripInformation = DB::SELECT(
+            DB::RAW(
+                'SELECT a.id, a.trip_id, a.gated_out, a.exact_location_id, a.customers_name, a.customer_no, a.loaded_quantity, a.loaded_weight, a.customer_address, a.tracker,  b.loading_site, c.*, d.product, e.state, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_products d JOIN tbl_regional_state e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.product_id = d.id AND a.destination_state_id = e.regional_state_id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.transporter_id = "'.$transporterId.'" AND trip_status = 1 ORDER BY a.gated_out DESC
+                '
+            )
+        );
+        $transporterInfo = transporter::findOrFail($transporterId);
+        return view('transportation.transporter-trips', compact('tripInformation', 'transporterInfo'));
+    }
 }
