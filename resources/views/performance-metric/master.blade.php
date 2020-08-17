@@ -36,14 +36,6 @@
 
             <div class="header-elements d-none">
                 <div class="d-flex justify-content-center">
-                    <!-- <a href="#" class="btn btn-link btn-float text-default">
-                        <h2 style="margin:0; padding:10px; letter-spacing:10px;" class="bg-danger font-weight-bold">100</h2>
-                        <p class="text-primary font-weight-bold">TOTAL GATE OUT</p>
-                    </a> -->
-                    <!-- <a href="#truckAvailability" data-toggle="modal"  class="btn btn-link btn-float text-default">
-                        <h2 style="margin:0; padding:10px; letter-spacing:10px;" class="bg-primary font-weight-bold">{{ 100 }}</h2>
-                        <p class="text-primary font-weight-bold">MY APRIL TRIPS</p>
-                    </a> -->
                     <h4 class="text-primary"><i class="icon-sun3 text-warning"></i> <span class="font-weight-semibold"> 
                     Good {{ $timeOfTheDay }}, 
                     {{ ucfirst(substr(Auth::user()->first_name, 0,1)) }}
@@ -74,18 +66,15 @@
         <div class="col-md-5 col-sm-12 mb-2">
             <canvas id="buhCurrentMonthMargin" height="215"></canvas>
         </div>
-
-
-       
     </div>
 
     
 
     <div class="card">
         <div class="row">
-            <!-- <div class="col-md-8">
-                <canvas id="stackedBar" height="200"></canvas>
-            </div> -->
+            <div class="col-md-6">
+                <canvas id="numbersForTheMonth" height="120"></canvas>
+            </div>
         </div>
     </div>
 
@@ -108,6 +97,8 @@
     var achieved = <?php echo json_encode($myGrossMargin); ?>;
     var deficit = <?php echo json_encode($myOutstanding); ?>;
     var currentMonthMarkup = <?php echo json_encode($unitHeadCurrentMarkUp); ?>;
+    var tripCount = <?php echo json_encode($trip_count); ?>;
+    console.log(currentMonthMarkup);
 
     var ctx = document.getElementById('stackedBar');
     var myChart = new Chart(ctx, {
@@ -143,11 +134,11 @@
                         beginAtZero: true,
                             callback: function(value, index, values) {
                             if(parseInt(value) >= 1000){
-                            return '#' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                            return '₦' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")+'M';
                             } else {
-                            return '#' + value;
+                            return '₦' + value+'M';
                             }
-                        }   
+                        },   
 
                     }
                 }]
@@ -200,6 +191,9 @@
             },
         });
     } 
+
+    myBarChart('bar', 'numbersForTheMonth', unitHeadInformations, 'Number of Trips', tripCount)
+
 
 
         

@@ -328,7 +328,6 @@
 										<a href="{{URL('payment-request')}}" class="nav-link">
 											<i class="icon-git-pull-request"></i>
 											<span>Payment Requests</span>
-											
 										</a>
 									</li>
 									<li class="nav-item">
@@ -353,6 +352,12 @@
 										<a href="{{URL('other-expenses')}}" class="nav-link">
 											<i class="icon-pencil"></i>
 											<span>Expenses</span>
+										</a>
+									</li>
+									<li class="nav-item">
+										<a href="{{URL('payment-request-master')}}" class="nav-link">
+											<i class="icon-coins"></i>
+											<span>All Pending Requests</span>
 										</a>
 									</li>
 
@@ -386,7 +391,7 @@
 									<a href="{{URL('transporter-log')}}" class="nav-link"><i class="icon-folder2"></i>Transporters Log</a>
 								</li>
 								<li class="nav-item">
-									<a href="#" class="nav-link"><i class="icon-eye2"></i>Issue Types</a>
+									<a href="{{URL('issue-types')}}" class="nav-link"><i class="icon-eye2"></i>Issue Types</a>
 								</li>
 								<li class="nav-item">
 									<a href="#" class="nav-link"><i class="icon-brain"></i>Issue Intelligence</a>

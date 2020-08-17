@@ -20,8 +20,7 @@ class performanceMetricController extends Controller
         foreach($unitHeadTargets as $key=> $unitHead) {
             $unitHeadRecord = User::findOrFail($unitHead->user_id);
             $unitHeadInformation[] = $unitHeadRecord->first_name.' '.substr($unitHeadRecord->last_name, 0, 1).'.';
-
-            $unitHeadSpecificTargets[] = $unitHead->target;
+            $unitHeadSpecificTargets[] = $unitHead->target / 1000000;
 
             // get the sum total of client rate for the trips done this month by the user
             // get the sum total of transporter rate for the trips done this month by this user
@@ -40,18 +39,21 @@ class performanceMetricController extends Controller
                 ->WHEREYEAR('gated_out', now())
                 ->VALUE(DB::RAW("SUM(transporter_rate)")
             );
-             $myGrossMargin[] = $myTotalRevenue - $myTotalTransporterRate;
+             $myGrossMargin[] = ($myTotalRevenue - $myTotalTransporterRate) / 1000000;
              $myOutstanding[] = $myGrossMargin[$key] - $unitHeadSpecificTargets[$key];
 
              if($myGrossMargin[$key] == 0 || $myTotalRevenue == 0){
                 $unitHeadCurrentMarkUp[] = number_format(0, 2);
              }
              else{
-                $unitHeadCurrentMarkUp[] = number_format(($myGrossMargin[$key] / $myTotalRevenue * 100), 2);
-            }            
+                $unitHeadCurrentMarkUp[] = number_format(($myGrossMargin[$key] / ($myTotalRevenue/1000000) * 100), 2);
+            }
+            
+            $tripCount[] = trip::WHEREMONTH('gated_out', now())->WHEREYEAR('gated_out', now())->WHERE('trip_status', 1)->WHERE('account_officer_id', $unitHead->user_id)->GET()->COUNT();
+
         }
 
-        $currentMonthOverview = array('unitHeadInformation' =>  $unitHeadInformation, 'unitHeadSpecificTargets' => $unitHeadSpecificTargets, 'myGrossMargin' => $myGrossMargin, 'myOutstanding' => $myOutstanding, 'unitHeadCurrentMarkUp' => $unitHeadCurrentMarkUp);
+        $currentMonthOverview = array('unitHeadInformation' =>  $unitHeadInformation, 'unitHeadSpecificTargets' => $unitHeadSpecificTargets, 'myGrossMargin' => $myGrossMargin, 'myOutstanding' => $myOutstanding, 'unitHeadCurrentMarkUp' => $unitHeadCurrentMarkUp, 'trip_count' => $tripCount);
     
         return view('performance-metric.master', $currentMonthOverview);
     }

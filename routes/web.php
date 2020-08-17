@@ -163,6 +163,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('balance-request-payment', 'transporterController@balanceRequestPayment');
     Route::post('upload-collected-waybill-proof', 'transporterController@uploadCollectedWaybillProof');
 //    Route::get('transporter-account-update/{id}', 'transporterController@updateTransporterAccountDetails');
+    Route::get('payment-request-master', 'transporterController@masterPaymentRequest');
     
 
     
@@ -280,6 +281,9 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('transporter-log', 'transporterController@transporterLog');
     Route::get('toggle-transporter-status', 'transporterController@transporterStatus');
     Route::get('{transporter}/trip/log/{transporterId}', 'transporterController@transporterTripLog');
+
+    Route::resource('issue-types', 'IssueTypeController');
+    
 });
 
 

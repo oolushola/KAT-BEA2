@@ -27,6 +27,7 @@ use App\completeInvoice;
 use Mail;
 use App\truckAvailability;
 use App\tripChanges;
+use App\IssueType;
 
 use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -579,7 +580,7 @@ class ordersController extends Controller
 
         $tripWaybills = tripWaybill::GET();
         $tripEvents = tripEvent::ORDERBY('current_date', 'DESC')->GET();
-        $waybillstatuses = tripWaybillStatus::GET();
+        $waybillstatuses = tripWaybillStatus::GET()->TAKE(100);
         $clientRates = DB::SELECT(
             DB::RAW(
                 'SELECT a.client_id, a.amount_rate, b.* FROM `tbl_kaya_client_fare_rates` a LEFT JOIN `tbl_kaya_transporter_rates` b ON a.from_state_id = b.transporter_from_state_id AND a.to_state_id = b.transporter_to_state_id AND a.destination = b.transporter_destination'
@@ -637,19 +638,35 @@ class ordersController extends Controller
         );   
     }
 
+
+
+    //Copy From here to the production server!
+
     public function eventTrip($orderId, $clientName) {
         $client_name = str_replace('-', ' ', $clientName);
-        $tracker_ = trip::SELECT('id', 'tracker')->WHERE('trip_id', $orderId)->GET();
+        $tracker_ = trip::SELECT('id', 'tracker', 'destination_state_id')->WHERE('trip_id', $orderId)->GET();
         $tracker = $tracker_[0]['tracker'];
         $tripId = $tracker_[0]['id'];
         $tripEvents = tripEvent::WHERE('trip_id', $tripId)->ORDERBY('current_date', 'DESC')->GET();
+        $onjourneyIssueTypes = IssueType::WHERE('issue_category', 1)->GET();
+        $offloadIssueTypes = IssueType::WHERE('issue_category', 2)->GET();
+        $lgas = DB::SELECT(
+            DB::RAW(
+                'SELECT lga_name FROM tbl_regional_local_govt WHERE regional_country_id = \'94\' ORDER BY lga_name ASC '
+            )
+        );
+        
+
         return view('orders.trip-events',
             compact(
                 'orderId',
                 'client_name',
                 'tracker',
                 'tripId',
-                'tripEvents'
+                'tripEvents',
+                'onjourneyIssueTypes',
+                'offloadIssueTypes',
+                'lgas'
             )
         );
     }
@@ -660,11 +677,83 @@ class ordersController extends Controller
             return 'cant_add';
         }
         else{ 
-            tripEvent::CREATE($request->all());
+            if($request->tracker == 6) { $onjourney_status = 1; $destination_status = 0; $offload_status = 0; }
+            if($request->tracker == 7) { $onjourney_status = 1; $destination_status = 1; $offload_status = 0;}
+            if($request->tracker == 8) { $onjourney_status = 1; $destination_status = 1; $offload_status = 1; }
+
+            if($request->tracker == 7 || $request->tracker == 8) {
+                $lastTripEvent = tripEvent::WHERE('trip_id', $request->trip_id)->GET()->LAST();
+                if($lastTripEvent) {
+                    $event = tripEvent::CREATE([
+                        'afternoon_issue_type' => $lastTripEvent->afternoon_issue_type,
+                        'afternoon_lga'=> $lastTripEvent->afternoon_lga,
+                        'current_date' => $request->current_date, 
+                        'destination_status' => $destination_status,
+                        'journey_status' => $onjourney_status,
+                        'location_check_one' => $lastTripEvent->location_check_one,
+                        'location_check_two' => $lastTripEvent->location_check_two,
+                        'location_one_comment' => $lastTripEvent->location_one_comment,
+                        'location_two_comment' => $lastTripEvent->location_two_comment,
+                        'morning_issue_type' => $lastTripEvent->morning_issue_type,
+                        'morning_lga' => $lastTripEvent->morning_lga,
+                        'offload_end_time' => $request->offload_end_time,
+                        'offload_issue_type' => $request->offload_issue_type,
+                        'offload_start_time' => $request->offload_start_time,
+                        'offloaded_location' => $request->offloaded_location,
+                        'offloading_status' =>  $offload_status,
+                        'time_arrived_destination' => $request->time_arrived_destination,
+                        'trip_id' => $request->trip_id
+                    ]);
+                    $event->save();
+                }
+                else {
+                    $tripEvent = tripEvent::CREATE([
+                        'morning_lga' => $request->lga,
+                        'current_date' => $request->current_date, 
+                        'morning_issue_type' => $request->morning_issue_type,
+                        'location_check_one' => $request->location_check_one,
+                        'location_one_comment' => $request->location_one_comment,
+                        'trip_id' => $request->trip_id,
+                        'journey_status' => $onjourney_status,
+                        'destination_status' => $destination_status,
+                        'offloading_status' => $offload_status,
+                        'afternoon_issue_type' => $request->afternoon_issue_type,
+                        'location_two_comment' => $request->location_two_comment,
+                        'location_check_two' => $request->location_check_two,
+                        'afternoon_lga' => $request->lga,
+                        'offload_end_time' => $request->offload_end_time,
+                        'offload_issue_type' => $request->offload_issue_type,
+                        'offload_start_time' => $request->offload_start_time,
+                        'offloaded_location' => $request->offloaded_location,
+                        'time_arrived_destination' => $request->time_arrived_destination,
+                    ]);
+                    $tripEvent->save();
+                }
+            }
+
+            if($request->tracker == 6) {
+                $tripEvent = tripEvent::CREATE([
+                    'morning_lga' => $request->lga,
+                    'current_date' => $request->current_date, 
+                    'morning_issue_type' => $request->morning_issue_type,
+                    'location_check_one' => $request->location_check_one,
+                    'location_one_comment' => $request->location_one_comment,
+                    'morning_issue_type' => $request->morning_issue_type,
+                    'trip_id' => $request->trip_id,
+                    'journey_status' => $onjourney_status,
+                    'destination_status' => $destination_status,
+                    'offloading_status' => $offload_status,
+                    'afternoon_issue_type' => $request->afternoon_issue_type,
+                    'location_two_comment' => $request->location_two_comment,
+                    'location_check_two' => $request->location_check_two,
+                    'afternoon_lga' => $request->lga
+                ]);
+                $tripEvent->save();
+            }
             $recid = trip::findOrFail($request->trip_id);
             $recid->tracker = $request->tracker;
             $recid->save();
-            return 'saved';
+            return 'saved'; 
         }
     }
 
@@ -675,6 +764,13 @@ class ordersController extends Controller
         $tripId = $tracker_[0]['id'];
         $tripEvents = tripEvent::WHERE('trip_id', $tripId)->ORDERBY('current_date', 'DESC')->GET();
         $recid = tripEvent::findOrFail($event_id);
+        $onjourneyIssueTypes = IssueType::WHERE('issue_category', 1)->GET();
+        $offloadIssueTypes = IssueType::WHERE('issue_category', 2)->GET();
+        $lgas = DB::SELECT(
+            DB::RAW(
+                'SELECT lga_name FROM tbl_regional_local_govt WHERE regional_country_id = \'94\' ORDER BY lga_name ASC '
+            )
+        );
         return view('orders.trip-events',
             compact(
                 'orderId',
@@ -682,7 +778,10 @@ class ordersController extends Controller
                 'tracker',
                 'tripId',
                 'tripEvents',
-                'recid'
+                'recid',
+                'onjourneyIssueTypes',
+                'offloadIssueTypes',
+                'lgas'
             )
         );
     }
@@ -693,8 +792,36 @@ class ordersController extends Controller
             return 'cant_add';
         }
         else{ 
+            if($request->tracker == 6) { $onjourney_status = 1; $destination_status = 0; $offload_status = 0; }
+            if($request->tracker == 7) { $onjourney_status = 1; $destination_status = 1; $offload_status = 0;}
+            if($request->tracker == 8) { $onjourney_status = 1; $destination_status = 1; $offload_status = 1; }
+
+            //return $request->all();
+
             $recid = tripEvent::findOrFail($id);
-            $recid->UPDATE($request->all());
+            $recid->UPDATE([
+                'morning_lga' => $request->lga,
+                'current_date' => $request->current_date, 
+                'morning_issue_type' => $request->morning_issue_type,
+                'location_check_one' => $request->location_check_one,
+                'location_one_comment' => $request->location_one_comment,
+                'morning_issue_type' => $request->morning_issue_type,
+                'trip_id' => $request->trip_id,
+                'journey_status' => $onjourney_status,
+                'destination_status' => $destination_status,
+                'offloading_status' => $offload_status,
+                'afternoon_issue_type' => $request->afternoon_issue_type,
+                'location_two_comment' => $request->location_two_comment,
+                'location_check_two' => $request->location_check_two,
+                'time_arrived_destination' => $request->time_arrived_destination,
+                'destination_status' => $destination_status,
+                'offload_issue_type' => $request->offload_issue_type,
+                'offload_start_time' => $request->offload_start_time,
+                'offload_end_time' => $request->offload_end_time,
+                'offload_status' => $offload_status,
+                'offloaded_location' => $request->offloaded_location
+            ]);
+            // $recid->UPDATE($request->all());
             $updateTracker = trip::findOrFail($request->trip_id);
             $updateTracker->tracker = $request->tracker;
             $updateTracker->save();
@@ -706,6 +833,8 @@ class ordersController extends Controller
         }
 
     }
+
+    //Down to this place.
 
     public function waybill($orderId, $clientName) {
         $client_name = str_replace('-', ' ', $clientName);

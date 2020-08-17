@@ -40,16 +40,18 @@ function getPaymentInitiator($arrayRecord, $master) {
     @csrf
 <div class="page-header page-header-light">
     <div class="page-header-content header-elements-md-inline">
-        <div class="page-title d-flex">
-            <h4><i class="icon-arrow-left52 mr-2"></i> <span class="font-weight-semibold">Payment Request</h4>
+        <div class="page-title d-flex text-primary" id="advanceRequestLog">
+            <h4><i class="icon-coins mr-2"></i> <span class="font-weight-semibold">Advance Request Log</h4>
             <a href="#" class="header-elements-toggle text-default d-md-none"><i class="icon-more"></i></a>
         </div>
-
-        
+        <div class="page-title d-flex" id="balanceRequestLog">
+            <h4><i class="icon-wallet mr-2"></i> <span class="font-weight-semibold">Balance Request Log</h4>
+            <a href="#" class="header-elements-toggle text-default d-md-none"><i class="icon-more"></i></a>
+        </div>
     </div>
 </div>
 
-<div class="row">
+<div class="row" id="advancecarrier">
     <div class="col-md-12">
     &nbsp;
 
@@ -182,7 +184,7 @@ function getPaymentInitiator($arrayRecord, $master) {
     </div>
 </div>
 
-<div class="row">
+<div class="row d-none" id="balancecarrier">
     <div class="col-md-12">
     &nbsp;
 
@@ -804,6 +806,21 @@ function getPaymentInitiator($arrayRecord, $master) {
         $('#outstandingLogTable').addClass('hidden')
         $('#viewOutstandingLog').removeClass('hidden')
         $(this).addClass('hidden');
+    })
+
+    $("#advanceRequestLog").click(function() {
+        $('#balancecarrier').addClass('d-none');
+        $('#advancecarrier').removeClass('d-none')
+        $(this).addClass('text-primary')
+        $('#balanceRequestLog').removeClass('text-primary')
+    })
+
+    $("#balanceRequestLog").click(function() {
+        $('#balanceRequestLog').removeClass('text-primary')
+        $('#advancecarrier').addClass('d-none');
+        $('#balancecarrier').removeClass('d-none')
+        $(this).addClass('text-primary')
+        $('#advanceRequestLog').removeClass('text-primary')
     })
 
 

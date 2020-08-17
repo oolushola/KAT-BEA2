@@ -20,6 +20,17 @@ class tripEvent extends Model
         'offloading_status',
         'offload_start_time',
         'offload_end_time',
-        'offloaded_location'
+        'offloaded_location',
+        'morning_lga',
+        'morning_issue_type',
+        'afternoon_lga',
+        'afternoon_issue_type',
+        'offload_issue_type',
+
+
+
+
+
+        
     ];
 }
