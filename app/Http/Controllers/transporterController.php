@@ -142,12 +142,13 @@ class transporterController extends Controller
         $user = Auth::user();
         $advancePaymentRequest = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, d.bank_name, d.account_name, d.account_number, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE  a.trip_status = \'1\' AND advance_paid = \'FALSE\'  ORDER BY a.trip_id ASC LIMIT 100'
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, d.bank_name, d.account_name, d.account_number, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id  WHERE  a.trip_status = \'1\' AND advance_paid = \'FALSE\' AND tracker >= 4 AND account_officer_id = "'.$user->id.'" ORDER BY a.trip_id DESC LIMIT 100'
             )
         );
+        
         $allpendingbalanceRequests = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, a.advance, a.standard_advance_rate, a.balance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.id AS tripid, b.*, c.company_name, d.state, f.transporter_name, f.phone_no, f.bank_name, f.account_name, f.account_number, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id WHERE a.advance_paid = TRUE and a.balance_paid = FALSE ORDER BY b.trip_id ASC'
+                'SELECT a.id, a.advance, a.standard_advance_rate, a.balance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.id AS tripid, b.*, c.company_name, d.state, f.transporter_name, f.phone_no, f.bank_name, f.account_name, f.account_number, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id WHERE a.advance_paid = TRUE and a.balance_paid = FALSE AND account_officer_id = "'.$user->id.'" ORDER BY b.trip_id DESC'
             )
         );
         $getwaybillUploadProof = offloadWaybillRemark::GET();
@@ -435,5 +436,23 @@ class transporterController extends Controller
         );
         $transporterInfo = transporter::findOrFail($transporterId);
         return view('transportation.transporter-trips', compact('tripInformation', 'transporterInfo'));
+    }
+
+
+    public function masterPaymentRequest() {
+        $user = Auth::user();
+        $advancePaymentRequest = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, d.bank_name, d.account_name, d.account_number, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id  WHERE  a.trip_status = \'1\' AND advance_paid = \'FALSE\' AND tracker >= 4 ORDER BY a.trip_id DESC LIMIT 100'
+            )
+        );
+        
+        $allpendingbalanceRequests = DB::SELECT(
+            DB::RAW(
+                'SELECT a.id, a.advance, a.standard_advance_rate, a.balance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.id AS tripid, b.*, c.company_name, d.state, f.transporter_name, f.phone_no, f.bank_name, f.account_name, f.account_number, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id WHERE a.advance_paid = TRUE and a.balance_paid = FALSE ORDER BY b.trip_id DESC'
+            )
+        );
+        $getwaybillUploadProof = offloadWaybillRemark::GET();
+        return view('finance.transporter-payment-request.all-pending-payments', compact('advancePaymentRequest', 'allpendingbalanceRequests', 'getwaybillUploadProof'));
     }
 }

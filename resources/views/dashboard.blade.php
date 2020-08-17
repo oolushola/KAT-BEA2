@@ -422,6 +422,7 @@ input, select{
 
 @section('script')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
+<script type="text/javascript" src="{{URL::asset('/js/validator/excelme.js')}}"></script>
 
 <script>
     $('.container').hide();
@@ -444,6 +445,27 @@ input, select{
         });
     }
     $("#extremeValuation").html('&#x20a6;'+$('#calculatedValuation').val())
+
+    $('#exportWaybillStatus').click(function() {
+        var name = Math.random().toString().substring(7);
+        $("#exportTableData").table2excel({
+            filename:`Waybill-status-${name}-report.xls`
+        });
+    })
+
+    // autosearch('#searchWaybillReportData', '#currentGateOutDataForWaybillReport')
+    $('#searchWaybillReportData').on("change", function() {
+        var value = $(this).val().toLowerCase();
+        if(value == 0){
+            $('.serialNumber').removeClass('d-none')
+        }
+        else{
+            $(`#currentGateOutDataForWaybillReport tr`).filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+            $('.serialNumber').addClass('d-none')
+        }
+    });
 </script>
 
 

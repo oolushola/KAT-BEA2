@@ -30,116 +30,156 @@ td{
 </div>
 
 <div class="row">
-    <div class="col-md-5">
-    &nbsp;
+        <div class="col-md-12">
+            &nbsp;
+            <form action="" method="POST" id="frmTripEvent" name="frmTripEvent">
+                @csrf
+                @if(isset($recid))
+                    <input type="hidden" name="id" id="id" value="{{$recid->id}}" >
+                    {!! method_field('PATCH') !!} 
+                @endif
+                <!-- Basic layout-->
+                <div class="card">
+                    <div class="card-header header-elements-inline">
+                        <h5>
+                            <select style="width:150px; border: 1px solid #ccc; padding:5px; font-size:11px; outline:none" name="tracker" id="tracker">
+                                <option value="">Choose Trip Status</option>
+                                <option value="6">On Journey</option>
+                                <option value="7">Arrived Destination</option>
+                                <option value="8">Offloading</option>
+                            </select>
+                            <select style="width:150px; border: 1px solid #ccc; padding:5px; font-size:11px; outline:none" name="lga" id="lga">
+                                <option value="">Local Government Area</option>
+                                @foreach($lgas as $lga)
+                                    @if(isset($recid))
+                                        @if(($recid->afternoon_lga != "") && $recid->afternoon_lga == $lga->lga_name)
+                                        <option value="{{ $lga->lga_name }}" selected>{{ $lga->lga_name }}</option>
+                                        @elseif(($recid->afternoon_lga == "") && ($recid->morning_lga != "") && ($recid->morning_lga == $lga->lga_name))
+                                        <option value="{{ $lga->lga_name }}" selected>{{ $lga->lga_name }}</option>
+                                        @else
+                                        <option value="{{ $lga->lga_name }}">{{ $lga->lga_name }}</option>
+                                        @endif
+                                    @else
+                                    <option value="{{ $lga->lga_name }}">{{ $lga->lga_name }}</option>
+                                    @endif
+                                @endforeach
+                            </select> 
+                            <input type="radio" class="ml-3 visibility" value="morningVisibility" name="visibility" />
+                                <span class="font-size-sm ml-1 font-weight-semibold">Morning Visibility</span>
+                            <input type="radio" class="ml-3 visibility" value="afternoonVisibility" name="visibility" />
+                                <span class="font-size-sm ml-1 font-weight-semibold">Afternoon Visibility</span>
 
-        <!-- Basic layout-->
-        <div class="card">
-            <div class="card-header header-elements-inline">
-                <h5 class="card-title">@if(isset($recid))Update @else Add @endif Event</h5>
-            </div>
-
-            <div class="card-body">
-                <form action="" method="POST" id="frmTripEvent" name="frmTripEvent">
-                    @csrf
-                    @if(isset($recid))
-                        <input type="hidden" name="id" id="id" value="{{$recid->id}}" >
-                        {!! method_field('PATCH') !!} 
-                    @endif
-                    <input type="hidden" name="trackerStatus" id="trackerStatus" value="{{$tracker}}" />
-                    <input type="hidden" name="trip_id" value="{{$tripId}}" />
-                    <input type="hidden" name="user_id" id="user_id" value="{{Auth::user()->id }}">
-                    <input type="hidden" name="tracker" value="@if(isset($recid)){{$tracker}}@endif" id="tracker" />
-                    <input type="hidden" name="current_date" value="{{date('Y-m-d')}}" />
-                    
-                    <div class="form-group">
-                        <div class="form-check-inline">
-                            <label class="form-check-label">
-                                <input type="checkbox" class="form-check-input" value="6" id="onjourney" name="on_journey" <?php if(isset($recid) && ($tracker>=6)) echo 'checked disabled'; ?>>On Journey
-
-                                <input type="hidden" value="@if(isset($recid)){{$recid->journey_status}}@else 0 @endif" name="journey_status" id="onJourneyStatus" >
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div id="journeyContainer">
-                        <div class="form-group">
-                            <label>Location check 1</label>
-                            <input type="datetime-local" class="form-control" name="location_check_one" id="locationCheckOne" style="border-radius:0px;" value="<?php if(isset($recid)) {echo $recid->location_check_one; } else { echo date('Y-m-d\TH:i'); } ?>">
-
-                            <input type="text" class="form-control" name="location_one_comment" id="localtionOneComment" placeholder="Enter your remark" style="border-radius:0px;" value="@if(isset($recid)){{$recid->location_one_comment}}@endif" >
-                        </div>
-
-                        <div class="form-group">
-                            <label>Location check 2</label>
-                            <input type="datetime-local" class="form-control" name="location_check_two" id="locationCheckTwo" style="border-radius:0px;" value="<?php if(isset($recid)) {echo $recid->location_check_two; } else { echo date('Y-m-d\TH:i'); } ?>">
-
-                            <input type="text" class="form-control" name="location_two_comment" id="localtionTwoComment" placeholder="Enter your remark" style="border-radius:0px;" value="@if(isset($recid)){{$recid->location_two_comment}}@endif">
-                        </div>
+                            <input type="hidden" id="visibility" value="">
+                        </h5>
                     </div>
 
-                    <div class="form-group">
-                        <div class="form-check-inline">
-                            <label class="form-check-label">
-                                <input type="checkbox" class="form-check-input" id="arrivedDestination" value="7" @if(isset($recid) && ($tracker>=7)) checked disabled @else @endif>Arrived Destination?
-                                <input type="hidden" name="destination_status" value="@if(isset($recid)){{$recid->destination_status}}@else 0 @endif" id="destinationArrival" >
-                            </label>
+                    <div class="card-body">
+                        <input type="hidden" id="trackerStatus" value="{{$tracker}}" />
+                        <input type="hidden" name="trip_id" value="{{$tripId}}" />
+                        <input type="hidden" name="user_id" id="user_id" value="{{Auth::user()->id }}">
+                        <!-- <input type="text" name="tracker" value="@if(isset($recid)){{$tracker}}@endif" id="tracker" /> -->
+                        <input type="hidden" name="current_date" value="{{date('Y-m-d')}}" />
+
+                        <div id="journeyContainer">
+                            <div class="row">
+                                <div class="col-md-3" id="locationCheckOne">
+                                    <div class="form-group">
+                                        <label>Location Check One</label>
+                                        <input type="datetime-local" class="form-control" name="location_check_one" id="morningVisibility" style="border-radius:0px;" value="<?php if(isset($recid)) {echo $recid->location_check_one; } ?>">
+
+
+                                        <input type="text" class="form-control" name="location_one_comment" id="morningComment" placeholder="Enter your remark" style="border-radius:0" value="@if(isset($recid)){{$recid->location_one_comment}}@endif" >
+
+                                        <select class="form-control" style="border-radius:0" name="morning_issue_type">
+                                            <option value="">Journey Issue Type</option>
+                                            @foreach($onjourneyIssueTypes as $journeyIssueType)
+                                            @if(isset($recid) && $recid->morning_issue_type == $journeyIssueType->issue_type)
+                                            <option value="{!! $journeyIssueType->issue_type !!}" selected>
+                                                {{ $journeyIssueType->issue_type }}
+                                            </option>
+                                            @else
+                                            <option value="{!! $journeyIssueType->issue_type !!}">{{ $journeyIssueType->issue_type }}</option>
+                                            @endif
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3" id="locationCheckTwo">
+                                    <div class="form-group">
+                                        <label>Location Check Two</label>
+                                        <input type="datetime-local" class="form-control" name="location_check_two" id="afternoonVisibility" style="border-radius:0px;" value="<?php if(isset($recid)) {echo $recid->location_check_two; } ?>">
+
+                                        <input type="text" class="form-control" name="location_two_comment" id="afternoonRemark" id="afternoonComment" placeholder="Enter your remark" style="border-radius:0px;" value="@if(isset($recid)){{$recid->location_two_comment}}@endif">
+
+                                        <select class="form-control" style="border-radius:0" name="afternoon_issue_type">
+                                            <option value="">Journey Issue Type</option>
+                                            @foreach($onjourneyIssueTypes as $journeyIssueType)
+                                            @if(isset($recid) && $recid->afternoon_issue_type == $journeyIssueType->issue_type)
+                                            <option value="{!! $journeyIssueType->issue_type !!}" selected>
+                                                {{ $journeyIssueType->issue_type }}
+                                            </option>
+                                            @else
+                                            <option value="{!! $journeyIssueType->issue_type !!}">{{ $journeyIssueType->issue_type }}</option>
+                                            @endif
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                    
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label>Time Arrived Destination</label>
+                                                    <input type="datetime-local" style="border-radius:0; font-size:11px" class="form-control" name="time_arrived_destination" id="timeArrivedDestination" disabled value="@if(isset($recid)){{$recid->time_arrived_destination}}@endif">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label>Offload Starts</label>
+                                                    <input type="datetime-local" style="border-radius:0; font-size:11px" class="form-control" name="offload_start_time" id="offloadStartTime" disabled value="@if(isset($recid)){{$recid->offload_start_time}}@endif">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label>Offload Ends</label>
+                                                    <input type="datetime-local" style="border-radius:0; font-size:11px" class="form-control" name="offload_end_time" id="offloadEndTime" disabled value="@if(isset($recid)){{$recid->offload_end_time}}@endif">
+                                            </div>
+                                        </div>
+                                            
+                                        <input type="text" class="form-control" name="offloaded_location" id="offloadedLocation" placeholder="Where did it offload" style="border-radius:0" value="@if(isset($recid)){{$recid->offloaded_location}}@endif" disabled>
+
+                                        <select class="form-control" style="border-radius:0" disabled name="offload_issue_type" id="offloadIssueType">
+                                            <option value="">Offload Issue Type</option>
+                                            @foreach($offloadIssueTypes as $offloadIssueType)
+                                            <option value="{!! $offloadIssueType->issue_type !!}">{{ $offloadIssueType->issue_type }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label>Time arrived at destination</label>
-                        <input type="datetime-local" class="form-control" name="time_arrived_destination" id="timeArrivedDestination" disabled value="@if(isset($recid)){{$recid->time_arrived_destination}}@endif">
-                    </div>
-
-                    <div class="form-group">
-                        <div class="form-check-inline">
-                            <label class="form-check-label">
-                                <input type="checkbox" class="form-check-input" id="offloading" value="8" @if(isset($recid) && ($tracker>=8 )) checked disabled @else @endif>Offloading? 
-                                <input type="hidden" name="offloading_status" id="offloadingStatus" value="@if(isset($recid)){{$recid->offloading_status}}@else 0 @endif">
-                            </label>
+                        <div class="text-right">
+                            <span id="loader"></span>
+                            @if(isset($recid))
+                                <button type="submit" class="btn btn-primary" id="updateTripEvent" @if($recid->offload_end_time != '' && Auth::user()->role_id != 1)disabled @endif>Update
+                            @else
+                            <button type="submit" class="btn btn-primary" id="addTripEvent">Add
+                            @endif
+                            Event
+                                <i class="icon-paperplane ml-2"></i>
+                            </button>
                         </div>
+                        
                     </div>
-
-                    <div>
-                        <div class="form-group">
-                            <label>Offloading Starts</label>
-                                <input type="datetime-local" class="form-control" name="offload_start_time" id="offloadStartTime" disabled value="@if(isset($recid)){{$recid->offload_start_time}}@endif"> 
-                        </div>
-                        <div class="form-group">
-                            <label>Offloading Ends</label>
-                                <input type="datetime-local" class="form-control" name="offload_end_time" id="offloadEndTime" disabled value="@if(isset($recid)){{$recid->offload_end_time}}@endif"> 
-                        </div>
-                    </div>
-
-                    <div class="text-right">
-                        <span id="loader"></span>
-                        @if(isset($recid))
-                            <button type="submit" class="btn btn-primary" id="updateTripEvent" @if($recid->offload_end_time != '')disabled @endif>Update
-                        @else
-                        <button type="submit" class="btn btn-primary" id="addTripEvent">Add
-                        @endif
-                        Event
-                            <i class="icon-paperplane ml-2"></i>
-                        </button>
-                    </div>
-
-                    
-
-                </form>
-            </div>
+                </div>
+                <!-- /basic layout -->
+            </form>
         </div>
-        <!-- /basic layout -->
 
-    </div>
-
-    <div class="col-md-7">
-    &nbsp;
-
+    <div class="col-md-12">
         <!-- Contextual classes -->
         <div class="card">
             <div class="card-header header-elements-inline">
-                <h5 class="card-title">Events for {{$orderId}} at {{strtoupper($client_name)}}</h5>
+                <h5 class="card-title">Events Log of  {{$orderId}} at {{strtoupper($client_name)}}</h5>
             </div>
 
             <div class="table-responsive">
@@ -148,8 +188,8 @@ td{
                         <tr style="font-size:11px;">
                             <th>#</th>
                             <th>Date of Event</th>
-                            <th>Location 1</th>
-                            <th>Location 2</th>
+                            <th>Morning Visibility</th>
+                            <th>Afternoon Visibility</th>
                             <th>Destination</th>
                             <th colspan="2">Offload Duration</th>
                             <th>Action</th>
@@ -173,13 +213,40 @@ td{
                                     $icon = '<span class="error">Not permitted to edit</span>';
                                 }
                             ?>
-                            <tr class="{{$css}}" style="font-size:10px">
+                            <tr class="{{$css}}" style="font-size:11px">
                                 <td>{{$counter}}</td>
                                 <td>{{$tripevent->current_date}}</td>
-                                <td>{{$tripevent->location_check_one}} - {{$tripevent->location_one_comment}}</td>
-                                <td>{{$tripevent->location_check_two}} - {{$tripevent->location_two_comment}}</td>  
-                                <td>{{$tripevent->time_arrived_destination}}</td>
-                                <td colspan="2">{{$tripevent->offload_start_time}} - {{$tripevent->offload_end_time}}</td>                              
+                                <td>
+                                    <p class="m-0">{{ date('d/m/Y - h:iA', strtotime($tripevent->location_check_one)) }} 
+                                    ({{$tripevent->location_one_comment}})</p>
+                                    <span class="badge badge-primary block">Lga: {{ $tripevent->morning_lga }}</span>
+                                    <span class="badge badge-danger block">Issue: {{ $tripevent->morning_issue_type }}</span>
+                                </td>
+                                <td>
+                                    @if($tripevent->location_check_two)
+                                    <p class="m-0">{{ date('d/m/Y - h:iA', strtotime($tripevent->location_check_two)) }} 
+                                    ({{$tripevent->location_two_comment}})</p>
+                                    <span class="badge badge-primary block">Lga: {{ $tripevent->afternoon_lga }}</span>
+                                    @endif
+                                    @if($tripevent->afternoon_issue_type)
+                                    <span class="badge badge-danger block">Issue: {{ $tripevent->afternoon_issue_type }}</span>
+                                    @endif
+                                </td>  
+                                <td>
+                                    @if($tripevent->time_arrived_destination)
+                                    {{ date('d/m/Y - h:iA', strtotime($tripevent->time_arrived_destination)) }}
+                                    @endif
+                                </td>
+                                <td colspan="2">
+                                    @if($tripevent->offload_end_time)
+                                    <p class="m-0">{{ date('d/m/Y - h:iA', strtotime($tripevent->offload_start_time)) }} - 
+                                    {{ date('d/m/Y - h:iA', strtotime($tripevent->offload_end_time)) }}</p>
+                                    @endif
+                                    <span class="badge badge-danger">Issue: {{ $tripevent->offload_issue_type }}</span>
+                                </td>
+
+                                    
+                                    
                                 <td>
                                     <div class="list-icons">
                                         <a href="{{URL($url)}}" class="list-icons-item text-primary-600">
@@ -199,9 +266,9 @@ td{
             </div>
         </div>
         <!-- /contextual classes -->
-
-
     </div>
+
+    
 </div>
 
 @stop

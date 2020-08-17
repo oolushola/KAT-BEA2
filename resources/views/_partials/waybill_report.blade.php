@@ -11,10 +11,19 @@
                     <button type="button" class="close font-weight-bold text-danger" data-dismiss="modal" style="position:relative; top:20px; padding:0px; right:20px; padding:5px;">CLOSE &times;</button>
                     
                 </div>
+                <div class="mt-2">
+                    <a class="m-0 font-weight-semibold pointer mt-3" id="exportWaybillStatus"><span class="icon-download ml-3"></span> Export to Excel</a> 
+                    <select id="searchWaybillReportData" class="ml-1" style="border:1px solid #ccc; padding:4px; ">
+                        <option value="0">Filter</option>
+                        <option value="On Journey">On Journey</option>
+                        <option value="Arrived Destination">Arrived Destination</option>
+                        <option value="Offloaded">Offloaded</option>
+                    </select>
+                </div>
                 
                 <div class="modal-body">
                    <div class="row waybillStatus">
-                        <table class="table table-condensed">
+                        <table class="table table-condensed" id="exportTableData">
                             <thead class="table-success">
                                 <!-- <tr>
                                     <th colspan="7"></th>
@@ -22,7 +31,7 @@
                                     <th colspan="3"></th>
                                 </tr> -->
                                 <tr class=" bg-success" style="font-size:10px;" >
-                                    <td>SN</td>
+                                    <td class="serialNumber">SN</td>
                                     <td class="font-weight-bold">KAID</td>
                                     <td class="font-weight-bold">GATE OUT</td>
                                     <td class="font-weight-bold">WAYBILL DETAILS</td>
@@ -37,7 +46,7 @@
                                     <td>CUSTOMER</td>
                                 </tr>
                                 </thead>
-                                <tbody id="currentGateOutData">
+                                <tbody id="currentGateOutDataForWaybillReport">
                                     <?php $count = 0; $extremeWaybillValuation = 0; ?>
                                     @if(count($tripWaybillYetToReceive))
                                         @foreach($tripWaybillYetToReceive as $specificRecord)
@@ -66,20 +75,21 @@
                                             }
 
                                             if($specificRecord->tracker == 8){
-                                                    $indicator ='<i class="icon-checkmark2" title="Offloaded"></i>';
+                                                    $checker ='<span class="d-none">Offloaded</span><i class="icon-checkmark2" title="Offloaded"></i>';
                                                 } elseif($specificRecord->tracker == 7) {
-                                                    $checker = '<i class="icon-truck" title="Arrived Destination"></i>';
+                                                    $checker = '<span class="d-none">Arrived Destination</span>
+                                                    <i class="icon-truck" title="Arrived Destination"></i>';
                                                 }
                                                 else{
                                                     if($specificRecord->tracker == 6 || $specificRecord->tracker == 5) {
-                                                        $checker = '<i class="spinner icon-spinner3" title="Still On Journey"></i>'; 
+                                                        $checker = '<span class="d-none">On Journey</span><i class="spinner icon-spinner3" title="Still On Journey"></i>'; 
                                                     }
                                                 }
                                         ?>
                                         <tr style="font-size:11px; color:{{ $color }}; background-color:{{ $bgcolor }}; cursor:pointer">
-                                            <td>({{ $count }})</td>
+                                            <td class="serialNumber">({{ $count }})</td>
                                             <td width="7%">
-                                                {{ $specificRecord->trip_id }} {!! $checker !!}
+                                                {{ $specificRecord->trip_id }} <span id="checker">{!! $checker !!}</span>
                                                 
                                             </td>
                                             <td width="7%" style="padding:0;" class="text-center">
