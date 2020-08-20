@@ -290,4 +290,81 @@ class paymentExceptionController extends Controller
 
         return 'saved';
     }
+
+    public function bulkPayment(Request $request) {
+        foreach($request->approveAdvance as $key=> $requestedPaymentId) {
+            [$trips[]] = DB::SELECT(
+                DB::RAW(
+                    'SELECT a.*, b.trip_id, b.exact_location_id, b.client_rate, b.transporter_rate, c.loading_site, d.truck_no FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_trucks d ON a.trip_id = b.id AND b.loading_site_id = c.id AND b.truck_id = d.id WHERE a.id = "'.$requestedPaymentId.'" '
+                )
+            );
+        }
+        return view('finance.bulk-full-payment', compact('trips'));
+    }
+
+    public function updateBulkFullPayment(Request $request) {
+        $trip_payments_lists = $request->tripPaymentIds;
+        foreach($trip_payments_lists as $key=> $paymentId) {
+            // $getInitialPayment = tripPayment::SELECT('trip_id')->WHERE('id', $paymentId)->FIRST();
+            $getInitialPayment = tripPayment::findOrFail($paymentId);
+
+            $trip = trip::FIND($getInitialPayment->trip_id);
+            $trip->client_rate = $request->clientRate[$key];
+            $trip->transporter_rate = $request->transporterRate[$key];
+            $trip->advance_paid = TRUE;
+
+            $getInitialPayment->amount = $request->transporterRate[$key];
+            $getInitialPayment->standard_advance_rate = 0.7 * $request->transporterRate[$key];
+            $getInitialPayment->standard_balance_rate = 0.3 * $request->transporterRate[$key];
+            $getInitialPayment->exception = 3;
+            $getInitialPayment->advance_paid = TRUE;
+            $getInitialPayment->balance_paid = TRUE;
+            $getInitialPayment->advance = $request->transporterRate[$key];
+            $getInitialPayment->balance = 0;
+            $getInitialPayment->remark = $request->remark[$key];
+
+            $trip->save();
+            $getInitialPayment->save();
+
+        }
+       
+        return 'updated';
+    }
+
+    public function paymentTopUp() {
+        $trips = DB::SELECT(
+            DB::RAW(
+                'SELECT a.trip_id, c.truck_no, b.id, b.amount, b.advance, b.balance, b.exception FROM tbl_kaya_trips a JOIN tbl_kaya_trip_payments b JOIN tbl_kaya_trucks c ON a.id = b.trip_id AND a.truck_id = c.id WHERE a.tracker BETWEEN 5 AND 6 AND b.advance_paid = TRUE AND b.exception <> 3 ORDER BY a.trip_id DESC'
+            )
+        );
+        return view('finance.payment-top-up', compact('trips'));
+    }
+
+    public function advanceTopUp(Request $request, $id) {
+        $specificTripPayment = tripPayment::findOrFail($id);
+        $newAdvance = $specificTripPayment->advance + $request->advance;
+        $newBalance = $specificTripPayment->amount - $newAdvance;
+        $specificTripPayment->advance = $newAdvance;
+        $specificTripPayment->balance = $newBalance;
+        $specificTripPayment->save();
+        return 'updated';
+    }
+
+    public function updateMultipleZeroAdvance(Request $request) {
+        $trip_payments_lists = $request->approveAdvance;
+        foreach($trip_payments_lists as $key=> $paymentId) {
+            $getInitialPayment = tripPayment::findOrFail($paymentId);
+            $trip = trip::FIND($getInitialPayment->trip_id);
+            $trip->advance_paid = TRUE;
+            $tripAmount = $trip->transporter_rate;
+            $getInitialPayment->advance_paid = TRUE;
+            $getInitialPayment->advance = 0;
+            $getInitialPayment->balance = $tripAmount;
+            $trip->save();
+            $getInitialPayment->save();
+
+        }
+       
+        return 'updated';
+    }
 }

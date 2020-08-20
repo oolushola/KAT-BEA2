@@ -860,11 +860,11 @@ class ordersController extends Controller
             if(isset($invoice_number) && $invoice_number != ''){
                 $salesorderandinvoice = tripWaybill::CREATE([
                     'trip_id' => $request->trip_id, 
-                    'sales_order_no' => $request->sales_order_no[$key],
+                    'sales_order_no' => strtoupper(str_replace('/', '', $request->sales_order_no[$key])),
                 ]);
                 $salesorderandinvoice->waybill_status = 0;
                 $salesorderandinvoice->invoice_status = 0;
-                $salesorderandinvoice->invoice_no = $invoice_number;
+                $salesorderandinvoice->invoice_no = strtoupper(str_replace('/', '', $invoice_number));
                 $salesorderandinvoice->save();
             }
 
@@ -916,7 +916,6 @@ class ordersController extends Controller
     }
 
     public function updatewaybill(Request $request, $id) {
-            
         $salesOrderNumber = $request->sales_order_no;
         $invoiceNumber = $request->invoice_no;
 
@@ -927,7 +926,7 @@ class ordersController extends Controller
 
             DB::UPDATE(
                 DB::RAW(
-                    'UPDATE tbl_kaya_trip_waybills SET sales_order_no = "'.$salesOrderNumber[$key].'", invoice_no = "'.$invoice_no.'" WHERE id = "'.$id.'" '
+                    'UPDATE tbl_kaya_trip_waybills SET sales_order_no = "'.strtoupper(str_replace('/', '', $salesOrderNumber[$key])).'", invoice_no = "'.strtoupper(str_replace('/', '', $invoice_no)).'" WHERE id = "'.$id.'" '
                 )
             );
             

@@ -283,7 +283,12 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('{transporter}/trip/log/{transporterId}', 'transporterController@transporterTripLog');
 
     Route::resource('issue-types', 'IssueTypeController');
+
+    Route::post('bulk-full-payment', 'paymentExceptionController@bulkPayment');
+    Route::post('update-selected-full-payment', 'paymentExceptionController@updateBulkFullPayment');
+    Route::get('payment-top-up', 'paymentExceptionController@paymentTopUp');
+    Route::get('/update-advance-top-up/{id}', 'paymentExceptionController@advanceTopUp');
+    Route::post('update-selected-zero-payment', 'paymentExceptionController@updateMultipleZeroAdvance');
+
     
 });
-
-
