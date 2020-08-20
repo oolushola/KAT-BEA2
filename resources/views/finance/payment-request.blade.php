@@ -36,7 +36,7 @@ function getPaymentInitiator($arrayRecord, $master) {
 
 ?>
 
-<form method="POST" name="frmPayment" id="frmPayment">
+<form method="POST" name="frmPayment" id="frmPayment" action="{{URL('bulk-full-payment')}}">
     @csrf
 <div class="page-header page-header-light">
     <div class="page-header-content header-elements-md-inline">
@@ -60,7 +60,13 @@ function getPaymentInitiator($arrayRecord, $master) {
                 <h6 class="card-title font-weight-semibold">Advance Payment Request Log</h6>
             </div>
             <span class="col-md-12 d-block">
-                <button class=" d-block btn btn-primary font-size-sm font-weight-bold ml-3 mb-3" id="approveAdvancePayment"><i class="icon-checkmark2"></i>Complete all advance payment</button>
+                @if(count($allpendingadvanceRequests) > 0)
+                <button class="btn btn-primary font-size-sm font-weight-bold mb-3" id="approveAdvancePayment"><i class="icon-checkmark2"></i>Complete all advance payment</button>
+                @endif
+
+                <a href="{{ URL('payment-top-up') }}" class="btn btn-success font-size-sm font-weight-bold mb-3">
+                    <i class="icon-menu-open"></i>Advance Top up Exception
+                </a>
             </span>
 
             <div class="row">
@@ -156,15 +162,12 @@ function getPaymentInitiator($arrayRecord, $master) {
                                                 </h6>
                                                 </td>
                                             </tr>
-                                            
-                                            
-                                            
                                             <tr>
                                                 <td>
                                                     <a href="#advancePaymentExceptionModal" class="badge btn-warning except pointer align-right ml-auto" role="{{$advancePayment->trip_id}}" value="{{$advancePayment->amount}}" id="{{$advancePayment->id}}" data-toggle="modal">Exception</a>
                                                 </td>
-                                                <td class="font-size-sm font-weight-bold"  style="font-size:11px;">
-                                                    <input type="checkbox" value="{{$advancePayment->id}}" name="approveAdvance[]"> Paid
+                                                <td class="font-size-sm font-weight-bold" style="font-size:11px;">
+                                                    <input type="checkbox" class="advanceValue" value="{{$advancePayment->id}}" name="approveAdvance[]"> Paid
                                                 </td>
                                         </tbody>
                                     </table>
@@ -172,14 +175,27 @@ function getPaymentInitiator($arrayRecord, $master) {
                             </div>
                         </section>
                     @endforeach
-                    <!--<span class="col-md-12 d-block">-->
-                    <!--    <button class=" d-block btn btn-primary font-size-sm font-weight-bold ml-3 mb-3" id="approveAdvancePayment"><i class="icon-checkmark2"></i>Complete all advance payment</button>-->
-                    <!--</span> -->
+                    
 
                 @else
                     <p class="ml-3 mb-3 font-weight-bold text-danger">You currently do not have any advance payment to approve.</p>
                 @endif
             </div>
+            @if(count($allpendingadvanceRequests) > 1)
+            <div class="ml-2 mb-2">
+                <p class="font-weight-semibold">
+                    <span>Multiple full payment exception 
+                        <input type="radio" class="multipleSelector" name="multipleExceptionSelector" value="1" />
+                    </span>
+                    <span class="ml-3">Multiple (0) Rate Advance 
+                        <input type="radio" class="multipleSelector" name="multipleExceptionSelector" value="2" />
+                    </span>    
+                </p>
+                <button id="bulkFullPayment" class="d-none btn btn-danger font-weight-semibold"><i class="icon-stack"></i>Proceed with multiple full payment </button>
+
+                <button id="multipleZeroAdvance" class="d-none btn btn-warning font-weight-semibold"><i class="icon-stack"></i>Proceed with multiple 0 rate</button>
+            </div>
+            @endif
         </div>
     </div>
 </div>
@@ -723,108 +739,173 @@ function getPaymentInitiator($arrayRecord, $master) {
 @section('script')
 <script src="{{URL::asset('js/validator/bulkpayment.js')}}" type="text/javascript"></script>
 <script type="text/javascript">
-    $('.updateClientRate').dblclick(function() {
-        $id = $(this).attr("id");
-        $(this).addClass("hidden").removeClass("d-block")
-        $('#clientRate'+$id).removeClass('hidden')
-        $('#approveAdvancePayment').addClass('hidden')
-    });
-
-    $('.updateClientRateVal').click(function($e) {
-        $e.preventDefault();
-        $id = $(this).attr('id');
-        $clientRate = $('#clientRateValue'+$id).val();
-        $('#gtvtrLoader').html('<i class="icon-spinner2 spinner ml-1"></i>Please wait...')
-        $.get('/update-client-rate/'+$id, {client_rate: eval($clientRate)}, function(data) {
-            if(data == 'updated') {
-                $('#gtvtrLoader').html('<i class="icon-checkmark2 ml-1"></i>Updated')
-                // window.location.href="";
-            }
-        })
-    })
-
-    $('.updateTransporterRate').dblclick(function() {
-        $id = $(this).attr("id");
-        $(this).addClass("hidden").removeClass("d-block")
-        $('#transporterRate'+$id).removeClass('hidden')
-        $('#approveAdvancePayment').addClass('hidden')
-    });
-
-    $('.updateTransporterRateVal').click(function($e) {
-        $e.preventDefault();
-        $id = $(this).attr('id');
-        $transporterRate = $('#transporterRateValue'+$id).val();
-        $('#trLoader').html('<i class="icon-spinner2 spinner ml-1"></i>')
-        $.get('/finance-update-transporter-rate/'+$id, {transporter_rate: eval($transporterRate)}, function(data) {
-            if(data == 'updated') {
-                $('#trLoader').html('<i class="icon-checkmark2 ml-1"></i>Updated')
-                $('#trLoader').html('<i class="icon-checkmark2 ml-1"></i>')
-
-            }
-        })
-    })
-
-
-    // trForBalanceDefault trForBalanceEditable
-    $('.trForBalanceDefault').dblclick(function() {
-        $(this).addClass('hidden')
-        $('#trForBalanceEditable'+ $(this).attr('id')).removeClass('hidden')
-    })
-
-    $('.changeTransporterAtBalance').keypress(function($e) {        
-        $oldValue = $(this).attr('value');
-        if($e.keyCode === 13) {
-            $newValue = eval($('.changeTransporterAtBalance').val())
-            $paymentId = $(this).attr('title')
-            if($oldValue === $newValue) {
-                $url = '/payment-request'
-                window.location = $url
-                $e.preventDefault();
-            }
-            else {
-                $.get('/update-balance-payment', { payment_id: $paymentId, transporter_rate: $newValue }, function(data) {
-                    if(data === 'updated') {
-                        $url = '/payment-request'
-                        window.location = $url
-                    }
-                    else {
-                        return false
-                    }
-                })
+    $(function() {
+        $lastSelectedMemory = localStorage.getItem('name')
+        if($lastSelectedMemory == 'advanceLog') {
+            $('#balancecarrier').addClass('d-none');
+            $('#advancecarrier').removeClass('d-none')
+            $('#advanceRequestLog').addClass('text-primary')
+            $('#balanceRequestLog').removeClass('text-primary')
+            localStorage.setItem('name', 'advanceLog')
+        }
+        else {
+            if($lastSelectedMemory == 'balanceLog') {
+                $('#balanceRequestLog').removeClass('text-primary')
+                $('#advancecarrier').addClass('d-none');
+                $('#balancecarrier').removeClass('d-none')
+                $('#balanceRequestLog').addClass('text-primary')
+                $('#advanceRequestLog').removeClass('text-primary')
             }
         }
         
+        $('.updateClientRate').dblclick(function() {
+            $id = $(this).attr("id");
+            $(this).addClass("hidden").removeClass("d-block")
+            $('#clientRate'+$id).removeClass('hidden')
+            $('#approveAdvancePayment').addClass('hidden')
+        });
+
+        $('.updateClientRateVal').click(function($e) {
+            $e.preventDefault();
+            $id = $(this).attr('id');
+            $clientRate = $('#clientRateValue'+$id).val();
+            $('#gtvtrLoader').html('<i class="icon-spinner2 spinner ml-1"></i>Please wait...')
+            $.get('/update-client-rate/'+$id, {client_rate: eval($clientRate)}, function(data) {
+                if(data == 'updated') {
+                    $('#gtvtrLoader').html('<i class="icon-checkmark2 ml-1"></i>Updated')
+                    // window.location.href="";
+                }
+            })
+        })
+
+        $('.updateTransporterRate').dblclick(function() {
+            $id = $(this).attr("id");
+            $(this).addClass("hidden").removeClass("d-block")
+            $('#transporterRate'+$id).removeClass('hidden')
+            $('#approveAdvancePayment').addClass('hidden')
+        });
+
+        $('.updateTransporterRateVal').click(function($e) {
+            $e.preventDefault();
+            $id = $(this).attr('id');
+            $transporterRate = $('#transporterRateValue'+$id).val();
+            $('#trLoader').html('<i class="icon-spinner2 spinner ml-1"></i>')
+            $.get('/finance-update-transporter-rate/'+$id, {transporter_rate: eval($transporterRate)}, function(data) {
+                if(data == 'updated') {
+                    $('#trLoader').html('<i class="icon-checkmark2 ml-1"></i>Updated')
+                    $('#trLoader').html('<i class="icon-checkmark2 ml-1"></i>')
+
+                }
+            })
+        })
+
+
+        // trForBalanceDefault trForBalanceEditable
+        $('.trForBalanceDefault').dblclick(function() {
+            $(this).addClass('hidden')
+            $('#trForBalanceEditable'+ $(this).attr('id')).removeClass('hidden')
+        })
+
+        $('.changeTransporterAtBalance').keypress(function($e) {        
+            $oldValue = $(this).attr('value');
+            if($e.keyCode === 13) {
+                $newValue = eval($('.changeTransporterAtBalance').val())
+                $paymentId = $(this).attr('title')
+                if($oldValue === $newValue) {
+                    $url = '/payment-request'
+                    window.location = $url
+                    $e.preventDefault();
+                }
+                else {
+                    $.get('/update-balance-payment', { payment_id: $paymentId, transporter_rate: $newValue }, function(data) {
+                        if(data === 'updated') {
+                            $url = '/payment-request'
+                            window.location = $url
+                        }
+                        else {
+                            return false
+                        }
+                    })
+                }
+            }
+            
+        })
+
+        $('#viewOutstandingLog').click(function() {
+            $('#outstandingLogTable').removeClass('hidden')
+            $('#collapseOutstandingLog').removeClass('hidden')
+            $(this).addClass('hidden');
+        })
+
+        $('#collapseOutstandingLog').click(function() {
+            $('#outstandingLogTable').addClass('hidden')
+            $('#viewOutstandingLog').removeClass('hidden')
+            $(this).addClass('hidden');
+        })
+
+        $("#advanceRequestLog").click(function() {
+            $('#balancecarrier').addClass('d-none');
+            $('#advancecarrier').removeClass('d-none')
+            $(this).addClass('text-primary')
+            $('#balanceRequestLog').removeClass('text-primary')
+            localStorage.setItem('name', 'advanceLog')
+        })
+
+        $("#balanceRequestLog").click(function() {
+            $('#balanceRequestLog').removeClass('text-primary')
+            $('#advancecarrier').addClass('d-none');
+            $('#balancecarrier').removeClass('d-none')
+            $(this).addClass('text-primary')
+            $('#advanceRequestLog').removeClass('text-primary')
+            localStorage.setItem('name', 'balanceLog')
+        })
+
+
+        $('.multipleSelector').click(function() {
+            $('#approveAdvancePayment').addClass('d-none')
+            $value = $(this).attr("value")
+            if($value == 1) {
+                $('#bulkFullPayment').removeClass('d-none')
+                $('#multipleZeroAdvance').addClass('d-none')
+            }
+            else{
+                if($value == 2) {
+                    $('#bulkFullPayment').addClass('d-none')
+                    $('#multipleZeroAdvance').removeClass('d-none')
+                }
+            }
+        })
+
+
+        $('#bulkFullPayment').click(function($e) {
+            $e.preventDefault();
+            $atLeastOneIsChecked = $('input:checkbox').is(':checked')
+            if(!$atLeastOneIsChecked) {
+                alert('Trip check is required.')
+                return false
+            }
+            $('#frmPayment').submit(); 
+        })
+
+        $('#multipleZeroAdvance').click(function($e) {
+            $e.preventDefault();
+            $atLeastOneIsChecked = $('input:checkbox').is(':checked')
+            if(!$atLeastOneIsChecked) {
+                alert('Trip check is required.')
+                return false
+            }
+            $event = $(this);
+            $(this).html('<i class="icon-spinner3 spinner"></i> Processing...').attr('disabled', true);
+            $.post('/update-selected-zero-payment', $('#frmPayment').serialize(), function(data) {
+                if(data == "updated") {
+                    $event.html('<i class="icon-checkmark2"></i> Successfully Updated')
+                    window.location.href = '';
+                }
+                else{
+                    $event.html('Error! Operation Aborted')
+                }
+            })
+        })
     })
-
-    $('#viewOutstandingLog').click(function() {
-        $('#outstandingLogTable').removeClass('hidden')
-        $('#collapseOutstandingLog').removeClass('hidden')
-        $(this).addClass('hidden');
-    })
-
-    $('#collapseOutstandingLog').click(function() {
-        $('#outstandingLogTable').addClass('hidden')
-        $('#viewOutstandingLog').removeClass('hidden')
-        $(this).addClass('hidden');
-    })
-
-    $("#advanceRequestLog").click(function() {
-        $('#balancecarrier').addClass('d-none');
-        $('#advancecarrier').removeClass('d-none')
-        $(this).addClass('text-primary')
-        $('#balanceRequestLog').removeClass('text-primary')
-    })
-
-    $("#balanceRequestLog").click(function() {
-        $('#balanceRequestLog').removeClass('text-primary')
-        $('#advancecarrier').addClass('d-none');
-        $('#balancecarrier').removeClass('d-none')
-        $(this).addClass('text-primary')
-        $('#advanceRequestLog').removeClass('text-primary')
-    })
-
-
-
-
 </script>
 @stop
