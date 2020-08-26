@@ -103,28 +103,6 @@ $(function() {
         }
     });
 
-    $('#previousMonthTarget').change(function(){
-        $selectedMonth = $('#previousMonthTarget').val();
-        $.get('/monthly-target-graph', {selected_month:$selectedMonth}, function(response){
-            $gateOutCount = response[0];
-            $target = response[1];
-
-            if($target.length <= 0){
-                $targetForSelectedMonth = 150; 
-            } else{ 
-                $targetForSelectedMonth = response[1][0].target;
-            }
-            $percentageRate = $gateOutCount / $targetForSelectedMonth * 100;
-            $percentageDisplay = `${$percentageRate.toFixed(2)}% of ${$targetForSelectedMonth}`
-            $valueDisplay = `${$gateOutCount} of ${$targetForSelectedMonth}`
-
-            $('#target-value').html($valueDisplay);
-            $('#target-percentage__value').html($percentageDisplay);
-
-            return targetPieChart($selectedMonth, $targetForSelectedMonth, $gateOutCount);
-        });
-        
-    })
 
     $('#clientTripStatus').change(function(){
         $clientId = $('#clientTripStatus').val();
@@ -133,8 +111,6 @@ $(function() {
             return masterBarChart('masterTripChart', $labels, response);
         })
     })
-
-
 
     $('#weekOne').blur(function(){
         $fromDateValue = $(this).val();
@@ -145,110 +121,6 @@ $(function() {
         $toDateValue = $(this).val();
         $('#presentDay').val($toDateValue);
     });
-
-    $('#searchByWeek').click(function(){
-        $currentWeekInView = $('#currentWeekInView').val();
-        $presentDay = $('#presentDay').val();
-        $("#dateRangeLoader").html("<i class='spinner icon-spinner2'></i> Please wait...").addClass('mt-2 font-weight-semibold text-primary')
-        $.get('/gatedout-selected-week', {from:$currentWeekInView, to:$presentDay}, function(data){
-            $dataArrayRecord = data[0];
-            $dataArrayCount = data[1];
-            $("#specificDataRangeRecord").html($dataArrayRecord);
-            graphWeeklyDisplay($currentWeekInView, $presentDay, data[1].TotalWeekly);
-            $("#dateRangeLoader").html("");
-
-        })
-
-    });
-
-    $('#compareTheTwoMonths').click(function(){
-        $firstMonthComparator = $('#firstMonthComparator').val();
-        $secondMonthComparator = $('#secondMonthComparator').val();
-        $.get('/gatedout-months-comparison', {firstMonth:$firstMonthComparator, secondMonth:$secondMonthComparator}, function(response){
-            twoMonthsComparator($firstMonthComparator, $secondMonthComparator, response);
-        })
-    })
-
-
-    function graphWeeklyDisplay(from, to, exactData) {
-        var ctx = document.getElementById('gatedOutForTheWeek');
-        var myChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Gated Out Trips for Week in view'],
-                datasets: [{
-                    label: `From [${from}] To [${to}]`,
-                    data: [exactData],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.2)',
-                        'rgba(54, 162, 235, 0.2)',
-                        'rgba(255, 206, 86, 0.2)',
-                        'rgba(75, 192, 192, 0.2)',
-                        'rgba(153, 102, 255, 0.2)',
-                        'rgba(255, 159, 64, 0.2)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)',
-                        'rgba(255, 159, 64, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: true
-                        }
-                    }]
-                }
-            },
-        });
-    }
-
-    function twoMonthsComparator(firstMonth, secondMonth, exactData){
-        var ctx = document.getElementById('gatedOutForTheMonth');
-        var myChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: [firstMonth, secondMonth],
-                datasets: [{
-                    label: `${firstMonth} - ${secondMonth}`,
-                    data: exactData,
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.2)',
-                        'rgba(54, 162, 235, 0.2)',
-                        'rgba(255, 206, 86, 0.2)',
-                        'rgba(75, 192, 192, 0.2)',
-                        'rgba(153, 102, 255, 0.2)',
-                        'rgba(255, 159, 64, 0.2)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)',
-                        'rgba(255, 159, 64, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: true
-                        }
-                    }]
-                }
-            }
-        });   
-    }
 
 
     // month data visualization
@@ -296,153 +168,48 @@ $(function() {
         }
     });
 
-
-    $('#preferedMonth').change(function(){
-        $selected_month = $('#preferedMonth').val();
-        $.get('/loading-site-monthly', {selected_month:$selected_month}, function(response){
-            $loadingSiteCounter = response[0];
-            $exactLoadingSiteName = response[2];
-            dataVisualizationOfLoadingSite($exactLoadingSiteName, $loadingSiteCounter, `${$selected_month} Loading Site Chart`);
-        });
-    });
-
-    $('#searchLoadingSiteByWeek').click(function(){
-        $loadingSiteWeekOne = $('#loadingSiteWeekOne').val();
-        $loadingSiteWeekTwo = $('#loadingSiteWeekTwo').val();
-
-        $.get('/loading-site-weekly', {weekOne:$loadingSiteWeekOne, weekTwo:$loadingSiteWeekTwo}, function(response){
-            $loadingSiteCounter = response[0];
-            $exactLoadingSiteName = response[2];
-            dataVisualizationOfLoadingSite($exactLoadingSiteName, $loadingSiteCounter, `${$loadingSiteWeekOne} - ${$loadingSiteWeekTwo} Loading Site Chart`);
-        });
-    });
-
-    $('#specificDay').change(function(){
-        $choosenDay = $('#specificDay').val();
-        $.get('/loading-site-specific-day', {choosen_day:$choosenDay}, function(response){
-            $loadingSiteCounter = response[0];
-            $exactLoadingSiteName = response[2];
-            dataVisualizationOfLoadingSite($exactLoadingSiteName, $loadingSiteCounter, `${$choosenDay} Loading Site Chart`);
-        });
-    });
+    /** Dashboard Misc */
     
+    $('.container').hide();
+    $('button').click(function(){
+        var target = "#" + $(this).data("target");
+        $(".container").not(target).hide();
+        $(target).show();
+    });
 
+    autosearch('#searchDataset', '#masterDataTable')
+    autosearch('#searchGatedOut', '#monthlyGatedOutData')
+    autosearch('#searchCurrentGateOut', '#currentGateOutData')
 
-    function dataVisualizationOfLoadingSite(loadingSitesName, loadingCount, description){
-        var masterCanvasBar = document.getElementById('masterBarChart');
-                
-        var myChart = new Chart(masterCanvasBar, {
-            type: 'bar',
-            data: {
-                labels: loadingSitesName,
-                datasets: [{
-                    label: description,
-                    data: loadingCount,
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.2)',
-                        'rgba(54, 162, 235, 0.2)',
-                        'rgba(255, 206, 86, 0.2)',
-                        'rgba(75, 192, 192, 0.2)',
-                        'rgba(153, 102, 255, 0.2)',
-                        'rgba(255, 159, 64, 0.2)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)',
-                        'rgba(255, 159, 64, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: true
-                        }
-                    }]
-                }
-            }
+    function autosearch(searchBoxId, dataSetId) {
+        $(searchBoxId).on("keyup", function() {
+        var value = $(this).val().toLowerCase();
+        $(`${dataSetId} tr`).filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
         });
-
-    }
-
-    function targetPieChart(selectedMonth, targetForTheMonth, gateOutForTheMonth){
-        var ctx = document.getElementById('targetProcessChart');
-
-        var myChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: [selectedMonth, 'Actualized'],
-                datasets: [{
-                    label: 'Monthly Target Statistics',
-                    data: [targetForTheMonth, gateOutForTheMonth],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.2)',
-                        'rgba(54, 162, 235, 0.2)',
-                        'rgba(255, 206, 86, 0.2)',
-                        'rgba(75, 192, 192, 0.2)',
-                        'rgba(153, 102, 255, 0.2)',
-                        'rgba(255, 159, 64, 0.2)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)',
-                        'rgba(255, 159, 64, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-
         });
     }
+    $("#extremeValuation").html('&#x20a6;'+$('#calculatedValuation').val())
 
-    function masterBarChart(canvasId, labels, exactData) {
-        var ctx = document.getElementById(canvasId);
-        var myChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: `Trip Status for a client`,
-                    data: exactData,
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.2)',
-                        'rgba(54, 162, 235, 0.2)',
-                        'rgba(255, 206, 86, 0.2)',
-                        'rgba(75, 192, 192, 0.2)',
-                        'rgba(153, 102, 255, 0.2)',
-                        'rgba(255, 159, 64, 0.2)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)',
-                        'rgba(255, 159, 64, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: true
-                        }
-                    }]
-                }
-            }
+    $('#exportWaybillStatus').click(function() {
+        var name = Math.random().toString().substring(7);
+        $("#exportTableData").table2excel({
+            filename:`Waybill-status-${name}-report.xls`
         });
-    }
+    })
 
-    return masterBarChart(canvasId, labels, exactData);
+    // autosearch('#searchWaybillReportData', '#currentGateOutDataForWaybillReport')
+    $('#searchWaybillReportData').on("change", function() {
+        var value = $(this).val().toLowerCase();
+        if(value == 0){
+            $('.serialNumber').removeClass('d-none')
+        }
+        else{
+            $(`#currentGateOutDataForWaybillReport tr`).filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+            $('.serialNumber').addClass('d-none')
+        }
+    });
 
 });

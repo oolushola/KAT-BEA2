@@ -41,10 +41,15 @@ input, select{
 <div class="content-wrapper">
     <?php
         function monthListings(){
-            $currentMonth = date('F');
-            for($i=0; $i<12; $i++){
+            $currentMonth = date('m');
+            for($i=1; $i<=12; $i++){
                 $month = date('F', mktime(0,0,0,$i, 1, date('Y')));
-                    echo '<option value="'.$month.'">'.$month.'</option>';
+                    if($currentMonth == $i) {
+                        echo '<option value="'.$i.'" selected>'.$month.'</option>';
+                    }
+                    else {
+                        echo '<option value="'.$i.'">'.$month.'</option>';
+                    }
             }
         }
 
@@ -132,13 +137,27 @@ input, select{
             <div class="dashboardbox">
                 <table class="table">
                     <tr>
-                        <td><i class="icon-trophy3 text-warning-400 icon"></i></td>
-                        <td class="font-weight-semibold text-center" id="target-label">Current Month Target</td>
-                        <td>
-                            <select class="dashboard-select" id="previousMonthTarget" name="previous_month_target">
+                        <td class="font-size-xs font-weight-bold text-center">
+                            <i class="icon-trophy3 text-warning-400 text-center" style="font-size:22px"></i>
+                            <span class="d-block">Current Month Target</span>
+                        </td>
+                        <td colspan="2" class="font-weight-semibold" id="target-label">
+                            <select class="dashboard-select" style="width:55px" id="currentYear">
+                                <?php 
+                                    for($yearStarted = 2019; $yearStarted <= date('Y'); $yearStarted++) {
+                                        if($yearStarted == date('Y')) {
+                                            echo '<option value="'.$yearStarted.'" selected>'.$yearStarted.'</option>';
+                                        } else {
+                                        echo '<option value="'.$yearStarted.'">'.$yearStarted.'</option>';
+                                        }
+                                    }
+                                ?>
+                            </select>
+                            <select class="dashboard-select" id="previousMonthTarget" name="previous_month_target" style="width:60px">
                                 <option>Previous Months</option>
                                 {!! monthListings() !!}
-                            </select></td>
+                            </select>
+                        </td>
                     </tr>
                 </table>
                 <hr class="mt-5-negative">
@@ -153,9 +172,14 @@ input, select{
                     $gatedOutPercentageRate = round($gatedOutForTheMonth/$targetforthemonth * 100, 1);
                 ?>
 
-                <p id="target-value"><span class="text-primary-400">{{$gatedOutForTheMonth}}</span> of <span class="text-danger-400">{{$targetforthemonth}}</span></p> 
+                <p id="target-value">
+                    <span class="text-primary-400" id="gateOutMonthPlaceholder">{{$gatedOutForTheMonth}}</span> of 
+                    <span class="text-danger-400" id="targetPlaceholder">{{$targetforthemonth}}</span>
+                </p> 
 
-                <span id="target-percentage"><sub id="target-percentage__value">{{$gatedOutPercentageRate}}% 0f {{$targetforthemonth}}</sub></span>
+                <span id="target-percentage">
+                    <sub id="target-percentage__value" class="percentageHolder">{{$gatedOutPercentageRate}}% 0f {{$targetforthemonth}}</sub>
+                </span>
             </div>
         </div>
 
@@ -232,11 +256,11 @@ input, select{
                 <input type="hidden" id="gatedOutForTheWeekValue" value="{{$noOfGatedOutTripForCurrentWeek[0]->weeklygateout}}">
 
 
-                <canvas id="gatedOutForTheWeek" height="200" data-toggle="modal" href="#specificDateRangeInformation"></canvas>
+                <canvas id="gatedOutForTheWeek" class="chartOfDateRange" height="200" data-toggle="modal" href="#specificDateRangeInformation"></canvas>
                 
                 <input class="font-weight-semibold" type="date" style="margin-top:10px;" name="week_one" id="weekOne" value="{{date('Y-m-d', strtotime('last sunday'))}}">
                 <input  class="font-weight-semibold" type="date" name="week_two" id="weekTwo" value="{{date('Y-m-d')}}">
-                <span><button id="searchByWeek" style="font-size:10px;" class="font-weight-semibold">GO</button></span>
+                <span><button style="font-size:10px;" class="font-weight-semibold chartOfDateRange">GO</button></span>
                 <span class="d-block font-size-sm" id="dateRangeLoader"></span>
             </div>
         </div>
@@ -403,18 +427,12 @@ input, select{
 
 </div>
 <!-- /main content -->
-
-
 <?php
     $current_day = date('d');
     $monthInView = date('M');
-    
     for($i=1; $i<= $current_day; $i++){
         $daysIntheMonth[] = $i.date("S-", mktime(0, 0, 0, 0, $i, 0)).$monthInView;
     }
-    
-    
-    
 ?>
 
 @stop
@@ -423,68 +441,38 @@ input, select{
 @section('script')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
 <script type="text/javascript" src="{{URL::asset('/js/validator/excelme.js')}}"></script>
-
 <script>
-    $('.container').hide();
-    $('button').click(function(){
-        var target = "#" + $(this).data("target");
-        $(".container").not(target).hide();
-        $(target).show();
-    });
+    var defaultbgcolors = [
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(54, 162, 235, 0.2)',
+        'rgba(255, 206, 86, 0.2)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 159, 64, 0.2)'
+    ]
+    var waybillbgcolors = [
+        'rgb(0,128,0, 1)',
+        'rgb(255,255,0, 1)',
+        'rgb(255,0,0, 1)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 159, 64, 0.2)'      
+    ]
 
-    autosearch('#searchDataset', '#masterDataTable')
-    autosearch('#searchGatedOut', '#monthlyGatedOutData')
-    autosearch('#searchCurrentGateOut', '#currentGateOutData')
-
-    function autosearch(searchBoxId, dataSetId) {
-        $(searchBoxId).on("keyup", function() {
-        var value = $(this).val().toLowerCase();
-        $(`${dataSetId} tr`).filter(function() {
-            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-        });
-        });
-    }
-    $("#extremeValuation").html('&#x20a6;'+$('#calculatedValuation').val())
-
-    $('#exportWaybillStatus').click(function() {
-        var name = Math.random().toString().substring(7);
-        $("#exportTableData").table2excel({
-            filename:`Waybill-status-${name}-report.xls`
-        });
-    })
-
-    // autosearch('#searchWaybillReportData', '#currentGateOutDataForWaybillReport')
-    $('#searchWaybillReportData').on("change", function() {
-        var value = $(this).val().toLowerCase();
-        if(value == 0){
-            $('.serialNumber').removeClass('d-none')
-        }
-        else{
-            $(`#currentGateOutDataForWaybillReport tr`).filter(function() {
-                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-            });
-            $('.serialNumber').addClass('d-none')
-        }
-    });
-</script>
-
-
-<!-- Chart for Target Process -->
-<script>
-    var ctx = document.getElementById('targetProcessChart');
+    var targetProcessChart = document.getElementById('targetProcessChart');
     var targetForTheMonth = <?php echo json_encode($targetforthemonth); ?>;
     var gateOutForTheMonth = <?php echo json_encode($gatedOutForTheMonth); ?>;
-
-    // var remainderTarget = targetForTheMonth - gateOutForTheMonth;
-   
-    var remainderTarget = -10;
-
-    var gateOutStatistics = [remainderTarget, 200];
-    
-
+    var remainder;
+    var remainderTarget = targetForTheMonth - gateOutForTheMonth;
+    if(remainderTarget <= 0) {
+        remainder = -1 *  remainderTarget  
+    }
+    else {
+        remainder = remainderTarget
+    }
+    var gateOutStatistics = [remainder, gateOutForTheMonth];
     var currentMonth = $('#currentMonthInTheYear').val();
-
-    var myChart = new Chart(ctx, {
+    var targetChart = new Chart(targetProcessChart, {
         type: 'doughnut',
         data: {
             labels: [currentMonth, 'Completed'],
@@ -492,43 +480,12 @@ input, select{
                 label: 'Monthly Target Statistics',
                 data: gateOutStatistics,
                 backgroundColor: [
-                    // 'rgba(255, 0, 0, 0.7)',
-                    // 'rgba(54, 162, 235, 0.2)',
-                    'rgba(255, 206, 86, 0.2)',
-                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(255, 0, 0, 0.7)', //uncomment this 
                     'rgba(153, 102, 255, 0.2)',
-                    'rgba(255, 159, 64, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-
-    });
-</script>
-
-<!-- Chart for Status Overview -->
-<script>
-    var ctx = document.getElementById('masterTripChart');
-    var stagesOfOperation = <?php echo json_encode($stagesOfOperation); ?>;
-    var myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: [ 'Gate In', 'At Loading Bay', 'Departed Loading Bay', 'On Journey', 'At Destination', 'Offloaded'],
-            datasets: [{
-                label: 'Trip Status',
-                data: stagesOfOperation,
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    //'rgb(124,252,0)', // comment this
                     'rgba(54, 162, 235, 0.2)',
-                    'rgba(255, 206, 86, 0.2)',
+                    
                     'rgba(75, 192, 192, 0.2)',
                     'rgba(153, 102, 255, 0.2)',
                     'rgba(255, 159, 64, 0.2)'
@@ -544,160 +501,93 @@ input, select{
                 borderWidth: 1
             }]
         },
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
+    });
+
+    $('#targetProcessChart').click(function() {
+        $currentYear = $('#currentYear').val();
+        $month = $('#previousMonthTarget').val();
+        $('#currentMonthGateOutTripListings').html('<i class="icon-spinner3 spinner mr-1"></i>loading...').addClass("ml-2 font-weight-semibold")
+        $.get('/current-month-trip-details', {year: $currentYear, month: $month }, function(data) {
+            $('#currentMonthGateOutTripListings').html(data)
+        })
+    })
+
+    $('#previousMonthTarget').change(function() {
+        $year = $('#currentYear').val();
+        $month = $(this).val();
+        $.get('/monthly-target-graph', { year: $year, month: $month }, function(data) {
+            $gateOutForTheMonth = data[0];
+            $targetForTheSelectedMonth = data[1].target;
+            $remainder = $targetForTheSelectedMonth - $gateOutForTheMonth;
+            targetChart.data.labels[0] = 'Target' 
+            targetChart.data.datasets[0].data = [$remainder, $gateOutForTheMonth]
+            $('#gateOutMonthPlaceholder').text($gateOutForTheMonth);
+            $('#targetPlaceholder').text($targetForTheSelectedMonth);
+            $percentage = Math.round(($gateOutForTheMonth / $targetForTheSelectedMonth) * 100);
+            $('.percentageHolder').html($percentage+'% of '+$targetForTheSelectedMonth);
+            targetChart.update()
+        })
+    })
+
+    $stagesOfOperation = <?php echo json_encode($stagesOfOperation); ?>;
+    var operations = chartPlotter('bar', 'masterTripChart', 
+        ['Gate In', 'At Loading Bay', 'Departed Loading Bay', 'On Journey', 'At Destination', 'Offloaded'], 
+        'Trip Status', $stagesOfOperation, defaultbgcolors
+    )
+
+    function chartPlotter(type, placeholder, labels, label, data, backgroundColorCode) {
+        var placeholderName = document.getElementById(placeholder);
+        var placeholderChart = new Chart(placeholderName, {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: backgroundColorCode,
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
                 }]
             },
-        },
-    });
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                },
+            },
+        });
+    }
 
-   
-</script>
-
-<!-- Chart for waybill Process -->
-<script>
-    var ctx = document.getElementById('waybillChart');
+// <!-- Chart for waybill Process -->
     var waybillStatusCategory = <?php echo json_encode($waybillCategories); ?>;
-    var myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Good', 'Warning', 'Danger'],
-            datasets: [{
-                label: 'Waybill Status',
-                data: waybillStatusCategory,
-                backgroundColor: [
-                    'rgb(0,128,0, 1)',
-                    'rgb(255,255,0, 1)',
-                    'rgb(255,0,0, 1)',
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)',
-                    'rgba(255, 159, 64, 0.2)'
-                ],
-                borderColor: [
-                    'rgb(0,128,0, 0.4)',
-                    'rgba(255, 206, 86, 0.2)',
-                    'rgb(255,0,0, 0.5)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }]
-            }
-        }
+    chartPlotter('bar', 'waybillChart', ['Good', 'Warning', 'Danger'], 'Waybill Status', waybillStatusCategory, waybillbgcolors);
 
-    });
-</script>
 
-<!-- Chart for Daily Gate out -->
-<script>
-    var ctx = document.getElementById('dailyGateOutChart');
+// <!-- Chart for Daily Gate out -->
     var dayssofar = <?php echo json_encode($daysIntheMonth); ?>;
     var noOfTripsPerDay = <?php echo json_encode($noOfTripsPerDay); ?>;
     var currentMonth = $('#currentMonthInTheYear').val();
+    chartPlotter('line', 'dailyGateOutChart', dayssofar, currentMonth, noOfTripsPerDay, defaultbgcolors)
 
-    var myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: dayssofar,
-            datasets: [{
-                label: `${currentMonth}`,
-                data: noOfTripsPerDay,
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(255, 206, 86, 0.2)',
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)',
-                    'rgba(255, 159, 64, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }]
-            }
-        }
-
-    });
-</script>
-
-
-<!-- Gated out for the Day -->
-<script>
-    var ctx = document.getElementById('myProjectionChart');
     var gatedOutDailyArray = <?php echo json_encode($numberofdailygatedout); ?>;
     var today = new Date();
     var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
-    var myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Gated Out, Today'],
-            datasets: [{
-                label: 'Gated Out for (Today): '+date,
-                data: [gatedOutDailyArray],
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(255, 206, 86, 0.2)',
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)',
-                    'rgba(255, 159, 64, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }]
-            }
-        }
-    });
-</script>
+    chartPlotter('bar', 'myProjectionChart', ['Gated Out, Today'], 'Gated Out for (Today): '+date, [gatedOutDailyArray], defaultbgcolors);
 
-<!-- Gated out for the Month -->
-<script>
-    var ctx = document.getElementById('gatedOutForTheMonth');
+    var monthComparator = document.getElementById('gatedOutForTheMonth');
     var gatedOutForTheMonth = <?php echo json_encode($gatedOutForTheMonth); ?>;
     var currentMonth = $('#currentMonthInTheYear').val();
-    var myChart = new Chart(ctx, {
+    var monthComparatorChart = new Chart(monthComparator, {
         type: 'bar',
         data: {
             labels: [currentMonth],
@@ -733,18 +623,29 @@ input, select{
             }
         }
     });
-</script>
 
-<!-- Gated out for the Week -->
-<script>
+    $('#compareTheTwoMonths').click(function(){
+        $firstMonthComparator = $('#firstMonthComparator').val();
+        $secondMonthComparator = $('#secondMonthComparator').val();
+        $.get('/gatedout-months-comparison', {firstMonth:$firstMonthComparator, secondMonth:$secondMonthComparator}, function(response){
+            monthComparatorChart.data.labels = [monthName($firstMonthComparator), monthName($secondMonthComparator)]
+            monthComparatorChart.data.datasets[0].data = response
+            monthComparatorChart.update()
+        })
+    })
 
-    var ctx = document.getElementById('gatedOutForTheWeek');
+    function monthName(month) {
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+        return months[month-1]; 
+    }
+
+
+    /** default last One week and any date ranger */
+    var dateRange = document.getElementById('gatedOutForTheWeek');
     var gatedoutTripFortheWeek = $('#gatedOutForTheWeekValue').val();
     var currentWeekInView = $('#currentWeekInView').val();
     var presentDay = $('#presentDay').val();
-
-
-    var myChart = new Chart(ctx, {
+    var dateRangeChart = new Chart(dateRange, {
         type: 'bar',
         data: {
             labels: ['Gated Out Trips for Week in view'],
@@ -780,16 +681,27 @@ input, select{
             }
         }
     });
-</script>
 
-<!-- Master Bar Chart -->
+    $('.chartOfDateRange').click(function() {
+        $dateFrom = $('#currentWeekInView').val();
+        $presentDay = $('#presentDay').val();
+        $('#specificDataRangeRecord').html('<i class="icon-spinner3 spinner"></i> Loading...').addClass('ml-2 font-weight-bold');
+        $.get('/gatedout-selected-week', {dateFrom: $dateFrom, currentDay: $presentDay}, function(data) {
+            $noOfTrips = data[0][0].weeklygateout;
+            $record = data[1]
+            dateRangeChart.data.datasets[0].data = [$noOfTrips]
+            $('#specificDataRangeRecord').html($record)
+            dateRangeChart.update();
+        });
+    })
 
-<script>
-    var ctx = document.getElementById('masterBarChart');
+
+
+    /** Loading site count */
+    var loadingSiteCount = document.getElementById('masterBarChart');
     var dailyLoadingSiteCount = <?php echo json_encode($countDailyTripByLoadingSite); ?>;
     var loadingSites = <?php echo json_encode($loading_sites); ?>;
-    
-    var myChart = new Chart(ctx, {
+    var loadingSiteCountChart = new Chart(loadingSiteCount, {
         type: 'bar',
         data: {
             labels: loadingSites,
@@ -826,6 +738,38 @@ input, select{
         }
     });
 
+    $('#specificDay').blur(function(){
+        $choosenDay = $('#specificDay').val();
+        $.get('/loading-site-specific-day', {choosen_day:$choosenDay}, function(response){
+            loadingSiteCountChart.data.labels = response[1]
+            loadingSiteCountChart.data.datasets[0].label = 'loading site operation count on '+$choosenDay
+            loadingSiteCountChart.data.datasets[0].data = response[0]
+            loadingSiteCountChart.update(); 
+        });
+    });
+
+    $('#preferedMonth').change(function(){
+        $selected_month = $('#preferedMonth').val();
+        $.get('/loading-site-monthly', {selected_month:$selected_month}, function(response){
+            loadingSiteCountChart.data.labels = response[1]
+            loadingSiteCountChart.data.datasets[0].label = 'Monthly count by loading site'
+            loadingSiteCountChart.data.datasets[0].data = response[0]
+            loadingSiteCountChart.update();
+        });
+    });
+
+    $('#searchLoadingSiteByWeek').click(function(){
+        $loadingSiteWeekOne = $('#loadingSiteWeekOne').val();
+        $loadingSiteWeekTwo = $('#loadingSiteWeekTwo').val();
+        $.get('/loading-site-weekly', {weekOne:$loadingSiteWeekOne, weekTwo:$loadingSiteWeekTwo}, function(response){
+            loadingSiteCountChart.data.labels = response[1]
+            loadingSiteCountChart.data.datasets[0].label = 'Operation between '+$loadingSiteWeekOne+' and '+$loadingSiteWeekTwo
+            loadingSiteCountChart.data.datasets[0].data = response[0]
+            loadingSiteCountChart.update();
+        });
+    });
+
+    
 </script>
 
 

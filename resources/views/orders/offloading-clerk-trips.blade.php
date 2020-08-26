@@ -38,8 +38,7 @@ input::placeholder{
                         <tbody>
                             <tr>
                                 <td class="text-primary"><span class="d-block font-size-sm font-weight-bold text-danger">
-                                    <span class="d-block">Reponsibility of</span>
-                                    
+                                    <span class="d-block">Offloading Clerk</span>
                                     @foreach($adHocStaffList as $assignedLocation)
                                         @if($assignedLocation->exact_location == $offloadingClerkTrips->exact_location_id)
                                             <span class="text-primary d-block">{{ ucfirst($assignedLocation->first_name)}} {{ $assignedLocation->last_name }} </span>
@@ -50,7 +49,19 @@ input::placeholder{
                                 <td class="text-primary"><span class="d-block font-size-sm font-weight-bold text-danger">Destination</span>{{ $offloadingClerkTrips->exact_location_id }}</td>
                             <tr>
                             <tr>
-                                <td class="font-weight-bold">Trip Details</td>
+                                <td class="font-weight-bold">
+                                    Trip Details
+                                    <div>
+                                        <span class="badge badge-success">
+                                            Account Manager: 
+                                            @foreach($accountofficers as $user)
+                                                @if($user->id == $offloadingClerkTrips->account_officer_id)
+                                                    {{ $user->first_name }} {{ substr($user->last_name, 0, 1) }}.
+                                                @endif
+                                            @endforeach
+                                        </span>
+                                    </div>
+                                </td>
                                 <td>
                                     <span class="defaultInfo">
                                         <span class="font-weight-bold">{{ $offloadingClerkTrips->trip_id }}</span>
@@ -59,7 +70,23 @@ input::placeholder{
                                 </td>
                             </tr>
                             <tr>
-                                <td class="font-weight-bold">Truck Details</td>
+                                <td colspan="2"><span class="font-weight-semibold">Transporter: </span>{{ $offloadingClerkTrips->transporter_name }}</td>
+                            </tr>
+                            
+                            <tr>
+                                <td class="font-weight-bold">
+                                    Truck Details
+                                    <div>
+                                        <span class="font-size-xs">
+                                            DRV: {{ $offloadingClerkTrips->driver_first_name }}, {{ $offloadingClerkTrips->driver_phone_number }}
+                                        </span><br>
+                                        @if(isset($offloadingClerkTrips->motor_boy_first_name))
+                                        <span class="font-size-xs">
+                                            MB: {{ $offloadingClerkTrips->motor_boy_first_name }}, {{ $offloadingClerkTrips->motor_boy_phone_no }}
+                                        </span>
+                                        @endif
+                                    </div>
+                                </td>
                                 <td>
                                 <h6 class="mb-0">
                                     <span class="defaultInfo">
@@ -70,6 +97,7 @@ input::placeholder{
                                 </h6>
                                 </td>
                             </tr>
+                            
                             <tr>
                                 <td class="font-weight-bold">Consignee Details</td>
                                 <td>

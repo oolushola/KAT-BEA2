@@ -33,8 +33,8 @@
                                 <tr class=" bg-success" style="font-size:10px;" >
                                     <td class="serialNumber">SN</td>
                                     <td class="font-weight-bold">KAID</td>
-                                    <td class="font-weight-bold">GATE OUT</td>
-                                    <td class="font-weight-bold">WAYBILL DETAILS</td>
+                                    <td class="font-weight-bold text-center">INVOICE NO</td>
+                                    <td class="font-weight-bold text-center">SO NUMBER</td>
                                     <td class="text-center">TRUCK NO.</td>
                                     <td>DESTINATION</td>
                                     <td>LOADED AT</td>
@@ -93,16 +93,20 @@
                                                 
                                             </td>
                                             <td width="7%" style="padding:0;" class="text-center">
-                                                {{ date('d-M-Y', strtotime($specificRecord->gated_out)) }}
+                                                @foreach($tripWaybills as $tripWaybill)
+                                                    @if($specificRecord->id == $tripWaybill->trip_id)
+                                                    <span class="mb-2 d-block">{{ strtoupper($tripWaybill->invoice_no) }}</span>
+                                                    @endif
+                                                @endforeach
                                             </td>
                                             <td class="text-center">
                                                 @foreach($tripWaybills as $tripWaybill)
                                                     @if($specificRecord->id == $tripWaybill->trip_id)
-                                                    <span class="mb-2 d-block">{{strtoupper($tripWaybill->sales_order_no)}}<br> {{ strtoupper($tripWaybill->invoice_no) }}</span>
+                                                    <span class="mb-2 d-block">{{strtoupper($tripWaybill->sales_order_no)}}</span>
                                                     @endif
                                                 @endforeach
                                             </td>
-                                            <td class="text-center">{{ strtoupper($specificRecord->truck_no) }}</b></span></td>
+                                            <td class="text-center">    </b></span></td>
                                             <td>{{ ucwords($specificRecord->exact_location_id) }}</td>
 
                                             <td>{{ $specificRecord->loading_site }}</td>

@@ -44,15 +44,6 @@ Route::group(['middleware' => 'auth'], function() {
     Route::post('upload-profile-photo', 'dashboardController@uploadProfilePhoto');
     Route::post('change-password', 'dashboardController@changePassword');
 
-    // Graphical Representation
-    Route::get('gatedout-selected-week', 'backendController@gatedOutSelectedWeek');
-    Route::get('gatedout-months-comparison', 'graphController@gatedOutMonthsCompare');
-    Route::get('loading-site-monthly', 'graphController@monthlyLoadingSite');
-    Route::get('loading-site-specific-day', 'graphController@loadingSiteBySpecificDay');
-    Route::get('loading-site-weekly', 'graphController@loadingSiteByweekRange');
-    Route::get('monthly-target-graph', 'graphController@specificMonthTarget');
-    Route::get('client-trip-status-chart', 'graphController@clientTripStatus');
-
     Route::resource('companies-profile', 'companyProfileController');
     Route::resource('product-category', 'productTypeController');
     Route::resource('products', 'productsController');
@@ -255,8 +246,6 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('update/invoice-incentive', 'invoiceController@updateTripIncentive');
     Route::get('update-invoice-number-and-date', 'invoiceController@updateInvoiceNumberAndDate');
 
-    
-    
     // Financial Record Filtering...
     Route::get('client-loading-site-finance', 'financialController@loadingSiteOnFinance');
     Route::get('client-loading-site-invoice-status', 'FinanceSortController@clientLoadingSiteInvoiceStatus');
@@ -289,6 +278,18 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('payment-top-up', 'paymentExceptionController@paymentTopUp');
     Route::get('/update-advance-top-up/{id}', 'paymentExceptionController@advanceTopUp');
     Route::post('update-selected-zero-payment', 'paymentExceptionController@updateMultipleZeroAdvance');
+
+    // Graphical Representation
+    Route::get('/current-month-trip-details', 'graphController@tripsForTheMonth');
+    Route::get('gatedout-selected-week', 'graphController@chartDateRange');
+    
+    Route::get('gatedout-months-comparison', 'graphController@gatedOutMonthsCompare');
+    Route::get('loading-site-monthly', 'graphController@monthlyLoadingSite');
+    Route::get('loading-site-specific-day', 'graphController@loadingSiteBySpecificDay');
+    Route::get('loading-site-weekly', 'graphController@loadingSiteByweekRange');
+    Route::get('monthly-target-graph', 'graphController@specificMonthTarget');
+    Route::get('client-trip-status-chart', 'graphController@clientTripStatus');
+
 
     
 });
