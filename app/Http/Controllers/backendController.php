@@ -76,17 +76,19 @@ class backendController extends Controller
         $numberofdailygatedout = trip::WHEREDATE('gated_out', date('Y-m-d'))->GET()->COUNT();
         $gatedOutForTheMonth = trip::WHERE('month', $current_month)->WHERE('year', $current_year)->WHERE('tracker', '>=', 5)->GET()->COUNT();
 
+        // comment out this section
         $lastOneWeek = date('Y-m-d', strtotime('last sunday'));
         $currentDate = date('Y-m-d');
 
         $noOfGatedOutTripForCurrentWeek = $this->specificDateRangeCount('COUNT(*)',  'weeklygateout', $lastOneWeek, $currentDate);
         $specificDataRecord = $this->specificDateRangeData($lastOneWeek, $currentDate);
-
+        // Down to this place
+        
         $allLoadingSites = loadingSite::SELECT('id', 'loading_site')->ORDERBY('loading_site', 'ASC')->GET();
 
         foreach($allLoadingSites as $loadingSite){
             $countDailyTripByLoadingSite[] = trip::WHERE('loading_site_id', $loadingSite->id)->WHEREDATE('gated_out', date('Y-m-d'))->WHERE('tracker', '>=', 5)->GET()->COUNT();
-            $loading_sites[] = $loadingSite->loading_site;
+            $loading_sites[] = strtoupper($loadingSite->loading_site);
         }
 
         $allclients = client::ORDERBY('company_name', 'ASC')->GET();
