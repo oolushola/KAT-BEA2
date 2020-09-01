@@ -103,28 +103,6 @@ $(function() {
         }
     });
 
-    $('#previousMonthTarget').change(function(){
-        $selectedMonth = $('#previousMonthTarget').val();
-        $.get('/monthly-target-graph', {selected_month:$selectedMonth}, function(response){
-            $gateOutCount = response[0];
-            $target = response[1];
-
-            if($target.length <= 0){
-                $targetForSelectedMonth = 150; 
-            } else{ 
-                $targetForSelectedMonth = response[1][0].target;
-            }
-            $percentageRate = $gateOutCount / $targetForSelectedMonth * 100;
-            $percentageDisplay = `${$percentageRate.toFixed(2)}% of ${$targetForSelectedMonth}`
-            $valueDisplay = `${$gateOutCount} of ${$targetForSelectedMonth}`
-
-            $('#target-value').html($valueDisplay);
-            $('#target-percentage__value').html($percentageDisplay);
-
-            return targetPieChart($selectedMonth, $targetForSelectedMonth, $gateOutCount);
-        });
-        
-    })
 
     $('#clientTripStatus').change(function(){
         $clientId = $('#clientTripStatus').val();
@@ -133,8 +111,6 @@ $(function() {
             return masterBarChart('masterTripChart', $labels, response);
         })
     })
-
-
 
     $('#weekOne').blur(function(){
         $fromDateValue = $(this).val();
@@ -146,6 +122,7 @@ $(function() {
         $('#presentDay').val($toDateValue);
     });
 
+<<<<<<< HEAD
     $('#searchByWeek').click(function(){
         $currentWeekInView = $('#currentWeekInView').val();
         $presentDay = $('#presentDay').val();
@@ -160,6 +137,8 @@ $(function() {
         })
 
     });
+=======
+>>>>>>> f547f6730660487d221c8e09979c0a73181cc3d6
 
     // month data visualization
     $('#monthDv').click(function(){
@@ -204,6 +183,54 @@ $(function() {
             $('#weekRangeDv').removeAttr('disabled');
             $('#dayPlaceHolder').addClass('hidden')
         }
+<<<<<<< HEAD
     });    
+=======
+    });
+
+    /** Dashboard Misc */
+    
+    $('.container').hide();
+    $('button').click(function(){
+        var target = "#" + $(this).data("target");
+        $(".container").not(target).hide();
+        $(target).show();
+    });
+
+    autosearch('#searchDataset', '#masterDataTable')
+    autosearch('#searchGatedOut', '#monthlyGatedOutData')
+    autosearch('#searchCurrentGateOut', '#currentGateOutData')
+
+    function autosearch(searchBoxId, dataSetId) {
+        $(searchBoxId).on("keyup", function() {
+        var value = $(this).val().toLowerCase();
+        $(`${dataSetId} tr`).filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+        });
+    }
+    $("#extremeValuation").html('&#x20a6;'+$('#calculatedValuation').val())
+
+    $('#exportWaybillStatus').click(function() {
+        var name = Math.random().toString().substring(7);
+        $("#exportTableData").table2excel({
+            filename:`Waybill-status-${name}-report.xls`
+        });
+    })
+
+    // autosearch('#searchWaybillReportData', '#currentGateOutDataForWaybillReport')
+    $('#searchWaybillReportData').on("change", function() {
+        var value = $(this).val().toLowerCase();
+        if(value == 0){
+            $('.serialNumber').removeClass('d-none')
+        }
+        else{
+            $(`#currentGateOutDataForWaybillReport tr`).filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+            $('.serialNumber').addClass('d-none')
+        }
+    });
+>>>>>>> f547f6730660487d221c8e09979c0a73181cc3d6
 
 });
