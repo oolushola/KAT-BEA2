@@ -290,5 +290,6 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('/update-advance-top-up/{id}', 'paymentExceptionController@advanceTopUp');
     Route::post('update-selected-zero-payment', 'paymentExceptionController@updateMultipleZeroAdvance');
 
+    Route::get('event-log', 'ordersController@eventLog');
     
 });

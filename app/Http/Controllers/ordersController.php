@@ -28,6 +28,7 @@ use Mail;
 use App\truckAvailability;
 use App\tripChanges;
 use App\IssueType;
+use Auth;
 
 use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -655,8 +656,9 @@ class ordersController extends Controller
                 'SELECT lga_name FROM tbl_regional_local_govt WHERE regional_country_id = \'94\' ORDER BY lga_name ASC '
             )
         );
-        
 
+        $tripDestinationchecker = tripEvent::WHERE('trip_id', $tripId)->GET()->LAST();
+    
         return view('orders.trip-events',
             compact(
                 'orderId',
@@ -666,7 +668,8 @@ class ordersController extends Controller
                 'tripEvents',
                 'onjourneyIssueTypes',
                 'offloadIssueTypes',
-                'lgas'
+                'lgas',
+                'tripDestinationchecker'
             )
         );
     }
@@ -701,8 +704,10 @@ class ordersController extends Controller
                         'offload_start_time' => $request->offload_start_time,
                         'offloaded_location' => $request->offloaded_location,
                         'offloading_status' =>  $offload_status,
-                        'time_arrived_destination' => $request->time_arrived_destination,
-                        'trip_id' => $request->trip_id
+                        'time_arrived_destination' => $request->tad,
+                        'trip_id' => $request->trip_id,
+                        'gate_in_time_destination' => $request->gate_in_destination_timestamp,
+
                     ]);
                     $event->save();
                 }
@@ -725,7 +730,9 @@ class ordersController extends Controller
                         'offload_issue_type' => $request->offload_issue_type,
                         'offload_start_time' => $request->offload_start_time,
                         'offloaded_location' => $request->offloaded_location,
-                        'time_arrived_destination' => $request->time_arrived_destination,
+                        'time_arrived_destination' => $request->tad,
+                        'gate_in_time_destination' => $request->gate_in_destination_timestamp,
+
                     ]);
                     $tripEvent->save();
                 }
@@ -753,40 +760,21 @@ class ordersController extends Controller
             $recid = trip::findOrFail($request->trip_id);
             $recid->tracker = $request->tracker;
             $recid->save();
-            return 'saved'; 
+
+            $trip_id = $request->trip_id;
+            $order_id = $request->orderId;
+            $loading_site = $request->loading_site;
+            $result = 'saved`'.$this->eventLogRecord($trip_id, $order_id, $loading_site); 
+            
+            return $result; 
         }
     }
 
     public function editeventTrip($orderId, $clientName, $event_id) {
-        $client_name = str_replace('-', ' ', $clientName);
-        $tracker_ = trip::SELECT('id', 'tracker')->WHERE('trip_id', $orderId)->GET();
-        $tracker = $tracker_[0]['tracker'];
-        $tripId = $tracker_[0]['id'];
-        $tripEvents = tripEvent::WHERE('trip_id', $tripId)->ORDERBY('current_date', 'DESC')->GET();
-        $recid = tripEvent::findOrFail($event_id);
-        $onjourneyIssueTypes = IssueType::WHERE('issue_category', 1)->GET();
-        $offloadIssueTypes = IssueType::WHERE('issue_category', 2)->GET();
-        $lgas = DB::SELECT(
-            DB::RAW(
-                'SELECT lga_name FROM tbl_regional_local_govt WHERE regional_country_id = \'94\' ORDER BY lga_name ASC '
-            )
-        );
-        return view('orders.trip-events',
-            compact(
-                'orderId',
-                'client_name',
-                'tracker',
-                'tripId',
-                'tripEvents',
-                'recid',
-                'onjourneyIssueTypes',
-                'offloadIssueTypes',
-                'lgas'
-            )
-        );
+        return $recid = tripEvent::findOrFail($event_id);
     }
 
-    public function updateTripEvent(Request $request, $id){
+    public function updateTripEvent(Request $request, $id) {
         $check = tripEvent::WHERE('current_date', $request->current_date)->WHERE('trip_id', $request->trip_id)->WHERE('id', '<>', $id)->exists();
         if($check) {
             return 'cant_add';
@@ -795,8 +783,6 @@ class ordersController extends Controller
             if($request->tracker == 6) { $onjourney_status = 1; $destination_status = 0; $offload_status = 0; }
             if($request->tracker == 7) { $onjourney_status = 1; $destination_status = 1; $offload_status = 0;}
             if($request->tracker == 8) { $onjourney_status = 1; $destination_status = 1; $offload_status = 1; }
-
-            //return $request->all();
 
             $recid = tripEvent::findOrFail($id);
             $recid->UPDATE([
@@ -814,6 +800,7 @@ class ordersController extends Controller
                 'location_two_comment' => $request->location_two_comment,
                 'location_check_two' => $request->location_check_two,
                 'time_arrived_destination' => $request->time_arrived_destination,
+                'gate_in_time_destination' => $request->gate_in_destination_timestamp,
                 'destination_status' => $destination_status,
                 'offload_issue_type' => $request->offload_issue_type,
                 'offload_start_time' => $request->offload_start_time,
@@ -821,15 +808,17 @@ class ordersController extends Controller
                 'offload_status' => $offload_status,
                 'offloaded_location' => $request->offloaded_location
             ]);
-            // $recid->UPDATE($request->all());
             $updateTracker = trip::findOrFail($request->trip_id);
             $updateTracker->tracker = $request->tracker;
             $updateTracker->save();
 
             $changes = tripChanges::CREATE(['trip_id' => $recid->trip_id, 'user_id' => $request->user_id, 'changed_keys' => $request->tracker, 'changed_values' => 'On Journey Details']);
 
-
-            return 'updated';
+            $trip_id = $request->trip_id;
+            $order_id = $request->orderId;
+            $loading_site = $request->loading_site;
+            $result = 'updated`'.$this->eventLogRecord($trip_id, $order_id, $loading_site);
+            return $result;
         }
 
     }
@@ -989,8 +978,6 @@ class ordersController extends Controller
                 'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND a.tracker <= 8 AND a.client_id = '.$client_id.' AND a.completed_trip_report = FALSE '
             )
         );
-
-
         $tripWaybills = tripWaybill::GET();
         $tripEvents = tripEvent::ORDERBY('current_date', 'DESC')->GET();
         $waybillstatuses = tripWaybillStatus::GET();
@@ -1010,7 +997,6 @@ class ordersController extends Controller
                     <th>DESTINATION</th>
                     <th>PRODUCT</th>
                     <th>GATE IN</th>
-                    <th>TIME SINCE GATE IN</th>
                     <th>ARRIVAL AT LOADING BAY</th>
                     <th class="text-center">GATE OUT</th>
                     <th>LAST KNOWN LOCATION 1</th>
@@ -1018,6 +1004,7 @@ class ordersController extends Controller
                     <th class="text-center">LAST KNOWN LOCATION 2</th>
                     <th class="text-center">TIME & DATE </th>
                     <th>TIME ARRIVED DESTINATION</th>
+                    <th class="text-center">DESTINATION GATE IN TIME</th>
                     <th>CURRENT STAGE</th>
                     <th>REMARKS</th>
                     <th><button class="btn btn-primary" id="sendForComplete">COMPLETED?</button></th>                  
@@ -1039,54 +1026,11 @@ class ordersController extends Controller
                 if($trip->tracker == 7){ $current_stage = 'ARRIVED DESTINATION';}
                 if($trip->tracker == 8){ $current_stage = 'OFFLOADED';}
                 
-                if($trip->gated_out != '') {
-                    if(count($waybillstatuses)){
-                        foreach($waybillstatuses as $waybillChecker){
-                            if($waybillChecker->trip_id == $trip->id && $waybillChecker->waybill_status == TRUE) {
-                                $bgcolor = '#fff';
-                                $color = '#000';
-                                $textdescription = 'AT HQ';
-                                break;
-                            } else {
-                                $now = time();
-                                $gatedout = strtotime($trip->gated_out);;
-                                $datediff = $now - $gatedout;
-                                $numberofdays = abs(round($datediff / (60 * 60 * 24)));
-                                if($numberofdays >=0 && $numberofdays <= 3){
-                                    $bgcolor = '#008000';
-                                    $textdescription = 'HEALTHY';
-                                    $color = '#fff';
-                                }
-                                elseif($numberofdays >=4 && $numberofdays <= 7){
-                                    $bgcolor = '#FFBF00';
-                                    $textdescription = 'WARNING';
-                                    $color = '#fff';
-                                }
-                                else{
-                                    $bgcolor = '#FF0000';
-                                    $textdescription = 'EXTREME';
-                                    $color = '#fff';
-                                }
-                            }
-                            continue;
-                        }
-                    }
-                    else{
-                        $bgcolor = '';
-                        $textdescription = 'Waybill Status Not Updated';
-                        $color= '#000';
-                    }
-                }
-                else{
-                    $bgcolor = '';
-                    $textdescription = 'Not gated out yet';
-                    $color= '#000';
-                }
-        $trip->arrival_at_loading_bay ? $alb = date('Y-m-d, g:i A',strtotime($trip->arrival_at_loading_bay)):$alb = '';
-        $trip->loading_start_time ? $lst = date('Y-m-d, g:i A',strtotime($trip->loading_start_time)) : $lst = '';
-        $trip->loading_end_time ? $let = date('Y-m-d, g:i A',strtotime($trip->loading_end_time)) : $let = '';
-        $trip->departure_date_time ? $ddt = date('Y-m-d, g:i A',strtotime($trip->departure_date_time)) : $ddt = '';
-        $trip->gated_out ? $gto = date('Y-m-d, g:i A',strtotime($trip->gated_out)) : $gto = '';
+                $trip->arrival_at_loading_bay ? $alb = date('Y-m-d, g:i A',strtotime($trip->arrival_at_loading_bay)):$alb = '';
+                $trip->loading_start_time ? $lst = date('Y-m-d, g:i A',strtotime($trip->loading_start_time)) : $lst = '';
+                $trip->loading_end_time ? $let = date('Y-m-d, g:i A',strtotime($trip->loading_end_time)) : $let = '';
+                $trip->departure_date_time ? $ddt = date('Y-m-d, g:i A',strtotime($trip->departure_date_time)) : $ddt = '';
+                $trip->gated_out ? $gto = date('Y-m-d, g:i A',strtotime($trip->gated_out)) : $gto = '';
 
                 $tabledata.='<tr class="'.$css.'hover" style="font-size:10px;">
                     <td>'.$counter.'</td>
@@ -1105,7 +1049,6 @@ class ordersController extends Controller
                     <td class="text-center">'.strtoupper($trip->exact_location_id).'</td>
                     <td>'.$trip->product.'</td>
                     <td>'.date('Y-m-d, g:i A',strtotime($trip->gate_in)).'</td>
-                    <td></td>
                     <td class="text-center">'.$alb.'</td>
                     <td class="text-center">'.$gto.'</td>
                     
@@ -1114,6 +1057,7 @@ class ordersController extends Controller
                     <td>'.$this->eventdetails($tripEvents, $trip, 'location_two_comment').'</td>
                     <td class="text-center">'.$this->eventdetails($tripEvents, $trip, 'location_check_two').'</td>
                     <td class="text-center">'.$this->eventdetails($tripEvents, $trip, 'time_arrived_destination').'</td>
+                    <td class="text-center">'.$this->eventdetails($tripEvents, $trip, 'gate_in_time_destination').'</td>
                     <td>'.$current_stage.'</td>
                     <td class="font-weight-semibold"></td>
                     <td class="text-center"><input type="checkbox" name="markAsCompleted[]" value="'.$trip->id.'"></td>                        
@@ -1151,7 +1095,7 @@ class ordersController extends Controller
 
         $onJourneyTrips = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage, h.first_name, h.last_name FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN users h ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id AND a.user_id = h.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND a.tracker BETWEEN \'5\' AND \'6\' ORDER BY a.trip_id DESC '
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage, h.first_name, h.last_name FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN users h ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id AND a.user_id = h.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND a.tracker BETWEEN \'5\' AND \'7\' ORDER BY a.trip_id DESC '
             )
         );
         
@@ -1167,8 +1111,114 @@ class ordersController extends Controller
         $invoiceCriteria = tripWaybillStatus::GET();
         $trippayments = tripPayment::GET();
 
+        $onjourneyIssueTypes = IssueType::WHERE('issue_category', 1)->GET();
+        $offloadIssueTypes = IssueType::WHERE('issue_category', 2)->GET();
+        $lgas = DB::SELECT(
+            DB::RAW(
+                'SELECT lga_name FROM tbl_regional_local_govt WHERE regional_country_id = \'94\' ORDER BY lga_name ASC '
+            )
+        );
 
-        return view('orders.on-journey', compact('onJourneyTrips', 'tripWaybills', 'tripEvents', 'waybillstatuses', 'clients', 'loadingSites', 'transporters', 'products', 'states', 'invoiceCriteria', 'trippayments'));
+        return view('orders.on-journey', compact('onJourneyTrips', 'tripWaybills', 'tripEvents', 'waybillstatuses', 'clients', 'loadingSites', 'transporters', 'products', 'states', 'invoiceCriteria', 'trippayments', 'onjourneyIssueTypes', 'offloadIssueTypes', 'lgas'));
+    }
+
+    public function eventLog(Request $request) {
+        $trip_id = $request->tripId;
+        $loading_site = $request->loadingSite;
+        $order_id = $request->kaid;
+        return $this->eventLogRecord($trip_id, $order_id, $loading_site);
+    }
+
+    function eventLogRecord($tripId, $kaid, $loadingSite) {
+
+        $response = '<div class="card-header header-elements-inline">
+            <h5 class="card-title">Events Log of  '.$kaid.' at '.strtoupper($loadingSite).'</h5>
+        </div>';
+
+        $tripEvents = tripEvent::ORDERBY('created_at', 'DESC')->WHERE('trip_id', $tripId)->GET();
+
+        $response.='<div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-info">
+                    <tr style="font-size:11px;">
+                        <th>#</th>
+                        <th>Date of Event</th>
+                        <th>Morning Visibility</th>
+                        <th>Afternoon Visibility</th>
+                        <th>Destination</th>
+                        <th colspan="2">Offload Duration</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>';
+                    $counter = 0; $current_date = date("Y-m-d");
+                    if(count($tripEvents)) {
+                        foreach($tripEvents as $tripevent) {
+                            $counter++;
+                            $counter % 2 == 0 ? $css = '' : $css = 'table-success';
+                            
+                        $response.='<tr class="{{$css}}" style="font-size:11px">
+                            <td>'.$counter.'</td>
+                            <td>'.$tripevent->current_date.'</td>
+                            <td>
+                                <p class="m-0">'.date('d/m/Y - h:iA', strtotime($tripevent->location_check_one)).' 
+                                ('.$tripevent->location_one_comment.')</p>
+                                <span class="badge badge-primary block">Lga: '.$tripevent->morning_lga.'</span>';
+
+                                if($tripevent->morning_issue_type) {
+                                 $response.='<span class="badge badge-danger block">Issue: '.$tripevent->morning_issue_type.'</span>';
+                                }
+                            $response.='</td>
+                            <td>';
+                                if($tripevent->location_check_two) {
+                                    $response.='<p class="m-0"> '.date('d/m/Y - h:iA', strtotime($tripevent->location_check_two)).' 
+                                    ('.$tripevent->location_two_comment.')</p>
+                                    <span class="badge badge-primary block">Lga: '.$tripevent->afternoon_lga.'</span>';
+                                }
+                                if($tripevent->afternoon_issue_type) {
+                                    $response.='<span class="badge badge-danger block">Issue: '.$tripevent->afternoon_issue_type.'</span>';
+                                }
+                            $response.='</td>  
+                            <td>';
+                                if($tripevent->time_arrived_destination) {
+                                    $response.= date('d/m/Y - h:iA', strtotime($tripevent->time_arrived_destination));
+                                }
+                                if($tripevent->gate_in_time_destination) {
+                                    $response.='<span class="d-block badge badge-primary">'.date('d/m/Y - h:iA', strtotime($tripevent->gate_in_time_destination)).'</span>';
+                                }
+                            $response.='</td>
+                            <td colspan="2">';
+                                if($tripevent->offload_end_time) {
+                                    $response.='<p class="m-0">'.date('d/m/Y - h:iA', strtotime($tripevent->offload_start_time)).' - 
+                                    '.date('d/m/Y - h:iA', strtotime($tripevent->offload_end_time)).'</p>';
+                                }
+                                if($tripevent->offload_issue_type ) {
+                                $response.='<span class="badge badge-danger">Issue: '.$tripevent->offload_issue_type.'</span>';
+                                }
+                            $response.='</td>
+                            <td>
+                                <div class="list-icons">';
+                                    if(($counter == 1) && ($current_date == $tripevent->current_date) || Auth::user()->role_id == 1) {
+                                        $response.="<i class=\"icon-pencil7 text-primary pointer updateTripEvent \" id=".$tripevent->id." value=".$loadingSite." name=".$kaid."></i>";
+                                    }
+                                    else{
+                                        $response.= '<span class="error">Access denied</span>';
+                                    }
+                                $response.='</div>
+                            </td>
+                        </tr>';   
+                        }
+                    } else {
+                        $response.='<tr>
+                            <td class="table-success" colspan="10">You\'ve not add any event for this trip</td>
+                        </tr>';
+                    }
+                $response.='</tbody>
+            </table>
+        </div>';
+
+        return $response;
+
     }
 
     function voidTrip($id){
@@ -1253,6 +1303,9 @@ class ordersController extends Controller
                 }
                 elseif(($field == 'offload_end_time' && $object->$field!='')){
                      return date('Y-m-d, g:i A', strtotime($object->$field));
+                }
+                elseif(($field == 'gate_in_time_destination' && $object->$field!='')){
+                    return date('Y-m-d, g:i A', strtotime($object->$field));
                 }
                 else{
                     return $object->$field;
@@ -1353,7 +1406,6 @@ class ordersController extends Controller
         else{
             echo 'Sorry, we do not have any log for this trip.';
         }
-        
     }
-    
+
 }

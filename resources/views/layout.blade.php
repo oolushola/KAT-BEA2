@@ -553,7 +553,6 @@
 <script src="{{URL::asset('global_assets/js/main/bootstrap.bundle.min.js')}}"></script>
 <script src="{{URL::asset('global_assets/js/plugins/loaders/blockui.min.js')}}"></script>
 <script src="{{URL::asset('global_assets/js/plugins/forms/styling/switchery.min.js')}}"></script>
-<script src="{{URL::asset('global_assets/js/plugins/forms/selects/select2.min.js')}}"></script>
 <script src="{{URL::asset('global_assets/js/plugins/forms/styling/uniform.min.js')}}"></script>
 <script src="{{URL::asset('assets/js/app.js')}}"></script>
 <script src="{{URL::asset('global_assets/js/demo_pages/form_layouts.js')}}"></script>

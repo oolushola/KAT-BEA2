@@ -17,6 +17,7 @@ class tripEvent extends Model
         'location_two_comment',
         'destination_status',
         'time_arrived_destination',
+        'gate_in_time_destination',
         'offloading_status',
         'offload_start_time',
         'offload_end_time',
@@ -26,11 +27,6 @@ class tripEvent extends Model
         'afternoon_lga',
         'afternoon_issue_type',
         'offload_issue_type',
-
-
-
-
-
         
     ];
 }
