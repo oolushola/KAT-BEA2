@@ -274,4 +274,103 @@ $(function() {
 
     })
 
+
+    //Quick Preview of an invoice
+    $('.invoicePreview').click(function() {
+        $invoiceNo = $(this).attr("id");
+        $completedInvoiceNo = $(this).attr('value')
+        $paymentStatus = $(this).attr('data-payment')
+        $acknowledgment = $(this).attr('data-acknowledgement')
+        $('#invoiceNoPlaceholder').html(`INVOICE NO: ${ $completedInvoiceNo }`)
+        $('#invoiceQuickViewController').html('<i class="icon-spinner3 spinner"></i>Please wait, fetching details...').addClass('font-weight-semibold')
+
+        $.get('/invoice-preview', { invoice_no: $invoiceNo, payment_status: $paymentStatus, acknowledgement: $acknowledgment }, function(data) {
+            $('#invoiceQuickViewController').html(data);
+        })  
+    })
+
+    $(document).on('dblclick', '.initialRatePlaceholder', function() {
+        $id = $(this).attr('id')
+        $tripId = $(this).attr("value")
+        $(this).addClass('d-none')
+        $('#amountPaid'+$tripId).removeClass('d-none')
+        $('#incentive'+$tripId).addClass('d-none')
+
+        $(document).on("keyup", '#amountPaid'+$tripId, function(e) {
+            if(e.keyCode === 13) {
+                $('#loader'+$tripId).html('<i class="icon-spinner3 spinner">')
+                $value = eval($(this).val())
+                $.get('/update-amount-paid', {id: $id, amount_paid: $value }, function(data) {
+                    if(data == "updated") {
+                        $('#loader'+$tripId).html('<i class="icon-checkmark2">')
+                    }
+                })
+            }
+        })
+    })
+
+    $(document).on('click', '.paidChecker', function() {
+        $checker = $(this).is(":checked");
+        if($checker) {
+            $('#paidDateChecker').removeClass('d-none')
+            $('#paidDateChecker').val('');
+        }
+        else {
+            $('#paidDateChecker').addClass('d-none')
+        }
+    })
+
+    $(document).on('keyup', '#paidDateChecker', function(e) {
+        $paidDate = $(this).val()
+        $invoiceNo = $(this).attr('name')
+        $event = $(this)
+        if(e.keyCode === 13) {
+            $('#paidPlaceholder').html('<i class="icon-spinner3 spinner"></i>')
+            $.get('/paid-invoices', { date_paid: $paidDate, invoice_no: $invoiceNo, checker: 1 }, function(data) {
+                if(data == "updated") {
+                    $event.addClass('d-none')
+                    $('#paymentState').html('<i class="icon-checkmark4 text-success"></i>')
+                    $('.paidChecker').attr('disabled', 'disabled')
+                    $('#paidPlaceholder').html('')
+        
+                }
+                else{
+                    return false
+                }
+            })
+        }
+    })
+
+    $(document).on('click', '.acknowledgementChecker', function() {
+        $checker = $(this).is(":checked");
+        if($checker) {
+            $('#acknowledgementDateChecker').removeClass('d-none')
+            $('#acknowledgementDateChecker').val('');
+        }
+        else {
+            $('#acknowledgementDateChecker').addClass('d-none')
+        }
+    })
+
+    $(document).on('keyup', '#acknowledgementDateChecker', function(e) {
+        $acknowledgementDate = $(this).val()
+        $invoiceNo = $(this).attr('name')
+        $event = $(this)
+        if(e.keyCode === 13) {
+            $('#acknowledgmentPlaceholder').html('<i class="icon-spinner3 spinner"></i>')
+            $.get('/paid-invoices', { acknowledgement_date: $acknowledgementDate, invoice_no: $invoiceNo, checker: 2 }, function(data) {
+                if(data == "updated") {
+                    $event.addClass('d-none')
+                    $('#acknowledgmentState').html('<i class="icon-checkmark4 text-success"></i>')
+                    $('.acknowledgementChecker').attr('disabled', 'disabled')
+                    $('#acknowledgmentPlaceholder').html('')
+                    $('.paidChecker').removeClass('d-none')
+                }
+                else{
+                    return false
+                }
+            })
+        }
+    })
+
 })

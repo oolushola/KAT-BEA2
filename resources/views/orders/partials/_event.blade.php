@@ -127,13 +127,11 @@
                                         </div>
                                     </div>
                                     <div class="text-right">
-                                        <span id="loader"></span>
+                                        <span id="loaderEvent"></span>
+                                            <button type="submit" class="btn btn-primary d-none" id="updateTripEvent" @if(Auth::user()->role_id != 1 || Auth::user()->role_id != 4)disabled @endif>Update Event
+                                            <i class="icon-paperplane ml-2"></i>
                                         
-                                            <button type="submit" class="btn btn-primary d-none" id="updateTripEvent" @if(Auth::user()->role_id != 1)disabled @endif>Update
-                                        
-                                        <button type="submit" class="btn btn-primary" id="addTripEvent">Add
-                                       
-                                        Event
+                                        <button type="submit" class="btn btn-primary" id="addTripEvent">Add Event
                                             <i class="icon-paperplane ml-2"></i>
                                         </button>
                                     </div>

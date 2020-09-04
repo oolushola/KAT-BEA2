@@ -140,43 +140,43 @@ $(function() {
     const validator = (url) => {
         $tracker = $('#tracker').val()
         if($tracker == "") {
-            errorMessage('#tracker', '#loader', 'Trip status is required', 'error')
+            errorMessage('#tracker', '#loaderEvent', 'Trip status is required', 'error')
             return false
         }
         else{
             if($tracker == 6) {
                 $lga = $('#lga').val();
                 if($lga == "") {
-                    errorMessage('#lga', '#loader', 'Nearest local govt. of the truck is required.', 'error')
+                    errorMessage('#lga', '#loaderEvent', 'Nearest local govt. of the truck is required.', 'error')
                     return false
                 }
                 $visibility = $('#visibility').val();
                 if($visibility == "") {
-                    errorMessage('', '#loader', 'Morning or Afternoon visibility check is required.', 'error')
+                    errorMessage('', '#loaderEvent', 'Morning or Afternoon visibility check is required.', 'error')
                     return false
                 }
                 else{
                     if($visibility == 1) {
                         $morningVisibility = $('#morningVisibility').val();
                         if($morningVisibility == "") {
-                            errorMessage('#morningVisibility', '#loader', 'Morning visibility date and time is required.', 'error')
+                            errorMessage('#morningVisibility', '#loaderEvent', 'Morning visibility date and time is required.', 'error')
                             return false;
                         }
                         $morningRemark = $('#morningComment').val();
                         if($morningRemark == "") {
-                            errorMessage('#morningComment', '#loader', 'Morning remark is required.', 'error')
+                            errorMessage('#morningComment', '#loaderEvent', 'Morning remark is required.', 'error')
                             return false;
                         }
                     }
                     if($visibility == 2) {
                         $afternoonVisibility = $('#afternoonVisibility').val();
                         if($afternoonVisibility == "") {
-                            errorMessage('#afternoonVisibility', '#loader', 'Afternoon visibility date and time is required.', 'error')
+                            errorMessage('#afternoonVisibility', '#loaderEvent', 'Afternoon visibility date and time is required.', 'error')
                             return false;
                         }
                         $afternoonRemark = $('#afternoonRemark').val();
                         if($afternoonRemark == "") {
-                            errorMessage('#afternoonRemark', '#loader', 'Afternoon remark is required.', 'error')
+                            errorMessage('#afternoonRemark', '#loaderEvent', 'Afternoon remark is required.', 'error')
                             return false;
                         }
                     }
@@ -194,7 +194,7 @@ $(function() {
             if($tracker == 7) {
                 $timeArrivedDestination = $('#timeArrivedDestination').val();
                 if($timeArrivedDestination == "") {
-                    errorMessage('#timeArrivedDestination', '#loader', 'Time arrived destination is required.', 'error')
+                    errorMessage('#timeArrivedDestination', '#loaderEvent', 'Time arrived destination is required.', 'error')
                     return false;
                 }
                 submit(url)                
@@ -203,30 +203,30 @@ $(function() {
             if($tracker == 8) {
                 $gateInDestinationTimestamp = $('#gateInDestinationTimestamp').val();
                 if($gateInDestinationTimestamp == "") {
-                    errorMessage('#gateInDestinationTimestamp', '#loader', 'Gate in destination timestamp is required.', 'error')                    
+                    errorMessage('#gateInDestinationTimestamp', '#loaderEvent', 'Gate in destination timestamp is required.', 'error')                    
                     return false;
                 }
                 $tadChecker = $('#tadChecker').val();
                 if($tadChecker == "") {
                     $timeArrivedDestination = $('#timeArrivedDestination').val();
                     if($timeArrivedDestination == "") {
-                        errorMessage('#timeArrivedDestination', '#loader', 'Time arrived destination is required.', 'error')                    
+                        errorMessage('#timeArrivedDestination', '#loaderEvent', 'Time arrived destination is required.', 'error')                    
                         return false;
                     }
                 }
                 $offloadStartTime = $('#offloadStartTime').val();
                 if($offloadStartTime == "") {
-                    errorMessage('#offloadStartTime', '#loader', 'Offload start time is required.', 'error')                    
+                    errorMessage('#offloadStartTime', '#loaderEvent', 'Offload start time is required.', 'error')                    
                     return false;
                 }
                 $offloadEndTime = $('#offloadEndTime').val();
                 if($offloadEndTime == "") {
-                    errorMessage('#offloadEndTime', '#loader', 'Offload end time is required.', 'error')                    
+                    errorMessage('#offloadEndTime', '#loaderEvent', 'Offload end time is required.', 'error')                    
                     return false;
                 }
                 $offloadedLocation = $('#offloadedLocation').val();
                 if($offloadedLocation == "") {
-                    errorMessage('#offloadedLocation', '#loader', 'Offload location is required.', 'error')
+                    errorMessage('#offloadedLocation', '#loaderEvent', 'Offload location is required.', 'error')
                     return false;
                 }
                 $ask = confirm('Are you sure about the offload issue type status?');
@@ -241,15 +241,15 @@ $(function() {
     }
 
     function submit(url) {
-        errorMessage('#loader', '<i class="icon-spinner2 spinner mr-2"></i>Please wait...', 'error')
+        $('#loaderEvent').html('<i class="icon-spinner2 spinner mr-2"></i>Please wait...').addClass('error')
         $.post(url, $("#frmTripEvent").serializeArray(), function(data) {
             if(data === 'cant_add') {
-                errorMessage('#loader', '<i class="icon-x mr-2"></i>Sorry, you can only add a trip event per day, click on the edit icon to modify.', 'error');
+                errorMessage('#loaderEvent', '<i class="icon-x mr-2"></i>Sorry, you can only add a trip event per day, click on the edit icon to modify.', 'error');
                 return
             }
             else {
                 $resultArray = data.split('`')
-                $('#loader').html('<i class="icon-checkmark2></i> Event added success').addClass('text-success');
+                $('#loaderEvent').html('<i class="icon-checkmark2></i> Event added successfully').addClass('text-success');
                 $('#eventLogListings').html($resultArray[1])
             }
         })

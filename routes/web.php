@@ -132,7 +132,6 @@ Route::group(['middleware' => 'auth'], function() {
     ROute::post('complete-invoicing', 'invoiceController@invoicedWaybill');
     Route::get('all-invoiced-trips', 'invoiceController@allInvoicedTrip');
     Route::get('invoice-trip/{invoiceNumber}', 'invoiceController@singleInvoice');
-    Route::post('paid-invoices', 'invoiceController@paidInvoices');
     Route::get('invoice-multi-search', 'invoiceController@bulksearchinvoice');
     Route::get('multi-search', 'invoiceController@multipleinvoicesearch');
     Route::resource('local-purchase-order', 'lpoController');
@@ -279,21 +278,11 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('/update-advance-top-up/{id}', 'paymentExceptionController@advanceTopUp');
     Route::post('update-selected-zero-payment', 'paymentExceptionController@updateMultipleZeroAdvance');
 
-<<<<<<< HEAD
     Route::get('event-log', 'ordersController@eventLog');
-=======
-    // Graphical Representation
-    Route::get('/current-month-trip-details', 'graphController@tripsForTheMonth');
-    Route::get('gatedout-selected-week', 'graphController@chartDateRange');
-    
-    Route::get('gatedout-months-comparison', 'graphController@gatedOutMonthsCompare');
-    Route::get('loading-site-monthly', 'graphController@monthlyLoadingSite');
-    Route::get('loading-site-specific-day', 'graphController@loadingSiteBySpecificDay');
-    Route::get('loading-site-weekly', 'graphController@loadingSiteByweekRange');
-    Route::get('monthly-target-graph', 'graphController@specificMonthTarget');
-    Route::get('client-trip-status-chart', 'graphController@clientTripStatus');
+    Route::get('invoice-preview', 'invoiceController@invoicePreview');
+    Route::get('update-amount-paid', 'invoiceController@updateAmountPaid');
 
+    Route::get('paid-invoices', 'invoiceController@paidInvoices');
 
->>>>>>> f547f6730660487d221c8e09979c0a73181cc3d6
     
 });
