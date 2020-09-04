@@ -69,16 +69,9 @@ td{
                                 <th>Client Name</th>
                                 <th>Billed to: </th>
                                 <th class="text-center">Invoice Number</th>
-                                <th class="text-center"><button type="button" style="font-size:10px" class="btn btn-success" id="acknowledgedInvoices">Acknowledged</button></th>
-                                <th class="text-center">Date <br> Acknowledge</th>
-                                <th class="text-center">
-                                    <button type="submit" class="btn btn-primary" id="paidInvoices" style="font-size:10px" >Paid?</button>
-                                    <span id="loader"></span>
-                                </th>
-                                
+                                <th class="text-center">Acknowledgement Date</th>
                                 <th>Date Paid</th>
-                                <th class="text-center">Payment <br> Status</th>
-                                <!-- <th class="text-center">Action</th> -->
+                                <th class="text-center">Payment Status</th>
                             </tr>
                         </thead>
                         <tbody class="font-size-sm font-weight-bold" style="font-size:9px;">
@@ -142,38 +135,23 @@ td{
                                             @if($specificBiller->invoice_no == $completeInvoice->completed_invoice_no)
                                                 {{ $specificBiller->client_name }}
                                             @endif
-                                            
                                         @endforeach
                                     </td>
                                     
-                                    <td class="text-center {{$acknowledgeClass}}">{!! $completeInvoice->completed_invoice_no !!}</td>
-                                    <td class="text-center">
-                                            <input type="checkbox" name="acknowledgedInvoice[]" class="acknowledgment">
-                                            <div class="hidden" style="font-size:10px; font-weight:bold; outline:none">
-                                                <div>Date Acknowledge</div>
-                                                <input type="date" name="acknowledgmentDate[]" style="outline:none" >
-                                                <input type="hidden" name="acknowledgedInvoiceId[]" value="{{ $completeInvoice->invoice_no }}">
-                                            </div>
-                                        {!! $acknowledgementStatus !!}
+                                    <td class="text-center {{$acknowledgeClass}} invoicePreview" data-toggle="modal" data-target=".quickInvoiceOverview" id="{{ $completeInvoice->invoice_no }}" value="{{ $completeInvoice->completed_invoice_no }}" data-payment="{{ $completeInvoice->paid_status }}" data-acknowledgement="{{ $completeInvoice->acknowledged }}">
+                                        {!! $completeInvoice->completed_invoice_no !!}
+                                        @if($completeInvoice->amount_paid_dfferent)
+                                            <i class="icon-exclamation font-size-sm text-primary"></i>
+                                        @endif
                                     </td>
+                                    <!-- <td class="text-center">{!! $acknowledgementStatus !!}</td> -->
                                     <td class="text-center">
                                         @if($completeInvoice->acknowledged == true)
                                             {{date('d/m/Y', strtotime($completeInvoice->acknowledged_date))}}
                                             <i class="icon icon-x text-danger-400 cancelAcknowledgment" title="Cancel Acknowledgement" id="{{$completeInvoice->invoice_no}}"></i>
                                         @endif
                                     </td>
-                                    <td class="text-center">
-                                        @if($completeInvoice->acknowledged == false)
-                                        <input type="checkbox" disabled >
-                                        @else
-                                        <input type="checkbox" {{ $checkStatus }} {{ $disabledStatus }} class="paymentCriteria" >
-                                        @endif
-                                        <div class="hidden" style="font-size:10px; font-weight:bold; outline:none">
-                                            <div>Date Paid</div>
-                                            <input type="date" name="paymentDate[]" value="{{$completeInvoice->invoice_no}}" style="outline:none" >
-                                        </div>
-
-                                    </td>
+                                    
                                     <td>
                                         @if($completeInvoice->paid_status == true)
                                             {{date('d/m/Y', strtotime($completeInvoice->date_paid))}}
@@ -207,7 +185,7 @@ td{
     <!-- /content area -->
 
 
-			
+	@include('finance.invoice.partials._quick-view')		
 
 </div>
 @stop

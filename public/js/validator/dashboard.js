@@ -122,23 +122,6 @@ $(function() {
         $('#presentDay').val($toDateValue);
     });
 
-<<<<<<< HEAD
-    $('#searchByWeek').click(function(){
-        $currentWeekInView = $('#currentWeekInView').val();
-        $presentDay = $('#presentDay').val();
-        $("#dateRangeLoader").html("<i class='spinner icon-spinner2'></i> Please wait...").addClass('mt-2 font-weight-semibold text-primary')
-        $.get('/gatedout-selected-week', {from:$currentWeekInView, to:$presentDay}, function(data){
-            $dataArrayRecord = data[0];
-            $dataArrayCount = data[1];
-            $("#specificDataRangeRecord").html($dataArrayRecord);
-            graphWeeklyDisplay($currentWeekInView, $presentDay, data[1].TotalWeekly);
-            $("#dateRangeLoader").html("");
-
-        })
-
-    });
-=======
->>>>>>> f547f6730660487d221c8e09979c0a73181cc3d6
 
     // month data visualization
     $('#monthDv').click(function(){
@@ -183,9 +166,6 @@ $(function() {
             $('#weekRangeDv').removeAttr('disabled');
             $('#dayPlaceHolder').addClass('hidden')
         }
-<<<<<<< HEAD
-    });    
-=======
     });
 
     /** Dashboard Misc */
@@ -231,6 +211,5 @@ $(function() {
             $('.serialNumber').addClass('d-none')
         }
     });
->>>>>>> f547f6730660487d221c8e09979c0a73181cc3d6
 
 });

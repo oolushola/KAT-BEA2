@@ -74,9 +74,24 @@ class trackerController extends Controller
         $avgMarginForLastMonth = number_format(($lastMonthMargin / $lastMonthTrip[0]->totalGateOut), 2);
 
 
+        
+        if(date('m') == 7) { $opsStarted = 0; }
+        if(date('m') == 8) { $opsStarted = 1; }
+        if(date('m') == 9) { $opsStarted = 2; }
+        if(date('m') == 10) { $opsStarted = 3; }
+        if(date('m') == 11) { $opsStarted = 4; }
+        if(date('m') == 12) { $opsStarted = 5; }
+        if(date('m') == 1) { $opsStarted = 6; }
+        if(date('m') == 2) { $opsStarted = 7; }
+        if(date('m') == 3) { $opsStarted = 8; }
+        if(date('m') == 4) { $opsStarted = 9; }
+        if(date('m') == 5) { $opsStarted = 10; }
+        if(date('m') == 6) { $opsStarted = 11; }
+        
+        
         $lastOneYearAndMonth = DB::SELECT(
             DB::RAW(
-                'SELECT DISTINCT YEAR(gated_out) AS "years", MONTH(gated_out) AS "months" FROM tbl_kaya_trips WHERE gated_out <> "" LIMIT 1, 13'
+                'SELECT DISTINCT YEAR(gated_out) AS "years", MONTH(gated_out) AS "months" FROM tbl_kaya_trips WHERE gated_out <> "" LIMIT '.$opsStarted.', 13'
             )  
         );
 
