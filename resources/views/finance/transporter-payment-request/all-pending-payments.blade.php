@@ -237,6 +237,27 @@ input::placeholder{
                                             </h6>
                                         </td>
                                     </tr>
+                                    <tr>
+                                        <td>
+                                            @if(count($balanceWaybills))
+                                                @foreach($balanceWaybills as $collectedWaybill)
+                                                    @if($collectedWaybill->trip_id == $balanceRequest->tripid)
+                                                        <a class="mr-2 mb-2" href="{{URL('/assets/img/signedwaybills/'.$collectedWaybill->received_waybill)}}" alt="{{$collectedWaybill->received_waybill}}" target="_blank"><i class="icon-file-check"></i></a>
+                                                    @endif
+                                                @endforeach
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if(count($balanceWaybills))
+                                                @foreach($balanceWaybills as $collectedWaybill)
+                                                    @if($collectedWaybill->trip_id == $balanceRequest->tripid)
+                                                         {{ $collectedWaybill->waybill_remark }}
+                                                        @break
+                                                    @endif
+                                                @endforeach
+                                            @endif
+                                        </td>
+                                    </tr>
                                     <!-- <tr>
                                         <td class="font-weight-bold" colspan="2">
                                             <span class="d-block font-size-sm text-danger" style="text-decoration:underline">Bank Details</span>

@@ -169,13 +169,6 @@ $(function() {
     });
 
     /** Dashboard Misc */
-    
-    $('.container').hide();
-    $('button').click(function(){
-        var target = "#" + $(this).data("target");
-        $(".container").not(target).hide();
-        $(target).show();
-    });
 
     autosearch('#searchDataset', '#masterDataTable')
     autosearch('#searchGatedOut', '#monthlyGatedOutData')

@@ -442,6 +442,12 @@ input, select{
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
 <script type="text/javascript" src="{{URL::asset('/js/validator/excelme.js')}}"></script>
 <script>
+        $('.container').hide();
+        $('button').click(function(){
+            var target = "#" + $(this).data("target");
+            $(".container").not(target).hide();
+            $(target).show();
+        });
     var defaultbgcolors = [
         'rgba(255, 99, 132, 0.2)',
         'rgba(54, 162, 235, 0.2)',

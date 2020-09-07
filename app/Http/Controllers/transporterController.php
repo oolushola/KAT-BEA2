@@ -30,7 +30,7 @@ class transporterController extends Controller
 {
     public function index() {
         $transporters = transporter::ORDERBY('transporter_name')->GET();
-        $users = User::WHERE('role_id', 6)->ORWHERE('role_id', 4)->GET();
+        $users = User::GET();
         return view('transportation.transporter', 
             compact(
                 'transporters',
@@ -73,7 +73,7 @@ class transporterController extends Controller
     public function edit($id) {
         $transporters = transporter::ORDERBY('transporter_name')->GET();
         $transporterDocuments = transporterDocuments::WHERE('transporter_id', $id)->GET(); 
-        $users = User::WHERE('role_id', 6)->ORWHERE('role_id', 4)->GET();
+        $users = User::GET();
         $recid = transporter::findOrFail($id);
         return view('transportation.transporter', 
             compact(
@@ -151,8 +151,21 @@ class transporterController extends Controller
                 'SELECT a.id, a.advance, a.standard_advance_rate, a.balance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.id AS tripid, b.*, c.company_name, d.state, f.transporter_name, f.phone_no, f.bank_name, f.account_name, f.account_number, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id WHERE a.advance_paid = TRUE and a.balance_paid = FALSE AND account_officer_id = "'.$user->id.'" ORDER BY b.trip_id DESC'
             )
         );
-        $getwaybillUploadProof = offloadWaybillRemark::GET();
-        return view('finance.transporter-payment-request.request-payment', compact('advancePaymentRequest', 'allpendingbalanceRequests', 'getwaybillUploadProof'));
+        
+        $tripsBalance = [];
+        $balanceWaybills = [];
+        if(count($allpendingbalanceRequests)) {
+            foreach($allpendingbalanceRequests as $balanceRequest) {
+                $tripsBalance[] = offloadWaybillRemark::WHERE('trip_id', $balanceRequest->tripid)->GET();
+            }
+            foreach($tripsBalance as $balanceWaybill_lists) {
+                foreach($balanceWaybill_lists as $uploadedWaybill) {
+                    $balanceWaybills[] = $uploadedWaybill;
+                }
+            }
+        }
+        
+        return view('finance.transporter-payment-request.request-payment', compact('advancePaymentRequest', 'allpendingbalanceRequests', 'balanceWaybills'));
     }
 
     public function advanceRequestPayment(Request $request) {
@@ -167,8 +180,7 @@ class transporterController extends Controller
         $recid->advance_request = TRUE;
         $recid->advance_requested_by = $user_id;
         $recid->advance_requested_at = $advanceRequestedAt;
-        $recid->save();
-
+        
         $transporterChunkPayment = bulkPayment::WHERE('transporter_id', $recid->transporter_id)->GET();
         if(sizeof($transporterChunkPayment)>0) {
             $current_balance = $transporterChunkPayment[0]->balance;
@@ -220,6 +232,7 @@ class transporterController extends Controller
         $payment->amount = $standardAdvanceRate;
         $payment->payment_mode = 'Advance Requested';
         $payment->save();
+        $recid->save();
 
         try{
             // Mail::send('initiate-payment', array(
@@ -245,6 +258,7 @@ class transporterController extends Controller
         } catch(\Throwable $e) {
             throw $e;
         }
+        
         
     }
 
@@ -369,7 +383,7 @@ class transporterController extends Controller
         }
         return 'completed...';
     }
-
+    
     public function updateTrRate(Request $request, $tripId) {
         $transporter_rate = $request->newTrValue;
         $tripDetails = trip::WHERE('trip_id', $tripId)->FIRST();
@@ -377,7 +391,7 @@ class transporterController extends Controller
         $tripDetails->save();
         return 'updated';
     }
-
+    
     public function transporterLog() {
         $users = DB::SELECT(
             DB::RAW(
@@ -437,8 +451,7 @@ class transporterController extends Controller
         $transporterInfo = transporter::findOrFail($transporterId);
         return view('transportation.transporter-trips', compact('tripInformation', 'transporterInfo'));
     }
-
-
+    
     public function masterPaymentRequest() {
         $user = Auth::user();
         $advancePaymentRequest = DB::SELECT(
@@ -452,7 +465,18 @@ class transporterController extends Controller
                 'SELECT a.id, a.advance, a.standard_advance_rate, a.balance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.id AS tripid, b.*, c.company_name, d.state, f.transporter_name, f.phone_no, f.bank_name, f.account_name, f.account_number, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id WHERE a.advance_paid = TRUE and a.balance_paid = FALSE ORDER BY b.trip_id DESC'
             )
         );
-        $getwaybillUploadProof = offloadWaybillRemark::GET();
-        return view('finance.transporter-payment-request.all-pending-payments', compact('advancePaymentRequest', 'allpendingbalanceRequests', 'getwaybillUploadProof'));
+        $tripsBalance = [];
+        $balanceWaybills = [];
+        if(count($allpendingbalanceRequests)) {
+            foreach($allpendingbalanceRequests as $balanceRequest) {
+                $tripsBalance[] = offloadWaybillRemark::WHERE('trip_id', $balanceRequest->tripid)->GET();
+            }
+            foreach($tripsBalance as $balanceWaybill_lists) {
+                foreach($balanceWaybill_lists as $uploadedWaybill) {
+                    $balanceWaybills[] = $uploadedWaybill;
+                }
+            }
+        }
+        return view('finance.transporter-payment-request.all-pending-payments', compact('advancePaymentRequest', 'allpendingbalanceRequests', 'balanceWaybills'));
     }
 }

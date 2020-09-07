@@ -1,19 +1,5 @@
 $(function() {
-    $('.waybillChecker').click(function() {
-        $conditionChecked = $(this).attr("title");
-        if($conditionChecked == 'collected'){
-            $('#proofOfWaybillUpload').removeClass('hidden');
-            $('#waybillNotCollected').addClass('hidden');
-            $('#waybillStatus').val(1);
-        }
-        else{
-            if($conditionChecked == 'notCollected'){
-                $('#proofOfWaybillUpload').addClass('hidden');
-                $('#waybillNotCollected').removeClass('hidden');
-                $('#waybillStatus').val(0);
-            }
-        }
-    })
+    
 
     $('.remarkOnTrips').click(function() {
         $title = $(this).attr('title');
@@ -30,6 +16,14 @@ $(function() {
             $('#timeArrivedDestination').focus();
             return false;
         }
+        
+        $gateInDestination = $('#gateInDestination').val();
+        if($gateInDestination == ''){
+            $('#messageHolder').html('<i class="icon-x"></i>Destination gate in time and date is required.').addClass('error')
+            $('#gateInDestination').focus();
+            return false;
+        }
+        
         
         $timeOffloadStarted = $('#timeOffloadStarted').val();
         if($timeOffloadStarted == ''){
@@ -50,33 +44,22 @@ $(function() {
             $('#offloadedLocation').focus();
             return false;
         }
-        $waybillChecker = $('.waybillChecker').is(':checked');
-        if(!$waybillChecker){
-            $("#messageHolder").html('<i class="icon-x"></i>We need to know if you were able to collect the waybill or').addClass('error'); 
-            return false;
-        }
-        else{
-            $waybillStatus = $('#waybillStatus').val();
-            if($waybillStatus == 1){
-                $receivedWaybill = $('#receivedWaybill').val();
-                if($receivedWaybill == "") {
-                    $("#messageHolder").html('<i class="icon-x"></i>Choose a file to be uploaded, should be a JPEG, PNG, GIF format').addClass('error');
-                    $('#file').focus();
-                    return false;
-                }
-            } else {
-                if($waybillStatus == 0){
-                    $waybilleNotReceived = $('#waybilleNotReceived').val();
-                    if($waybilleNotReceived == "") {
-                        $("#messageHolder").html('<i class="icon-x"></i>Please state the reason why you couldn\'t collect the waybill ').addClass('error');
-                        $('#waybilleNotReceived').focus();
-                    }
-                }
-            }
-        }
+        
         $('#messageHolder').html('<i class="spinner icon-spinner2"></i>Please wait...').addClass('text-warning');
         $('#frmUpdateTripEvent').submit()
     });
+
+    $('#addMoreOffloadImages').click(function() {
+        $moreImages = '<div class="d-block">';
+        $moreImages += '<input type="file" name="recieved_waybill[]" id="receivedWaybill" class="font-size-xs mb-1 d-inline">';
+        $moreImages += '<i class="icon-minus-circle2 text-danger removeWaybill" id=""></i>';
+        $moreImages += '</div>';
+        $('#moreImagesPlace').append($moreImages)
+    })
+
+    $(document).on('click', '.removeWaybill', function() {
+        $(this).parent('div').remove()
+    })
 
 
     $('.nofifyAdHoc').click(function($e) {
