@@ -11,7 +11,7 @@ td{
     white-space: nowrap;
 }
 input::placeholder{
-    font-size:18px;
+    font-size:11px;
     font-weight:bold;
 }
 </style>
@@ -172,6 +172,12 @@ input::placeholder{
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
+                            <label class="font-weight-semibold">Time Gated In Destination</label>
+                            <input type="datetime-local" class="form-control" name="gate_in_destination" id="gateInDestination">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
                             <label class="font-weight-semibold">Time Offloading Started</label>
                             <input type="datetime-local" class="form-control" name="time_offloading_started" id="timeOffloadStarted">
                         </div>
@@ -193,31 +199,26 @@ input::placeholder{
 
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label class="font-weight-semibold">Were you able to collect this waybill?</label>
-                            <span class="d-block">
-                                <input type="radio" class="waybillChecker" name="waybillChecker" title="collected">Yes &nbsp; &nbsp; <input type="radio" class="waybillChecker"  name="waybillChecker" title="notCollected">No
-                            </span>
+                            <label class="font-weight-semibold">Remark</label>
+                            <input type="text" class="form-control" name="offloadRemark" id="" placeholder="Optional">
                         </div>
                     </div>
 
-                    <div class="col-md-6 hidden" id="proofOfWaybillUpload">
-                        <div class="form-group">
-                            <label class="font-weight-semibold">Upload proof of signed waybill collected</label>
-                            <input type="file" name="recieved_waybill" id="receivedWaybill">
+                   
+                    <div class="form-group">
+                        <label class="font-weight-semibold">Upload proof of signed waybill collected</label>
+                        <span class="ml-2 font-size-xs font-weight-semibold pointer" id="addMoreOffloadImages">Add More Images</span>
+                        <div class="d-block" id="moreImagesPlace">
+                            <input type="file" name="recieved_waybill[]" id="receivedWaybill" class="font-size-xs mb-1 d-inline"> 
                         </div>
                     </div>
+                    
 
-                    <div class="col-md-6 hidden" id="waybillNotCollected">
-                        <div class="form-group">
-                            <label class="font-weight-semibold">Why were you not able to collect this waybill?</label>
-                            <textarea class="form-control" name="waybill_not_collected" id="waybilleNotReceived"></textarea>
-                        </div>
-                    </div>
-                    <input type="hidden" id="waybillStatus" value="" name="waybill_status">
+                    
                     <div class="col-md-12">
                         <div class="form-group">
                             <label class="font-weight-semibold">&nbsp; &nbsp;</label><br>
-                            <button type="submit" class="btn btn-lg btn-primary d-block font-weight-sm font-weight-bold" id="updateTripEvent">UPDATE CHANGES</button>
+                            <button type="submit" class="btn btn-lg btn-primary d-block font-weight-sm font-weight-bold" id="updateTripEvent">SAVE CHANGES</button>
                         </div>
                     </div>
                     <span id="messageHolder" class="d-block"><span>

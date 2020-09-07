@@ -240,29 +240,63 @@ class offloadingClerkController extends Controller
                 $checkThisTripLastEvent->offload_start_time = $request->time_offloading_started;
                 $checkThisTripLastEvent->offload_end_time = $request->time_offloading_end;
                 $checkThisTripLastEvent->offloaded_location = $request->offloaded_location;
+                $checkThisTripLastEvent->gate_in_time_destination = $request->gate_in_destination;
                 $checkThisTripLastEvent->save();
             } else {
-                $createNewRecord = tripEvent::CREATE(['trip_id' => $request->trip_id, 'current_date' => $currentDate, 'journey_status' => 1, 'location_check_one' => $checkThisTripLastEvent->location_check_one, 'location_one_comment' => $checkThisTripLastEvent->location_one_comment, 'location_check_two' => $checkThisTripLastEvent->location_check_two, 'location_two_comment' => $checkThisTripLastEvent->location_two_comment, 'destination_status' => TRUE, 'time_arrived_destination' => $request->time_arrived_destination, 'offloading_status' => 1, 'offload_start_time' => $request->time_offloading_started, 'offload_end_time' => $request->time_offloading_end, 'offloaded_location' => $request->offloaded_location]);
+                $createNewRecord = tripEvent::CREATE(
+                    [
+                        'trip_id' => $request->trip_id, 
+                        'current_date' => $currentDate, 
+                        'journey_status' => 1, 
+                        'location_check_one' => $checkThisTripLastEvent->location_check_one, 
+                        'location_one_comment' => $checkThisTripLastEvent->location_one_comment, 
+                        'location_check_two' => $checkThisTripLastEvent->location_check_two, 
+                        'location_two_comment' => $checkThisTripLastEvent->location_two_comment, 
+                        'destination_status' => 1, 
+                        'time_arrived_destination' => $request->time_arrived_destination, 
+                        'offloading_status' => 1, 
+                        'offload_start_time' => $request->time_offloading_started, 
+                        'offload_end_time' => $request->time_offloading_end, 
+                        'offloaded_location' => $request->offloaded_location,
+                        'gate_in_time_destination' => $request->gate_in_destination
+                    ]
+                );
             }
         } else{
-            $createNewRecord = tripEvent::CREATE(['trip_id' => $request->trip_id, 'current_date' => $currentDate, 'journey_status' => 1, 'location_check_one' => '', 'location_one_comment' => '', 'location_check_two' => '', 'location_two_comment' => '', 'destination_status' => TRUE, 'time_arrived_destination' => $request->time_arrived_destination, 'offloading_status' => 1, 'offload_start_time' => $request->time_offloading_started, 'offload_end_time' => $request->time_offloading_end, 'offloaded_location' => $request->offloaded_location]);
+            $createNewRecord = tripEvent::CREATE(
+                [
+                    'trip_id' => $request->trip_id, 
+                    'current_date' => $currentDate, 
+                    'journey_status' => 1, 
+                    'location_check_one' => '', 
+                    'location_one_comment' => '', 
+                    'location_check_two' => '', 
+                    'location_two_comment' => '', 
+                    'destination_status' => 1, 
+                    'time_arrived_destination' => $request->time_arrived_destination, 
+                    'offloading_status' => 1, 
+                    'offload_start_time' => $request->time_offloading_started, 
+                    'offload_end_time' => $request->time_offloading_end, 
+                    'offloaded_location' => $request->offloaded_location,
+                    'gate_in_time_destination' => $request->gate_in_destination
+                ]
+            );
         }
         $recid = trip::findOrFail($request->trip_id);
-        $recid->tracker = 8; // implies offloaded.
+        $recid->tracker = 8;
         $recid->save();
 
-        if($request->hasFile('recieved_waybill')) {
         $signedWaybill = $request->file('recieved_waybill');
-        $name = 'signed-waybill-'.$request->trip_id.'.'.$signedWaybill->getClientOriginalExtension();
-        $destination_path = public_path('assets/img/signedwaybills/');
-        $waybillPath = $destination_path."/".$name;
-        $signedWaybill->move($destination_path, $name);
-        offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name]);
-        } else {
-            if($request->waybill_not_collected){
-                offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => FALSE, 'waybill_remark' => $request->waybill_not_collected]);
+            foreach($signedWaybill as $key => $collectedWaybill) {
+                if(isset($collectedWaybill) && $collectedWaybill !='') {
+                    $name = 'signed-waybill-'.$request->trip_id.'.'.$collectedWaybill->getClientOriginalExtension();
+                    $destination_path = public_path('assets/img/signedwaybills/');
+                    $waybillPath = $destination_path."/".$name;
+                    $collectedWaybill->move($destination_path, $name);
+                    offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => $request->offloadRemark]);
+                }
+
             }
-        }
         return 'updated';
     }
 
