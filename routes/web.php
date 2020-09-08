@@ -283,6 +283,8 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('update-amount-paid', 'invoiceController@updateAmountPaid');
 
     Route::get('paid-invoices', 'invoiceController@paidInvoices');
+    Route::get('daily-gate-out-record', 'backendController@dailyGateOutRecord');
+
 
     
 });

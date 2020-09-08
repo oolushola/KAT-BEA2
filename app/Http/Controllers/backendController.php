@@ -142,7 +142,7 @@ class backendController extends Controller
         }
         while($count <= $todaysDate);
         
-         $tripEventListing = tripEvent::ORDERBY('current_date', 'DESC')->GET();
+        $tripEventListing = tripEvent::ORDERBY('current_date', 'DESC')->GET();
        
 
         $availableTrucks = DB::SELECT(
@@ -347,7 +347,79 @@ class backendController extends Controller
         );
         return $specificDateRecord;
     }
+
+    public function dailyGateOutRecord(Request $request) {
+        $selected_date = $request->selected_date;
+        $currentMothAndYear = date('Y-m');
+        $user_selected_date = $currentMothAndYear.'-'.$selected_date[0];
+
+        $choosenDate = ltrim(date('dS \of F, Y', strtotime($user_selected_date)), '0');
+        
+        $trips = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND DATE(gated_out) = "'.$user_selected_date.'" ORDER BY a.trip_id DESC'
+            )
+        );
+
+        $waybillTrips = [];
+        $tripWaybills = [];
+        foreach($trips as $tripsListings) {
+            $waybillTrips[] = tripWaybill::WHERE('trip_id', $tripsListings->id)->GET();
+        }
+        
+        foreach($waybillTrips as $myWaybills) {
+            foreach($myWaybills as $waybills) {
+                $tripWaybills[] = $waybills;
+            }
+        }
+    
+        $response = '
+        <div class="table-responsive">
+            <table class="table table-striped table-hover font-size-sm">
+                <thead class="table-success">
+                    <tr>
+                        <th class="text-center font-weight-bold">GATE OUT DETAILS</th>
+                        <th class="font-weight-bold">TRUCK</th>
+                        <th class="font-weight-bold">WAYBILL DETAILS</th>
+                        <th class="font-weight-bold">CONSIGNEE DETAILS</th>
+                    </tr>
+                <thead>
+                <tbody id="currentGateOutData">';
+                    if(count($trips)) {
+                        foreach($trips as $key => $specificRecord) {
+                        $response.='<tr>
+                            <td class="text-center">
+                                <p class="font-weight-bold" style="margin:0">'.$specificRecord->trip_id.'</p>
+                                <p>'.$specificRecord->loading_site.' <br> '.date('d-m-Y', strtotime($specificRecord->gated_out)).' <br> '.date('h:i A', strtotime($specificRecord->gated_out)).'</p>
+                            </td>
+                            <td>
+                                <span class="text-primary"><b>'.$specificRecord->truck_no.'</b></span>
+                                <p style="margin:0"><b>Truck Type</b>: '.$specificRecord->truck_type.' '.$specificRecord->tonnage / 1000 .'</p>
+                                <p style="margin:0"><b>Transporter</b>: '.$specificRecord->transporter_name.', '.$specificRecord->phone_no.'</p>
+                            </td>
+                            <td>';
+                            $response.='<span class="mb-2"><a href="assets/img/waybills/'.$tripWaybills[$key]->photo.'" target="_blank" title="View waybill '.$tripWaybills[$key]->sales_order_no.'">'.$tripWaybills[$key]->sales_order_no.'
+                            '.$tripWaybills[$key]->invoice_no.'</a></span>   
+                            </td>
+                            <td>
+                                <p class="font-weight-bold" style="margin:0">'.$specificRecord->customers_name.'</p>
+                                <p  style="margin:0">Location: '.$specificRecord->exact_location_id.'</p>
+                                <p  style="margin:0">Product: '.$specificRecord-> product.'</p>
+
+                            </td>
+                        </tr>';
+                        }
+                    }
+                    else {
+                        $response.='<tr><td colspan="4">No record is available.</td></tr>';
+                    }
+                    $response.='</tbody>
+                </tbody>
+            </table>
+        </div>';
+
+            return $choosenDate.'`'.$response;
+    }
 }
 
-//'SELECT COUNT(*) as weeklygateout  FROM tbl_kaya_trips WHERE DATE(gated_out) BETWEEN "'.$lastOneWeek.'" and "'.$currentDate.'" and tracker >= 5'
 
