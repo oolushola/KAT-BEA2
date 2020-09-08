@@ -261,15 +261,12 @@ class invoiceController extends Controller
     }
 
     public function allInvoicedTrip() {
-        // $completedInvoice = completeInvoice::ORDERBY('invoice_no', 'DESC')->distinct('invoice_no')->GET(['invoice_no', 'completed_invoice_no', 'paid_status', 'date_paid', 'acknowledged', 'acknowledged_date']);
-
         $completedInvoice = DB::SELECT(
             DB::RAW(
-                'SELECT DISTINCT a.invoice_no, a.paid_status, a.date_paid, a.acknowledged, a.acknowledged_date, b.client_id, c.company_name, a.completed_invoice_no FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c on a.trip_id = b.id AND b.client_id = c.id ORDER BY invoice_no DESC'
+                'SELECT DISTINCT a.invoice_no, a.paid_status, a.date_paid, a.acknowledged, a.acknowledged_date, b.client_id, c.company_name, a.completed_invoice_no, a.amount_paid_dfferent FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c on a.trip_id = b.id AND b.client_id = c.id ORDER BY invoice_no DESC'
             )
         );
         $invoiceBillers = invoiceClientRename::GET();
-        
         
         return view('finance.invoice.all-invoiced-trip', compact('completedInvoice', 'invoiceBillers'));
     }
@@ -316,9 +313,6 @@ class invoiceController extends Controller
             }
         }
 
-
-
-
         $tripIncentives = tripIncentives::GET();
         //$vatRate = vatRate::first();
         $invoiceBiller = invoiceClientRename::WHERE('invoice_no', $invoiceNumber)->first();
@@ -358,31 +352,6 @@ class invoiceController extends Controller
                
             )
         );
-    }
-
-    public function paidInvoices(Request $request) {
-       $paymentDate = $request->paymentDate;
-       $invoiceId = $request->paid_invoices;
-       if($request->acknowledgeChecker == 1){
-            foreach($paymentDate as $key => $datePaid) {
-                if(isset($datePaid) && $datePaid != '' ) {
-                    $recid = completeInvoice::WHERE('invoice_no', $invoiceId[$key])->UPDATE(['paid_status' => TRUE, 'date_paid' => $datePaid]);
-                }
-            }
-        }
-        
-        if($request->acknowledgeChecker == 2) {
-            
-            $acknowledgmentDate = $request->acknowledgmentDate;
-            $acknowledgedInvoiceId = $request->acknowledgedInvoiceId;
-            foreach($acknowledgmentDate as $key=> $dateAcknowledged){
-                if(isset($dateAcknowledged) && $dateAcknowledged != '' ) {
-                    $recid = completeInvoice::WHERE('invoice_no', $acknowledgedInvoiceId[$key])->UPDATE(['acknowledged' => TRUE, 'acknowledged_date' => $dateAcknowledged]);
-                }
-            }
-        }
-
-        return 'updated';
     }
 
     public function bulksearchinvoice() {
@@ -746,5 +715,235 @@ class invoiceController extends Controller
         );
     }
 
+    public function invoicePreview(Request $request) {
+        $invoiceNo = $request->invoice_no;
+        $acknowledgement = $request->acknowledgement;
+        $payment_status = $request->payment_status;
+
+        $clientInfo = DB::SELECT(
+            DB::RAW(
+                'SELECT b.id, b.trip_id, b.gated_out, a.vat_used, a.withholding_tax_used, b.client_rate, b.amount_paid, c.address, c.company_name, c.phone_no, c.email, d.truck_no FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_kaya_trucks d ON a.trip_id = b.id AND b.client_id = c.id AND b.truck_id = d.id WHERE a.invoice_no = "'.$invoiceNo.'"'
+            )
+        );
+        $companyProfile = companyProfile::GET()->FIRST();
+        foreach($clientInfo as $key => $clientDetails) {
+            $tripIncentives[] = tripIncentives::WHERE('trip_id', $clientDetails->id)->GET()->FIRST();
+        }        
+        $invoicePreview ='<div class="card-body" style="font-family:tahoma; font-size:11px;">
+        <div class="row">
+            <div class="mb-4 col-md-6">
+                <span class="text-muted">Client</span>
+                <ul class="list list-unstyled mb-0">
+                    <li>
+                        <h5 class="my-2">'.$clientInfo[0]->company_name.'</h5>
+                    </li>
+                    <li>'.$clientInfo[0]->address.'</li>
+                    <li>Nigeria</li>
+                    <li>'.$clientInfo[0]->phone_no.'</li>
+                </ul>
+            </div>
+            <div class="mb-2  col-md-6">
+                <div class="d-flex flex-wrap wmin-md-400">
+                    <ul class="list list-unstyled mb-0">
+                        <li>
+                            <h6 class="my-1 font-weight-bold font-size-sm">Acknowledged? ';
+                                if($acknowledgement == TRUE) {
+                                    $acknowledgementStatus = 'disabled checked';
+                                    $iconState = '<i class="icon-checkmark4 text-primary"></i>';
+                                    $paymentApplicable = '';
+                                }
+                                else {
+                                    $acknowledgementStatus = '';
+                                    $iconState = '<i class="icon-x text-danger"></i>';
+                                    $paymentApplicable = 'd-none';
+                                }
+                                $invoicePreview.='<input type="checkbox" class="acknowledgementChecker ml-2" '.$acknowledgementStatus.'  />
+                                <input type="date" style="width:120px; font-size:10px" class="d-none" id="acknowledgementDateChecker" name="'.$invoiceNo.'"  />
+                                <span id="acknowledgmentPlaceholder"></span>
+                            </h6>
+                        </li>
+
+                        <li>
+                            <h6 class="my-1 font-weight-bold font-size-sm mt-2">Payment Received?';
+                                if($payment_status == TRUE) {
+                                    $paymentStatus = 'disabled checked';
+                                    $paymentState = '<i class="icon-checkmark4 text-success"></i>';
+                                }
+                                else {
+                                    $paymentStatus = '';
+                                    $paymentState = '<i class="icon-x text-danger"></i>';
+                                }
+                                $invoicePreview.='<input type="checkbox" class="paidChecker ml-1 '.$paymentApplicable.'" '.$paymentStatus.' />
+                                <input type="date" style="width:120px; font-size:10px" class="d-none" id="paidDateChecker" name="'.$invoiceNo.'"  />
+                                <span id="paidPlaceholder"></span>
+                            </h6>
+                        </li>                        
+                    </ul>
+
+                    <ul class="list list-unstyled text-right mb-0 ml-auto">
+                        <li><h6 class="font-weight-bold my-1" id="acknowledgmentState">'.$iconState.'</h6></li>
+                        <li><h6 class="font-weight-bold my-1" id="paymentState">'.$paymentState.'</h6></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>';
+    
+    $invoicePreview.='<div class="table-responsive">
+        <table class="table table-striped" >
+            <thead>
+                <tr style="font-size:12px; font-family:tahoma; font-weight:bold">
+                    <th class="text-center"><b>Trip ID</b></th>
+                    <th class="text-center"><b>Invoice Date</b></th>
+                    <th><b>Truck No.</b></th>
+                    <th class="text-center"><b>Expected Rate</b> </th>
+                    <th class="text-center"><b>Amount Paid</b></th>
+                    <th class="text-center"><b>Difference</b></th>
+                </tr>
+            </thead>
+            <tbody style="font-size:12px; font-family:tahoma">';
+                $subtotal = 0;
+                $total = 0;
+                $sumOfActualRateIncentive = 0;
+                $sumOfAmountPaidIncentive = 0;
+                $sumOfAmountPaid = 0;
+                foreach($clientInfo as $key=> $tripDetails) {
+                    $difference = 0;
+                    $subtotal += $tripDetails->client_rate;
+                    if($tripDetails->amount_paid == "") {
+                        $demo = $tripDetails->client_rate * (($tripDetails->vat_used - $tripDetails->withholding_tax_used)/100);
+                        $amountPaid = $tripDetails->client_rate + $demo;
+                    }
+                    else {
+                        $amountPaid = $tripDetails->amount_paid;
+                    }
+                    $sumOfAmountPaid += $amountPaid;
+                    $invoicePreview.='<tr>
+                        <td class="font-weight-bold text-center">
+                            <span class="defaultInfo">'.$tripDetails->trip_id.'</span>
+                        </td>
+                        <td class="text-center">'.date('d/m/Y', strtotime($tripDetails->gated_out)).'</td>
+                        <td>'.$tripDetails->truck_no.'</td>
+                        
+                        <td class="text-center">';
+                           
+                            $singleIncentive = 0; 
+                            if($tripIncentives[$key] && $tripIncentives[$key]->trip_id == $tripDetails->id) {
+                                
+                                $sumOfActualRateIncentive+=$tripIncentives[$key]->amount;
+
+                                $amount_ = $tripIncentives[$key]->amount + $tripDetails->client_rate;
+                                $wht = ($amount_) * (($tripDetails->vat_used - $tripDetails->withholding_tax_used) / 100);
+                                $exr = $amount_ + $wht;
+                                $expectedRate = '&#x20a6;'.number_format($exr, 2).'<span class="icon-coins font-size-xs ml-1"></span>';
+                            }
+                            else {
+                                $amount_ = $tripDetails->client_rate; + $singleIncentive;
+                                $wht = ($amount_) * (($tripDetails->vat_used - $tripDetails->withholding_tax_used) / 100);
+                                $exr = $amount_ + $wht;
+                                $expectedRate = '&#x20a6;'.number_format($exr, 2).'<span class="icon font-size-xs ml-1"></span>';
+                            }
+                            $invoicePreview.= $expectedRate; 
+                            
+                        $invoicePreview.='</td>
+                        <td class="text-center">
+                            
+                            
+                            <input type="text" value="'.$amountPaid.'" class="d-none" id="amountPaid'.$tripDetails->trip_id.'" style="width:80px; font-size:10px; outline:none">
+                            <span id="loader'.$tripDetails->trip_id.'"></span>';
+                            
+                            $invoicePreview.='<span id="incentive'.$tripDetails->trip_id.'">';
+                            $singleIncentiveAP = 0;
+                            if($tripIncentives[$key] && $tripIncentives[$key]->trip_id == $tripDetails->id && $tripDetails->amount_paid == "") {
+                                $amount_ap = $tripIncentives[$key]->amount + $tripDetails->client_rate;
+                                $wht_ap = ($amount_ap) * (($tripDetails->vat_used - $tripDetails->withholding_tax_used) / 100);
+                                $exr_ap = $amount_ap + $wht_ap;
+                                $expectedRate_ap = '&#x20a6;'.number_format($exr_ap, 2).'<span class="icon-coins font-size-xs ml-1"></span>';
+                                $sumOfAmountPaidIncentive+=$tripIncentives[$key]->amount;                                
+                            }
+                            else {
+                                if(!$tripIncentives[$key] && $tripDetails->amount_paid == "") {
+                                    $amount_ap = $tripDetails->client_rate;
+                                    $wht_ap = ($amount_ap) * (($tripDetails->vat_used - $tripDetails->withholding_tax_used) / 100);
+                                    $exr_ap = $amount_ap + $wht_ap;
+                                    $expectedRate_ap = '&#x20a6;'.number_format($exr_ap, 2).'<span class="icon font-size-xs ml-1"></span>';
+
+                                } else {
+                                    $exr_ap = $tripDetails->amount_paid;
+                                    $expectedRate_ap = '&#x20a6;'.number_format($tripDetails->amount_paid, 2).'<span class="icon font-size-xs ml-1"></span>';
+                                }
+                            }
+                            
+                            $invoicePreview.= '<span id="'.$tripDetails->id.'" value="'.$tripDetails->trip_id.'" class="initialRatePlaceholder">'.$expectedRate_ap.'</span>';
+                            
+                        $invoicePreview.='</td>
+                        <td class="text-center">';
+                            $invoicePreview.= number_format($exr - $exr_ap, 2);
+                        $invoicePreview.='</td>
+                    </tr>';
+                }
+                $sumOfAmountPaid;
+                
+                $vat = $tripDetails->vat_used;
+                $withholdingTax = $tripDetails->withholding_tax_used;
+                $taxDifference = ($vat - $withholdingTax) / 100;
+
+                $sumActualRateAndIncentive = $subtotal + $sumOfActualRateIncentive;
+                $withholdingTaxofActualRate = $sumActualRateAndIncentive * $taxDifference;
+                $amountPayableExpectedRate = $sumActualRateAndIncentive + $withholdingTaxofActualRate;
+                
+                $sumOfAmountPaidIncentive += $sumOfAmountPaidIncentive * $taxDifference ;
+
+                $amountPayableofAmountPaid = $sumOfAmountPaid + $sumOfAmountPaidIncentive;
+
+            $invoicePreview.='
+                <tr>
+                    <td colspan="3"></td>
+                    <td class="text-center font-weight-bold">Total: &#x20a6;'.number_format($amountPayableExpectedRate, 2).'</td>
+                    <td class="text-center font-weight-bold">Total: &#x20a6;'.number_format($amountPayableofAmountPaid, 2).'</td>
+                    <td class="text-center font-weight-bold">Total: &#x20a6;'.number_format($amountPayableExpectedRate - $amountPayableofAmountPaid, 2).'</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>';
+
+    
+
+    return $invoicePreview;
+    }
+
+    public function updateAmountPaid(Request $request) {
+        $amountPaid = $request->amount_paid;
+        $id = $request->id;
+
+        $tripDetails = trip::findOrFail($id);
+        $getTripInvoiceNum = completeInvoice::SELECT('invoice_no')->WHERE('trip_id', $id)->GET()->FIRST();
+        if($tripDetails->client_rate == $amountPaid) {
+            $tripDetails->amount_paid = NULL;
+            $invoices = DB::table('tbl_kaya_complete_invoices')
+                ->WHERE('invoice_no', $getTripInvoiceNum->invoice_no)
+                ->UPDATE(array('amount_paid_dfferent' => 0));
+            
+        }
+        else {
+            $tripDetails->amount_paid = $amountPaid;
+            $invoices = DB::table('tbl_kaya_complete_invoices')
+            ->WHERE('invoice_no', $getTripInvoiceNum->invoice_no)
+            ->UPDATE(array('amount_paid_dfferent' => 1));
+        }
+        $tripDetails->save();
+        return 'updated';
+    }
+
+    public function paidInvoices(Request $request) {
+        if($request->checker == 1) {
+            completeInvoice::WHERE('invoice_no', $request->invoice_no)->UPDATE(['paid_status' => TRUE, 'date_paid' => $request->date_paid]);
+        }
+        if($request->checker == 2) {
+            completeInvoice::WHERE('invoice_no', $request->invoice_no)->UPDATE(['acknowledged' => TRUE, 'acknowledged_date' => $request->acknowledgement_date]);
+        }
+ 
+        return 'updated';
+     }
     
 }

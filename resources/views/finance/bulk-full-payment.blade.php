@@ -38,11 +38,13 @@
                             </tr>
                         </thead>
                         <tbody class="font-weight-semibold font-size-sm">
-                            <?php $count = 0; ?>
+                            <?php $count = 0; $sumOfclientRate = 0; $sumOfTransporterRate = 0; ?>
                             @if(count($trips))
                                 @foreach($trips as $trip)
                                     <?php
                                         if($count % 2 == 0) { $css = 'table-success'; } else { $css = ''; }
+                                        $sumOfclientRate += $trip->client_rate;
+                                        $sumOfTransporterRate += $trip->transporter_rate;
                                     ?>
                                     <tr class="{{ $css }}">
                                         <td>{{ $count+=1 }} <input type="hidden" value="{{ $trip->id }}" name="tripPaymentIds[]"></td>
@@ -63,13 +65,19 @@
                                 @endforeach
                                     <tr>
                                         <td colspan="5">&nbsp;</td>
-                                        <td colspan="2">
-                                            <button class="btn btn-primary" id="updateAll">Update Payment Status</button>
+                                        <td>
+                                            Total: ₦{{ number_format($sumOfclientRate, 2) }}
+                                        </td>
+                                        <td>
+                                            Total: ₦{{ number_format($sumOfTransporterRate, 2) }}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-primary font-weight-semibold font-size-sm" id="updateAll">Update Payment Status</button>
                                             <span id="loader"></span>
                                         </td>
                                     </tr>
                             @else
-
+                                Sorry, nothing has been selected
                             @endif
                         </tbody>
                     </table>

@@ -47,11 +47,12 @@ td{
                         <th class="text-center">Gate In</th>
                         <th>Time since gate in</th>
                         <th class="text-center">Arrival at loading bay</th>
-                        <th>loading bay departure time</th>
+                        <th>Loading bay departure time</th>
                         <th class="text-center">Gate out</th>
                         <th>Last known location</th>
                         <th>Latest time</th>
                         <th class="text-center">Time arrived destination</th>
+                        <th class="text-center">Destination gate-in Time</th>
                         <th class="text-center">Offloading Duration</th>
                         <th class="text-center">Current Stage</th>
                         <th>Remarks</th>
