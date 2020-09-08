@@ -290,6 +290,11 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('monthly-target-graph', 'graphController@specificMonthTarget');
     Route::get('client-trip-status-chart', 'graphController@clientTripStatus');
 
+<<<<<<< Updated upstream
+=======
+    Route::get('paid-invoices', 'invoiceController@paidInvoices');
+    Route::get('daily-gate-out-record', 'backendController@dailyGateOutRecord');
+>>>>>>> Stashed changes
 
     
 });

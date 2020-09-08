@@ -31,12 +31,6 @@ input, select{
 @section('main')
 
 <!-- Main content -->
-@include('_partials.gate-out-month-view')
-@include('_partials.current-gate-out-view')
-@include('_partials.current_trip_status')
-@include('_partials.truck-availability')
-@include('_partials.waybill_report')
-@include('_partials.specific_date_range_trip')
 
 <div class="content-wrapper">
     <?php
@@ -233,7 +227,7 @@ input, select{
         </div>
         <div class="col-md-8 col-sm-12 mb-2" id="">
             <div class="dashboardbox">
-                <canvas id="dailyGateOutChart" height="130"></canvas>
+                <canvas id="dailyGateOutChart" height="130" data-toggle="modal" href=".dailyGateOutChart"></canvas>
             </div>
         </div>
 
@@ -435,6 +429,14 @@ input, select{
     }
 ?>
 
+@include('_partials.gate-out-month-view')
+@include('_partials.current-gate-out-view')
+@include('_partials.current_trip_status')
+@include('_partials.truck-availability')
+@include('_partials.waybill_report')
+@include('_partials.specific_date_range_trip')
+@include('_partials.daily-gate-out-record')
+
 @stop
 
 
@@ -442,6 +444,15 @@ input, select{
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
 <script type="text/javascript" src="{{URL::asset('/js/validator/excelme.js')}}"></script>
 <script>
+<<<<<<< Updated upstream
+=======
+    $('.container').hide();
+    $('button').click(function(){
+        var target = "#" + $(this).data("target");
+        $(".container").not(target).hide();
+        $(target).show();
+    });
+>>>>>>> Stashed changes
     var defaultbgcolors = [
         'rgba(255, 99, 132, 0.2)',
         'rgba(54, 162, 235, 0.2)',
@@ -563,8 +574,8 @@ input, select{
                             beginAtZero: true
                         }
                     }]
-                },
-            },
+                }
+            }
         });
     }
 
@@ -572,12 +583,58 @@ input, select{
     var waybillStatusCategory = <?php echo json_encode($waybillCategories); ?>;
     chartPlotter('bar', 'waybillChart', ['Good', 'Warning', 'Danger'], 'Waybill Status', waybillStatusCategory, waybillbgcolors);
 
-
 // <!-- Chart for Daily Gate out -->
     var dayssofar = <?php echo json_encode($daysIntheMonth); ?>;
     var noOfTripsPerDay = <?php echo json_encode($noOfTripsPerDay); ?>;
     var currentMonth = $('#currentMonthInTheYear').val();
-    chartPlotter('line', 'dailyGateOutChart', dayssofar, currentMonth, noOfTripsPerDay, defaultbgcolors)
+    var dailyGateOutChart = document.getElementById('dailyGateOutChart')
+    var dailyGateOutChart = new Chart(dailyGateOutChart, {
+        type: 'line',
+        data: {
+            labels: dayssofar,
+            datasets: [{
+                label: currentMonth,
+                data: noOfTripsPerDay,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(255, 159, 64, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            },
+            onClick: function(c, i) {
+                    e = i[0];
+                    var xValue = this.data.labels[e._index];
+                    var yValue = this.data.datasets[0].data[e._index];
+                    $('#recordOfDailyGateOut').html('<i class="icon-spinner3 spinner"></i>Please wait...')
+                    $.get('/daily-gate-out-record', { selected_date: xValue }, function(data) {
+                        $result = data.split('`')
+                        $('#selectedDatePlaceHolder').html($result[0])
+                        $('#recordOfDailyGateOut').html($result[1])
+                    })
+                }
+        }
+    });
 
     var gatedOutDailyArray = <?php echo json_encode($numberofdailygatedout); ?>;
     var today = new Date();
@@ -694,8 +751,6 @@ input, select{
             dateRangeChart.update();
         });
     })
-
-
 
     /** Loading site count */
     var loadingSiteCount = document.getElementById('masterBarChart');

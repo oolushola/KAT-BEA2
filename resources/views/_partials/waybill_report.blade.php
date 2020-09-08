@@ -1,7 +1,7 @@
 <!-- Modal HTML for Advance Request -->
 <div id="waybillReportStatus" class="modal fade">
-        <div class="modal-dialog">
-            <div class="modal-content" style="width:1200px; position:relative; left:-300px">
+        <div class="modal-dialog modal-full">
+            <div class="modal-content">
                 <div class="modal-header" style="padding:5px; background:#324148">
                     <h5 class="font-weight-sm font-weight-bold text-warning">Waybill Status as at {{ date('d-m-Y') }}</h5>
                     <span class="ml-2"></span>
@@ -22,7 +22,7 @@
                 </div>
                 
                 <div class="modal-body">
-                   <div class="row waybillStatus">
+                   <div class="row waybillStatus table-responsive">
                         <table class="table table-condensed" id="exportTableData">
                             <thead class="table-success">
                                 <!-- <tr>
@@ -88,11 +88,11 @@
                                         ?>
                                         <tr style="font-size:11px; color:{{ $color }}; background-color:{{ $bgcolor }}; cursor:pointer">
                                             <td class="serialNumber">({{ $count }})</td>
-                                            <td width="7%">
+                                            <td>
                                                 {{ $specificRecord->trip_id }} <span id="checker">{!! $checker !!}</span>
                                                 
                                             </td>
-                                            <td width="7%" style="padding:0;" class="text-center">
+                                            <td style="padding:0;" class="text-center">
                                                 @foreach($tripWaybills as $tripWaybill)
                                                     @if($specificRecord->id == $tripWaybill->trip_id)
                                                     <span class="mb-2 d-block">{{ strtoupper($tripWaybill->invoice_no) }}</span>
