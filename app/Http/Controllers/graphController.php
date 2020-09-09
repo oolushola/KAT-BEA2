@@ -225,10 +225,10 @@ class graphController extends Controller
 
 
     function records($trips, $wabillResult) {
-        $response ='<table class="table table-striped table-hover">
-            <div class="table-responsive">
+        $response ='<div class="table-responsive">
+                <table class="table table-striped table-hover">
                 <thead>
-                    <tr class="table-success" style="font-size:10px;">
+                    <tr class="table-success" style="font-size:11px;">
                         <th class="font-weight-bold">SN</th>
                         <th class="font-weight-bold text-center">GATE OUT DETAILS</th>
                         <th class="font-weight-bold">TRUCK</th>
@@ -236,7 +236,7 @@ class graphController extends Controller
                         <th class="font-weight-bold">CONSIGNEE DETAILS</th>
                     </tr>
                 </thead>
-                <tbody id="monthlyGatedOutData" style="font-size:10px; font-weight:normal">';
+                <tbody class="font-size-sm font-weight-normal monthlyGatedOutData">';
                     $count = 1;
                     if(count($trips)) {
                         foreach($trips as $trip) {
@@ -279,8 +279,7 @@ class graphController extends Controller
                         </tr>';
                     }
                 $response.='</tbody>
-            </div>
-        </table>';
+        </table></div>';
         return $response;
     }
 

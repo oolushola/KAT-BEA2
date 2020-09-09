@@ -87,15 +87,15 @@ input{
 								@endif
 
 								<div class="mb-4">
-									<img src="{{URL::asset('/assets/img/kaya/'.$companyProfile[0]->company_logo)}}" class="mb-3 mt-2" alt="company's Logo" style="width: 100px;">
-									<ul class="list list-unstyled mb-0">
+									<img src="{{URL::asset('/assets/img/kaya/'.$companyProfile[0]->company_logo)}}" class="mb-3 mt-2" alt="company's Logo" style="width: 70px;">
+									<!-- <ul class="list list-unstyled mb-0">
 										<li class="font-weight-bold">{!! $companyProfile[0]->address !!}</li>
 										<li class="font-weight-bold">Lagos, Nigeria</li>
 										<li class="font-weight-bold"><a href="#">{!! $companyProfile[0]->website !!}</a> | 
 											<a href="#">{!! $companyProfile[0]->company_email !!}</a>
 										</li>
 										<li class="font-weight-bold">{!! $companyProfile[0]->company_phone_no !!}</li>
-									</ul>
+									</ul> -->
 								</div>
 							</div>
 
@@ -509,7 +509,9 @@ input{
 					
 
 					<div class="card-footer">
-						<span class="text-muted">Thank you for choosing Kaya Africa Technology Nigeria Limited as your trusted logistic partner. This invoice can be paid via Bank transfer, or any other payment means convenient.</span>
+						<!-- <span class="text-muted">Thank you for choosing Kaya Africa Technology Nigeria Limited as your trusted logistic partner. This invoice can be paid via Bank transfer, or any other payment means convenient.</span> -->
+						<p class="text-center text-muted m-0 font-weight-semibold">{!! $companyProfile[0]->address !!} Lagos, Nigeria | {!! $companyProfile[0]->website !!}</p>
+						<p class="text-center text-muted m-0 font-weight-semibold">{!! $companyProfile[0]->company_email !!} | Tel: {!! $companyProfile[0]->company_phone_no !!}</p>
 					</div>
 				</div>
 			</div>

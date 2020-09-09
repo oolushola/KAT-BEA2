@@ -202,10 +202,6 @@ class backendController extends Controller
         }
     }
 
-
-    
-    
-    
     public function logout() {
         Auth::logout();
         return redirect('/');
@@ -378,16 +374,19 @@ class backendController extends Controller
             <table class="table table-striped table-hover font-size-sm">
                 <thead class="table-success">
                     <tr>
+                        <th class="text-center font-weight-bold">SN</th>
                         <th class="text-center font-weight-bold">GATE OUT DETAILS</th>
                         <th class="font-weight-bold">TRUCK</th>
                         <th class="font-weight-bold">WAYBILL DETAILS</th>
                         <th class="font-weight-bold">CONSIGNEE DETAILS</th>
                     </tr>
                 <thead>
-                <tbody id="currentGateOutData">';
+                <tbody id="searchSpecificDateGateOutData">';
                     if(count($trips)) {
+                        $counter = count($trips);
                         foreach($trips as $key => $specificRecord) {
                         $response.='<tr>
+                            <td class="font-weight-bold">('.$counter-- .')</td>
                             <td class="text-center">
                                 <p class="font-weight-bold" style="margin:0">'.$specificRecord->trip_id.'</p>
                                 <p>'.$specificRecord->loading_site.' <br> '.date('d-m-Y', strtotime($specificRecord->gated_out)).' <br> '.date('h:i A', strtotime($specificRecord->gated_out)).'</p>
@@ -418,7 +417,7 @@ class backendController extends Controller
             </table>
         </div>';
 
-            return $choosenDate.'`'.$response;
+        return $choosenDate.'`'.$response;
     }
 }
 

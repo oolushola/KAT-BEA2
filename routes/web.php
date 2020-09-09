@@ -152,11 +152,9 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('advance-request-payment', 'transporterController@advanceRequestPayment');
     Route::get('balance-request-payment', 'transporterController@balanceRequestPayment');
     Route::post('upload-collected-waybill-proof', 'transporterController@uploadCollectedWaybillProof');
-//    Route::get('transporter-account-update/{id}', 'transporterController@updateTransporterAccountDetails');
+    Route::get('transporter-account-update/{id}', 'transporterController@updateTransporterAccountDetails');
     Route::get('payment-request-master', 'transporterController@masterPaymentRequest');
-    
-
-    
+ 
     Route::resource('cargo-availability', 'cargoAvailabilityController');
     Route::resource('kaya-target', 'targetController');
 
@@ -242,10 +240,11 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('finance-update-transporter-rate/{tripId}', 'overviewController@updateTransporterRate');
     Route::get('update-balance-payment', 'overviewController@updateTransporterRateOnBalance');
 
+    
     Route::get('update/invoice-incentive', 'invoiceController@updateTripIncentive');
     Route::get('update-invoice-number-and-date', 'invoiceController@updateInvoiceNumberAndDate');
-
-    // Financial Record Filtering...
+    
+     // Financial Record Filtering...
     Route::get('client-loading-site-finance', 'financialController@loadingSiteOnFinance');
     Route::get('client-loading-site-invoice-status', 'FinanceSortController@clientLoadingSiteInvoiceStatus');
     Route::get('client-invoice-status', 'FinanceSortController@clientAndInvoiceStatus');
@@ -257,27 +256,36 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('finance-client-invoice-payment', 'FinanceSortController@financeClientInvoicePayment');
     Route::get('finance-payment-status', 'FinanceSortController@financePaymentStatus');
     Route::get('finance-client-invoice-date-range', 'FinanceSortController@financeClientInvoiceDateRange');
-
-    //finance-client-invoice-payment
-
+    
     Route::get('invoice-collage/{invoiceNumber}', 'invoiceController@invoiceCollage');
     Route::get('financials/receivables-tracker', 'trackerController@receivables');
     Route::resource('other-expenses', 'expensesController');
+
     Route::get('/client-revenue', 'trackerController@clientRevenue');
     Route::get('/client-margin-expense-gain', 'trackerController@clientMarginExpenseGain');
     
     Route::get('transporter-log', 'transporterController@transporterLog');
     Route::get('toggle-transporter-status', 'transporterController@transporterStatus');
     Route::get('{transporter}/trip/log/{transporterId}', 'transporterController@transporterTripLog');
-
     Route::resource('issue-types', 'IssueTypeController');
-
+    
     Route::post('bulk-full-payment', 'paymentExceptionController@bulkPayment');
     Route::post('update-selected-full-payment', 'paymentExceptionController@updateBulkFullPayment');
     Route::get('payment-top-up', 'paymentExceptionController@paymentTopUp');
     Route::get('/update-advance-top-up/{id}', 'paymentExceptionController@advanceTopUp');
     Route::post('update-selected-zero-payment', 'paymentExceptionController@updateMultipleZeroAdvance');
 
+    // Graphical Representation
+    Route::get('/current-month-trip-details', 'graphController@tripsForTheMonth');
+    Route::get('gatedout-selected-week', 'graphController@chartDateRange');
+    
+    Route::get('gatedout-months-comparison', 'graphController@gatedOutMonthsCompare');
+    Route::get('loading-site-monthly', 'graphController@monthlyLoadingSite');
+    Route::get('loading-site-specific-day', 'graphController@loadingSiteBySpecificDay');
+    Route::get('loading-site-weekly', 'graphController@loadingSiteByweekRange');
+    Route::get('monthly-target-graph', 'graphController@specificMonthTarget');
+    Route::get('client-trip-status-chart', 'graphController@clientTripStatus');
+    
     Route::get('event-log', 'ordersController@eventLog');
     Route::get('invoice-preview', 'invoiceController@invoicePreview');
     Route::get('update-amount-paid', 'invoiceController@updateAmountPaid');
@@ -285,6 +293,6 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('paid-invoices', 'invoiceController@paidInvoices');
     Route::get('daily-gate-out-record', 'backendController@dailyGateOutRecord');
 
-
-    
 });
+
+

@@ -171,8 +171,10 @@ $(function() {
     /** Dashboard Misc */
 
     autosearch('#searchDataset', '#masterDataTable')
-    autosearch('#searchGatedOut', '#monthlyGatedOutData')
-    autosearch('#searchCurrentGateOut', '#currentGateOutData')
+    autosearch('#searchGatedOut', '.monthlyGatedOutData')
+    autosearch('#specificDateRangeSearch', '.monthlyGatedOutData')
+    autosearch('#searchSpecificDateGateOut', '#searchSpecificDateGateOutData')
+
 
     function autosearch(searchBoxId, dataSetId) {
         $(searchBoxId).on("keyup", function() {
