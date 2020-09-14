@@ -287,7 +287,9 @@ class backendController extends Controller
                     $data.='<tr>
                         <td>('.$count++.')</td>
                         <td class="text-center">
-                            <p class="font-weight-bold" style="margin:0">'.$specificRecord->trip_id.'</p>
+                            <a href="/trip-overview/'.$specificRecord->trip_id.'">
+                                <p class="font-weight-bold" style="margin:0">'.$specificRecord->trip_id.'</p>
+                            </a>
                             <p>'.$specificRecord->loading_site.' <br> '.date('d-m-Y', strtotime($specificRecord->gated_out)).' <br> '.date('h:i A', strtotime($specificRecord->gated_out)).'</p>
                         </td>
                         <td>
@@ -388,7 +390,9 @@ class backendController extends Controller
                         $response.='<tr>
                             <td class="font-weight-bold">('.$counter-- .')</td>
                             <td class="text-center">
-                                <p class="font-weight-bold" style="margin:0">'.$specificRecord->trip_id.'</p>
+                                <a href="/trip-overview/'.$specificRecord->trip_id.'">
+                                    <p class="font-weight-bold" style="margin:0">'.$specificRecord->trip_id.'</p>
+                                </a>
                                 <p>'.$specificRecord->loading_site.' <br> '.date('d-m-Y', strtotime($specificRecord->gated_out)).' <br> '.date('h:i A', strtotime($specificRecord->gated_out)).'</p>
                             </td>
                             <td>

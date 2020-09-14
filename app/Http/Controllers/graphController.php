@@ -243,7 +243,9 @@ class graphController extends Controller
                         $response.='<tr>
                             <td width="5%">('.$count++.')</td>
                             <td class="text-center">
-                                <p class="font-weight-bold" style="margin:0;">'.$trip->trip_id.'</p>
+                                <a href="/trip-overview/'.$trip->trip_id.'" target="_blank">
+                                    <p class="font-weight-bold" style="margin:0;">'.$trip->trip_id.'</p>
+                                </a>
                                 <p>'.$trip->loading_site.' <br>'.date("d-m-Y", strtotime($trip->gated_out)).'<br>'.date("H:i A", strtotime($trip->gated_out)).'</p>
                             </td>
                             <td>

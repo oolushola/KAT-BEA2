@@ -459,7 +459,7 @@ class ordersController extends Controller
         }
         else{
             $recid = trip::findOrFail($id);
-            if($request->tracker >= 3){
+            if($request->tracker <= 3){
                 $previousTripRecord = trip::SELECT('client_rate', 'transporter_rate')->WHERE('client_id', $request->client_id)->WHERE('loading_site_id', $request->loading_site_id)->WHERE('destination_state_id', $request->destination_state_id)->WHERE('exact_location_id', $request->exact_location_id)->WHERE('trip_status', '!=', 0)->LATEST()->FIRST();
 
                 if($previousTripRecord) {

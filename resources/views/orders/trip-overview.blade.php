@@ -15,7 +15,7 @@
         <div class="page-title d-flex">
             <h4>
                 <i class="icon-arrow-left52 mr-2"></i>
-                <span class="font-weight-semibold">Amount: &#x20a6;{{number_format($transporterRate, 2)}}</span>
+                <span class="font-weight-semibold">Transporter Rate: &#x20a6;{{number_format($transporterRate, 2)}}</span>
             </h4>
             <a href="#" class="header-elements-toggle text-default d-md-none"><i class="icon-more"></i></a>
         </div>

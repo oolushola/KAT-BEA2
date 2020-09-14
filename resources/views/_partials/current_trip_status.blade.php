@@ -81,7 +81,9 @@
                         $data.='<tr>
                         <td class="text-center">('.$count.')</td>
                         <td>
-                            <p class="font-weight-bold" style="margin:0">'.$object->trip_id.'</p>
+                            <a href="/trip-overview/'.$object->trip_id.'" target="_blank">
+                                <p class="font-weight-bold" style="margin:0">'.$object->trip_id.'</p>
+                            </a>
                             <p  style="margin:0; "class="text-warning font-weight-bold">'.$object->loading_site.',</p>';
                             if($tracker <=5) {
                                 $data.='<p>'.date('d-m-Y', strtotime($object->$fieldLabel)).' <br> '.date('H:i A', strtotime($object->$fieldLabel)).'</p>';

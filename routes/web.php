@@ -229,6 +229,8 @@ Route::group(['middleware' => 'auth'], function() {
 
     Route::group(['middleware' => 'bussinessUnitHead'], function() {
         Route::get('performance-metrics', 'performanceMetricController@performanceMetrics');
+        Route::get('filter-performance-metrics', 'performanceMetricController@filterPerformanceMetrics');
+        Route::get('specific-buh-performance', 'performanceMetricController@specificBuhPerformance');
         Route::get('performance-metrics/{userid}/{role_id}', 'performanceMetricController@businessUnitHead');
         Route::post('update-client-rate', 'performanceMetricController@updateClientRate');
     });
