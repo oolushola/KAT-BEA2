@@ -347,9 +347,10 @@ class backendController extends Controller
     }
 
     public function dailyGateOutRecord(Request $request) {
-        $selected_date = $request->selected_date;
+
+        preg_match_all('!\d+!', $request->selected_date, $specificDate);
         $currentMothAndYear = date('Y-m');
-        $user_selected_date = $currentMothAndYear.'-'.$selected_date[0];
+        $user_selected_date = $currentMothAndYear.'-'.$specificDate[0][0];
 
         $choosenDate = ltrim(date('dS \of F, Y', strtotime($user_selected_date)), '0');
         

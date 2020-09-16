@@ -26,8 +26,10 @@ td{
 
             <div class="header-elements d-none">
                 <div class="d-flex justify-content-center">
-                    <a href="#" class="btn btn-link btn-float text-default"><i class="icon-bars-alt text-primary"></i><span>Statistics</span></a>
-                    <a href="{{URL('invoices')}}" class="btn btn-link btn-float text-default"><i class="icon-calculator text-primary"></i> <span>Available for Invoice</span></a>
+                    <a class="btn btn-link btn-float text-default font-weight-semibold"  href="#" data-toggle="modal" data-target=".receivedWaybillLog" id="logOfReceiveWaybill">
+                        <i class="icon-checkmark4 text-primary"></i><span>RECEIVE WAYBILL</span>
+                    </a>
+                    <a href="{{URL('invoices')}}" class="btn btn-link btn-float text-default font-weight-semibold"><i class="icon-calculator text-primary"></i> <span>NEW INVOICE</span></a>
                 </div>
             </div>
         </div>
@@ -35,8 +37,7 @@ td{
         <div class="breadcrumb-line breadcrumb-line-light header-elements-md-inline">
             <div class="d-flex">
                 <div class="breadcrumb">
-                    <a href="index.html" class="breadcrumb-item"><i class="icon-home2 mr-2"></i> Home</a>
-                    <a href="invoice_archive.html" class="breadcrumb-item">Invoices</a>
+                    <a href="{{URL('all-invoiced-trips')}}" class="breadcrumb-item"><i class="icon-home2 mr-2"></i> Home</a>
                     <span class="breadcrumb-item active">Invoiced Trips</span>
                 </div>
 
@@ -185,12 +186,54 @@ td{
     <!-- /content area -->
 
 
-	@include('finance.invoice.partials._quick-view')		
+    @include('finance.invoice.partials._quick-view')
+    @include('finance.invoice.partials._receive-waybills')		
 
 </div>
 @stop
 
 @section('script')
 <script type="text/javascript" src="{{URL::asset('/js/validator/invoice.js')}}"></script>
+<script type="text/javascript">
+    $('#logOfReceiveWaybill').click(function() {
+        $('#logOfWaybillsToReceive').html('<i class="icon-spinner3 spinner"></i>Loading...').addClass('font-weight-semibold')
+        $.get('/yet-to-receive-waybills', function(data) {
+            $('#logOfWaybillsToReceive').html(data)
+        })
+    })
 
+    $(document).on('click', '#checkAllTrips', function() {
+        $checked = $(this).is(':checked')
+        if($checked) {
+            $('.receivedTripsSelected').attr('checked', true)
+        }
+        else {
+            $('.receivedTripsSelected').removeAttr('checked')
+        }
+    })
+
+    $(document).on("keypress", "#searchTrips", function() {
+        $value = $(this).val().toLowerCase()
+        $(`#tripsToBeReceivedDB tr`).filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf($value) > -1)
+        })
+    })
+
+    $(document).on('click', '#receiveSelectedWaybill', function(e) {
+        e.preventDefault();
+        $(this).html('Processing...')
+        $element = $(this);
+        $.post('/receive-waybills-bulk', $('#bulkReceiveWaybill').serializeArray(), function(data) {
+            if(data === 'aborted') {
+                $element.html('<i class="icon-exclamation"></i> None Selected')
+            }
+            else {
+                if(data === 'received') {
+                    $element.html('<i class="icon-checkmark3"></i>Completed')
+                    window.location.href="/all-invoiced-trips"
+                }
+            }
+        })
+    })
+</script>
 @stop

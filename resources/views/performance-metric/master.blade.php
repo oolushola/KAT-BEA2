@@ -136,12 +136,6 @@
                     data: achieved,
                     backgroundColor: '#7EF9FF',
                     borderWidth: 1
-                },
-                {
-                    label: 'Outstanding',
-                    data: deficit,
-                    backgroundColor: 'red',
-                    borderWidth: 1
                 }
                 
             ]
@@ -381,6 +375,7 @@
             $(this).toggle($(this).text().toLowerCase().indexOf($value) > -1)
         });
     })
+
 
 </script>
 

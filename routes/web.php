@@ -294,6 +294,8 @@ Route::group(['middleware' => 'auth'], function() {
 
     Route::get('paid-invoices', 'invoiceController@paidInvoices');
     Route::get('daily-gate-out-record', 'backendController@dailyGateOutRecord');
+    Route::get('yet-to-receive-waybills', 'invoiceController@yetToReceiveWaybill');
+    Route::post('receive-waybills-bulk', 'invoiceController@receiveWaybillsBulk');
 
 });
 
