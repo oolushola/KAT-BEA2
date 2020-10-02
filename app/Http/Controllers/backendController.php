@@ -141,9 +141,10 @@ class backendController extends Controller
             $noOfTripsPerDay[] = trip::whereDATE('gated_out',  $newDate)->GET()->COUNT();
         }
         while($count <= $todaysDate);
-        
-        $tripEventListing = tripEvent::ORDERBY('current_date', 'DESC')->GET();
-       
+
+        foreach($onJourneyData as $trips) {
+            $tripEventListing[] = tripEvent::WHERE('trip_id', $trips->id)->GET()->LAST();
+        }
 
         $availableTrucks = DB::SELECT(
             DB::RAW(

@@ -54,7 +54,7 @@ class ordersController extends Controller
 
     public function index() {
         $loadingsites = loadingSite::ORDERBY('loading_site', 'ASC')->GET();
-        $transporters = transporter::ORDERBY('transporter_name', 'ASC')->GET();
+        $transporters = transporter::ORDERBY('transporter_name', 'ASC')->WHERE('transporter_status', TRUE)->GET();
         $trucks = trucks::ORDERBY('truck_no', 'ASC')->GET();
         $drivers = drivers::ORDERBY('driver_first_name', 'ASC')->GET();
         $products = product::ORDERBY('product', 'ASC')->GET();
@@ -145,7 +145,7 @@ class ordersController extends Controller
 
     public function createTripByAvailability($truck_no, $availabilityId) {
         $loadingsites = loadingSite::ORDERBY('loading_site', 'ASC')->GET();
-        $transporters = transporter::ORDERBY('transporter_name', 'ASC')->GET();
+        $transporters = transporter::WHERE('transporter_status', TRUE)->ORDERBY('transporter_name', 'ASC')->GET();
         $trucks = trucks::ORDERBY('truck_no', 'ASC')->GET();
         $drivers = drivers::ORDERBY('driver_first_name', 'ASC')->GET();
         $products = product::ORDERBY('product', 'ASC')->GET();
@@ -370,7 +370,7 @@ class ordersController extends Controller
 
     public function edit($id) {
         $loadingsites = loadingSite::ORDERBY('loading_site', 'ASC')->GET();
-        $transporters = transporter::ORDERBY('transporter_name', 'ASC')->GET();
+        $transporters = transporter::WHERE('transporter_status', TRUE)->ORDERBY('transporter_name', 'ASC')->GET();
         $trucks = trucks::ORDERBY('truck_no', 'ASC')->GET();
         $drivers = drivers::ORDERBY('driver_first_name', 'ASC')->GET();
         $products = product::ORDERBY('product', 'ASC')->GET();

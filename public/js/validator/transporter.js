@@ -241,14 +241,20 @@ $(function(){
          $specificTripId = $(this).attr('id')
          $title = $(this).attr("title")
          $requester = $("#userId").val();
-         $(`#${$value}`).html('<i class="spinner icon-spinner2"></i>Please wait, notifying finance...').addClass('font-size-sm');
          $.get('/advance-request-payment', {trip_id:$specificTripId, user_id:$requester}, function(data){
-             if(data == 'requestSent') {
-                $e.html(`<i class="icon-checkmark2"></i>${$title} <br> Advance Requested`).addClass('btn btn-warning').prop("disabled", "disabled");
-                $(`#${$value}`).html('').removeClass('font-size-sm');
-            }
-             else{
-                $(`#${$value}`).html('<i class="spinner icon-spinner2"></i>Oops! something went wrong.').addClass('font-size-sm text-danger');
+            if(data == 'blackListed') {
+            alert('Sorry, you can not request for this transporter payment until onboarding is completed.')
+            return false
+            } 
+            else {
+                $(`#${$value}`).html('<i class="spinner icon-spinner2"></i>Please wait, notifying finance...').addClass('font-size-sm');
+                if(data == 'requestSent') {
+                    $e.html(`<i class="icon-checkmark2"></i>${$title} <br> Advance Requested`).addClass('btn btn-warning').prop("disabled", "disabled");
+                    $(`#${$value}`).html('').removeClass('font-size-sm');
+                }
+                else{
+                    $(`#${$value}`).html('<i class="spinner icon-spinner2"></i>Oops! something went wrong.').addClass('font-size-sm text-danger');
+                }
             }
          })
      });
@@ -281,19 +287,24 @@ $(function(){
         $title = $(this).attr("title")
         $requester = $(this).attr("requester");
 
-        $e.html('<i class="spinner icon-spinner2"></i>Please wait, <br>notifying finance...').addClass('font-size-sm');
-
         $.get('/balance-request-payment', {trip_id:$specificTripId, user_id:$requester}, function(data){
-            if(data == 'requestSent') {
-               $e.html(`<i class="icon-checkmark2"></i>Balance of ${$title} <br> Requested`).addClass('btn btn-warning').prop("disabled", "disabled");
-               //$(`#${$value}`).html('').removeClass('font-size-sm');
-           }
+            if(data === 'blackListed') {
+                alert('Sorry, you can not request for this transporter payment until onboarding is completed.')
+                return false
+            }
             else{
-                if(data == 'abort') {
-                    $e.html('<i class="icon-x"></i> Request Aborted').addClass('btn btn-danger').prop('disabled', 'disabled'); 
-                    $e.next().html('You haven\'t uploaded any proof of waybill.').addClass('font-size-sm mt-1 text-danger font-weight-bold').fadeIn(2000).delay(5000).fadeOut('1000');     
+                $e.html('<i class="spinner icon-spinner2"></i>Please wait, <br>notifying finance...').addClass('font-size-sm');
+                if(data == 'requestSent') {
+                $e.html(`<i class="icon-checkmark2"></i>Balance of ${$title} <br> Requested`).addClass('btn btn-warning').prop("disabled", "disabled");
+                //$(`#${$value}`).html('').removeClass('font-size-sm');
                 }
-           }
+                else{
+                    if(data == 'abort') {
+                        $e.html('<i class="icon-x"></i> Request Aborted').addClass('btn btn-danger').prop('disabled', 'disabled'); 
+                        $e.next().html('You haven\'t uploaded any proof of waybill.').addClass('font-size-sm mt-1 text-danger font-weight-bold').fadeIn(2000).delay(5000).fadeOut('1000');     
+                    }
+                }
+            }
         })
     });
 

@@ -9,9 +9,7 @@
 
 @section('main')
 <div class="page-content">
-<form method="POST" name="frmCompleteInvoice" id="frmCompleteInvoice">
-	<input type="hidden" name="date_invoiced" value="{{date('d-m-Y')}}" />
-	@csrf
+
 
 	<!-- Main content -->
 	<div class="content-wrapper">
@@ -57,6 +55,7 @@
 			</div>
 		</div>
 		<!-- /page header -->
+
 
 		<!-- Content area -->
 		<div class="content">
@@ -164,7 +163,15 @@
 									?>
 									@foreach($lposummary as $lpoParams)
 										<?php 
-                                            $vat = 5 / 105 *  $lpoParams->transporter_rate;
+											if(date('Y-m-d', strtotime($lpoParams->gated_out) > '2020-01-31')) {
+												$vatValue = 7.5;
+												$vat = $vatValue / 105 *  $lpoParams->transporter_rate;
+											}
+											else {
+												$vatValue = 5;
+												$vat = $vatValue / 107 *  $lpoParams->transporter_rate;
+											}
+                                            
                                             $subtotal+=$lpoParams->transporter_rate - $vat;
 											$totalVatRate+=$vat;
 										?>
@@ -182,7 +189,7 @@
 										<td>
 											@foreach($waybillinfos as $waybilldetails)
 												@if($waybilldetails->trip_id == $lpoParams->id)
-													{!! $waybilldetails->sales_order_no !!}<br>
+													{{ $waybilldetails->sales_order_no }}<br />  
 												@endif
 											@endforeach
 										</td>
@@ -223,7 +230,7 @@
 												<td class="text-right">&#x20a6;{!! number_format($subtotal, 2) !!}</td>
 											</tr>
 											<tr>
-												<th>VAT: <span class="font-weight-normal">(5%)</span></th>
+												<th>VAT: <span class="font-weight-normal">({{$vatValue}}%)</span></th>
 												<td class="text-right">&#x20a6;{!! number_format($totalVatRate, 2) !!}</td>
 											</tr>
 											<tr>
@@ -260,10 +267,12 @@
 		</div>
 		<!-- /content area -->
 
+		
+
 
 	</div>
 	<!-- /main content -->
-</form>
+
 
 	
 	
