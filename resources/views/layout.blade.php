@@ -115,6 +115,9 @@
 					</a>
 
 					<div class="dropdown-menu dropdown-menu-right">
+						<a href="{{URL(Auth::user()->first_name.'-'.Auth::user()->last_name.'/bio-data')}}" class="dropdown-item">
+							<i class="icon-pencil"></i> Update Biodata
+						</a>
 						<a href="#uploadPhotoBox" data-toggle="modal" class="dropdown-item">
 							<i class="icon-file-picture"></i> Upload Photo
 						</a>
@@ -149,7 +152,6 @@
 					<i class="icon-screen-normal"></i>
 				</a>
 			</div>
-
 
 			<div class="sidebar-content">
 				<div class="sidebar-user">

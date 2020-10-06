@@ -297,6 +297,16 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('yet-to-receive-waybills', 'invoiceController@yetToReceiveWaybill');
     Route::post('receive-waybills-bulk', 'invoiceController@receiveWaybillsBulk');
 
+    //Human Resource Management
+    Route::get('/hr/dashboard', 'hrController@dashboard');
+    Route::get('{user}/bio-data', 'UserController@biodata');
+    Route::post('/store-bio-data', 'UserController@storeBiodata');
+    Route::post('/store-user-education', 'UserController@storeUserEducation');
+    Route::get('/update-transporter-rate-at-topup/{tripId}', 'overviewController@updateTransporterRateTopup');
+
+    Route::get('notification-real-data', 'backendController@realTimeEvent');
+    Route::get('real-stat', 'backendController@realStat');
+
 });
 
 
