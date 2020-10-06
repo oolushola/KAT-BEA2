@@ -100,8 +100,8 @@ class transporterController extends Controller
             if($documentDescriptions){
                 foreach($documentDescriptions as $key => $descriptions){
                     if(isset($descriptions) && $descriptions != ''){
-                        $recid = transporterDocuments::firstOrNew(['description' => $descriptions]);
-                        $recid->transporter_id = $id;
+                        $recid = transporterDocuments::firstOrNew(['transporter_id' => $id, 'description' => $descriptions]);
+                        // $recid->transporter_id = $id;
                         $recid->description = $descriptions;     
                         $recid->save();
                     }

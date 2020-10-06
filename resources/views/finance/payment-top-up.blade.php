@@ -30,11 +30,13 @@
                             <tr style="font-size:11px;">
                                 <th width="5%">SN</th>
                                 <th>KAID</th>
-                                <th>TRUCK NO</th>
-                                <th>RATE</th>
-                                <th>ADVANCE PAID</th>
-                                <th>BALANCE</th>
-                                <th>TOP UP WITH</th>
+                                <th>Transporter</th>
+                                <th>Truck No.</th>
+                                <th>Client Rate</th>
+                                <th>Transporter Rate</th>
+                                <th>Advance Paid</th>
+                                <th>Balance</th>
+                                <th>Top Up With</th>
                             </tr>
                         </thead>
                         <tbody class="font-weight-semibold font-size-xs">
@@ -45,8 +47,20 @@
                                     <tr>
                                         <td>{{ $count }}</td>
                                         <td>{{ $trip->trip_id }}</td>
+                                        <td>{{ $trip->transporter_name }}</td>
                                         <td>{{ $trip->truck_no }}</td>
-                                        <td class="amountPlace">{{ number_format($trip->amount, 2) }}</td>
+
+                                        <td class="changeGtvAtTopUp" id="{{ $trip->trip_id }}" >
+                                            <span id="defaultGtv{{ $trip->trip_id }}">{{ number_format($trip->client_rate, 2) }}</span>
+                                            <input type="text" value="{{ $trip->client_rate }}" class="d-none" id="gtvRate{{ $trip->trip_id }}" title="{{ $trip->trip_id }}"  />
+                                            <span id="gtvLoader{{ $trip->trip_id }}"></span>
+                                        </td>
+
+                                        <td class="amountPlace changeTrRateAtTopUp" id="{{$trip->trip_id}}" >
+                                            <span id="defaultTr{{ $trip->trip_id }}">{{ number_format($trip->amount, 2) }}</span>
+                                            <input type="text" value="{{ $trip->amount }}" class="d-none" id="rateOf{{ $trip->trip_id }}" title="{{ $trip->trip_id }}"  />
+                                            <span id="trLoader{{ $trip->trip_id }}"></span>
+                                        </td>
                                         <td class="advancePlace">{{ number_format($trip->advance, 2) }}</td>
                                         <td class="balancePlace">{{ number_format($trip->balance, 2) }}</td>
                                         <td>
@@ -122,9 +136,58 @@
                 $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
             });
         }); 
-            
-        
 
+
+        $('.changeGtvAtTopUp').dblclick(function($e) {
+            $id = $(this).attr('id')
+            $('#defaultGtv'+$id).addClass('d-none')
+            $('#gtvRate'+$id).removeClass('d-none')
+            $oldValue = $('#gtvRate'+$id).val()
+            transactionUpdator('#gtvRate'+$id, '#defaultGtv'+$id, '#gtvLoader'+$id, '/update-client-rate/'+$id)
+        })
+
+        $('.changeTrRateAtTopUp').dblclick(function($e) {
+            $id = $(this).attr('id')
+            $('#defaultTr'+$id).addClass('d-none')
+            $('#rateOf'+$id).removeClass('d-none')
+            $oldValue = $('#rateOf'+$id).val()
+            transactionUpdator('#rateOf'+$id, '#defaultTr'+$id, '#trLoader'+$id, '/update-transporter-rate-at-topup/'+$id)
+        })
+
+
+
+        const transactionUpdator = (element, defaultLabel, loader, url) => {
+            $(element).keyup(function($e) {
+                 if($e.keyCode === 27) {
+                    $(defaultLabel).removeClass('d-none')
+                    $(element).addClass('d-none')
+                }
+                else {
+                    if($e.keyCode === 13) {
+                        $newValue = $(this).val()
+                        $tripId = $(this).attr('title')
+                        if($oldValue === $newValue) {
+                            $(defaultLabel).removeClass('d-none')
+                            $(element).addClass('d-none')
+                        }
+                        else {
+                            $(loader).html('<i class="spinner icon-spinner2"></i>')
+                            $.get(url, { client_rate: $newValue, transporter_rate: $newValue }, function(data) {
+                                if(data == 'updated') {
+                                    $(loader).html('<i class="icon-checkmark2">')
+                                    window.location.href = ''
+                                }
+                                else {
+                                    alert('Something went wrong!!!')
+                                    return false
+                                }
+                                
+                            })                        
+                        }   
+                    }
+                }
+            })
+        }
     })
 </script>
 @stop

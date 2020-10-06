@@ -201,7 +201,7 @@
 											@endforeach
 										</td>
 										<td>{!! $lpoParams->tonnage /1000 !!}</td>
-										<td>&#x20a6;{!! number_format($lpoParams->transporter_rate, 2) !!}</td>
+										<td>&#x20a6;{!! number_format($subtotal, 2) !!}</td>
 
 										</tr>
 									@endforeach

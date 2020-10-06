@@ -327,4 +327,19 @@ class overviewController extends Controller
 
         return 'updated';
     }
+
+    public function updateTransporterRateTopup(Request $request, $tripId) {
+        
+        $updateTransporterRate = trip::WHERE('trip_id', $tripId)->FIRST();
+        $updateTransporterRate->transporter_rate = $request->transporter_rate;
+
+        $tripPaymentRecord = tripPayment::WHERE('trip_id', $updateTransporterRate->id)->FIRST();
+        $tripPaymentRecord->amount = $request->transporter_rate;
+
+        $updateTransporterRate->save();
+        $tripPaymentRecord->save();
+
+        return 'updated';
+
+    }
 }

@@ -95,6 +95,8 @@
         </div>
     </div>
 
+    
+
     <div class="card">
         <div class="row">
             <div class="col-md-6">
@@ -102,6 +104,7 @@
             </div>
         </div>
     </div>
+    
 </div>
 
 @include('performance-metric.partials._specificNumberPerformance')
@@ -137,7 +140,6 @@
                     backgroundColor: '#7EF9FF',
                     borderWidth: 1
                 }
-                
             ]
         },
         options: {
@@ -352,7 +354,7 @@
                 myChart.data.labels = res.unitHeadInformation
                 myChart.data.datasets[0].data = res.unitHeadSpecificTargets
                 myChart.data.datasets[1].data = res.myGrossMargin
-                myChart.data.datasets[2].data = res.myOutstanding
+                //myChart.data.datasets[2].data = res.myOutstanding
                 myChart.update()
 
                 markUpChart.data.labels = res.unitHeadInformation
@@ -377,6 +379,14 @@
     })
 
 
+    //
+
+
+
+
+
+
+   
 </script>
 
 
