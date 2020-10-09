@@ -103,30 +103,39 @@
                         if($tracker >=5 && $tracker <=6){
                             $data.='<td width="25%">';
                             $counter = 1;
-                            foreach($tripEvent as $tripActivities){
-                                if($tripActivities->trip_id == $object->id){
-                                    $data.= '<span class="font-weight-bold"><u>Day'.$counter++.'</u></span><br>';
-                                        $locationOne = date('d-m-Y, H:i A', strtotime($tripActivities->location_check_one));
-                                        if($tripActivities->location_check_two == ''){
-                                            $locationTwo = '';
-                                        } else {
-                                            $locationTwo = date('d-m-Y, H:i A', strtotime($tripActivities->location_check_one));
-                                        }
+                            
+                            foreach($tripEvent as $onJourneyTrips) {
+                                if($onJourneyTrips && $onJourneyTrips->trip_id === $object->id) {
+                                    if($onJourneyTrips->location_check_two) {
+                                        $data.='<p class="font-size-sm ml-1 font-weight-bold d-block m-0">'.$onJourneyTrips->location_two_comment.',</p>';
+                                        $data.='<p class="font-size-xs d-block ml-1 m-0">'.date('d-m-Y, H:i A', strtotime($onJourneyTrips->location_check_two)).'<p>';
+                                        $data.='<span class="font-size-xs text-danger d-block ml-2">'.$onJourneyTrips->afternoon_issue_type.'</span>';
 
-                                        $data.='<span class="text-danger d-block font-size-sm">'.$locationOne.'</span>';
-                                        $data.='<span class="text-primary"><b>'.$tripActivities->location_one_comment.'</b></span><br>';
-                                        
-                                        $data.='<span class="text-danger d-block font-size-sm">'.$locationTwo.'</span>';
-                                        $data.='<span class="text-primary d-block"><b>'.$tripActivities->location_two_comment.'</b></span>';    
+                                    }
+                                    else {
+                                        $data.='<p class="font-size-sm ml-1 font-weight-bold d-block m-0">'.$onJourneyTrips->location_one_comment.',</p>';
+                                        $data.='<p class="font-size-xs d-block ml-1 m-0">'.date('d-m-Y, H:i A', strtotime($onJourneyTrips->location_check_one)).'<p>';
+                                        $data.='<span class="font-size-xs text-danger d-block ml-2">'.$onJourneyTrips->morning_issue_type.'</span>';
+                                    }
                                 }
-                                
                             }
+                            $now = time(); // or your date as well
+                            $your_date = strtotime($object->gated_out);
+                            $datediff = $now - $your_date;
+                            $noOfDays = round($datediff / (60 * 60 * 24));
+
+                            $noOfDays > 5 ? $className = 'notifier' : $className = '';
+
+                            $data.= '<p class=" defaultNotifier '.$className.'">
+                                <a href="trip-overview/'.$object->trip_id.'"> '.$noOfDays.' Days </a>
+                                </p>';
+
                             $data.='</td>';
                         }
                         if($tracker == 7){
                             $data.='<td>';
                             foreach($tripEvent as $tripActivities){
-                                if($tripActivities->trip_id == $object->id){
+                                if($tripActivities && $tripActivities->trip_id == $object->id){
                                     if($tripActivities->time_arrived_destination == ''){
                                         $timeArrivedDestination = '';
                                     } else {

@@ -5,6 +5,13 @@
 @elseif(Auth::user()->role_id == 5)
 <script>window.location.href='/update-trip'</script>
 
+@elseif(Auth::user()->role_id == 6 && Auth::user()->email != 'success.iziomo@kayaafrica.co')
+<?php 
+    $roleId = sha1(Auth::user()->role_id);
+    $user_id = base64_encode(Auth::user()->id);
+    $url = '/performance-metrics/'.$roleId.'/'.$user_id;
+?>
+<script>window.location.href=<?php echo json_encode($url); ?>;</script>
 
 @elseif(Auth::user()->role_id == 7)
 <script>window.location.href='/offloading/my-trips-view'</script>
@@ -38,12 +45,12 @@ input, select{
             $currentMonth = date('m');
             for($i=1; $i<=12; $i++){
                 $month = date('F', mktime(0,0,0,$i, 1, date('Y')));
-                    if($currentMonth == $i) {
-                        echo '<option value="'.$i.'" selected>'.$month.'</option>';
-                    }
-                    else {
-                        echo '<option value="'.$i.'">'.$month.'</option>';
-                    }
+                if($currentMonth == $i) {
+                    echo '<option value="'.$i.'" selected>'.$month.'</option>';
+                }
+                else {
+                    echo '<option value="'.$i.'">'.$month.'</option>';
+                }
             }
         }
 
@@ -132,7 +139,11 @@ input, select{
                 <table class="table">
                     <tr>
                         <td class="font-size-xs font-weight-bold text-center">
-                            <i class="icon-trophy3 text-warning-400 text-center" style="font-size:22px"></i>
+                            <i class="icon-trophy3 text-warning-400 text-center monthCountToggleDefault" value="1" style="font-size:22px; cursor:pointer" id="exclusiveCount"></i>
+                            <i class="icon-trophy3 text-primary-400 text-center monthCountToggleAll monthCountToggleDefault  d-none" value="0" style="font-size:22px; cursor:pointer" id="allCounts"></i>
+
+
+                            
                             <span class="d-block">Current Month Target</span>
                         </td>
                         <td colspan="2" class="font-weight-semibold" id="target-label">
@@ -162,7 +173,7 @@ input, select{
                     } else{
                         $targetforthemonth = $monthlyTarget->target;
                     }
-                    $gatedOutForTheMonth = $getGatedOutByMonth;
+                    $gatedOutForTheMonth = $getGatedOutByMonth[0]->currentMonthGateOut;
                     $gatedOutPercentageRate = round($gatedOutForTheMonth/$targetforthemonth * 100, 1);
                 ?>
 
@@ -174,6 +185,7 @@ input, select{
                 <span id="target-percentage">
                     <sub id="target-percentage__value" class="percentageHolder">{{$gatedOutPercentageRate}}% 0f {{$targetforthemonth}}</sub>
                 </span>
+                
             </div>
         </div>
 
@@ -314,116 +326,13 @@ input, select{
             <canvas id="masterBarChart" height="100"></canvas>
         </div>
     </div>
-
-    <div class="card mt-2">
-        <div class="card-header header-elements-sm-inline">
-            <h6 class="card-title">Support tickets</h6>
-        </div>
-
-        <div class="card-body d-md-flex align-items-md-center justify-content-md-between flex-md-wrap">
-            <div class="d-flex align-items-center mb-3 mb-md-0">
-                <div id="tickets-status"><svg width="42" height="42"><g transform="translate(21,21)"><g class="d3-arc" style="stroke: rgb(255, 255, 255); cursor: pointer;"><path style="fill: rgb(41, 182, 246);" d="M1.1634144591899855e-15,19A19,19 0 0,1 -12.326087772183463,-14.459168725498339L-6.163043886091732,-7.229584362749169A9.5,9.5 0 0,0 5.817072295949927e-16,9.5Z"></path></g><g class="d3-arc" style="stroke: rgb(255, 255, 255); cursor: pointer;"><path style="fill: rgb(102, 187, 106);" d="M-12.326087772183463,-14.459168725498339A19,19 0 0,1 14.331188229058796,-12.474656065130077L7.165594114529398,-6.237328032565038A9.5,9.5 0 0,0 -6.163043886091732,-7.229584362749169Z"></path></g><g class="d3-arc" style="stroke: rgb(255, 255, 255); cursor: pointer;"><path style="fill: rgb(239, 83, 80);" d="M14.331188229058796,-12.474656065130077A19,19 0 0,1 5.817072295949928e-15,19L2.908536147974964e-15,9.5A9.5,9.5 0 0,0 7.165594114529398,-6.237328032565038Z"></path></g></g></svg></div>
-                <div class="ml-3">
-                    <h5 class="font-weight-semibold mb-0">3239 <span class="text-success font-size-sm font-weight-normal"><i class="icon-arrow-up12"></i> (+2.9%)</span></h5>
-                    <span class="badge badge-mark border-success mr-1"></span> <span class="text-muted">Sept 20, 02:30 PM</span>
-                </div>
-            </div>
-
-            <div class="d-flex align-items-center mb-3 mb-md-0">
-                <a href="#" class="btn bg-transparent border-indigo-400 text-indigo-400 rounded-round border-2 btn-icon">
-                    <i class="icon-alarm-add"></i>
-                </a>
-                <div class="ml-3">
-                    <h5 class="font-weight-semibold mb-0">1,132</h5>
-                    <span class="text-muted">total tickets</span>
-                </div>
-            </div>
-
-            <div class="d-flex align-items-center mb-3 mb-md-0">
-                <a href="#" class="btn bg-transparent border-indigo-400 text-indigo-400 rounded-round border-2 btn-icon">
-                    <i class="icon-spinner11"></i>
-                </a>
-                <div class="ml-3">
-                    <h5 class="font-weight-semibold mb-0">06:25:00</h5>
-                    <span class="text-muted">Average response time</span>
-                </div>
-            </div>
-
-            <div>
-                <a href="#" class="btn bg-teal-400"><i class="icon-statistics mr-2"></i> Report</a>
-            </div>
-        </div>
-
-        <div class="table-responsive">
-            <table class="table text-nowrap">
-                <thead>
-                    <tr>
-                        <th style="width: 50px">Due</th>
-                        <th style="width: 300px;">User</th>
-                        <th>Description</th>
-                        <th class="text-center" style="width: 20px;"><i class="icon-arrow-down12"></i></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="table-active table-border-double">
-                        <td colspan="3">Active tickets</td>
-                        <td class="text-right">
-                            <span class="badge bg-blue badge-pill">24</span>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td class="text-center">
-                            <h6 class="mb-0">12</h6>
-                            <div class="font-size-sm text-muted line-height-1">hours</div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="mr-3">
-                                    <a href="#" class="btn bg-teal-400 rounded-round btn-icon btn-sm">
-                                        <span class="letter-icon">O</span>
-                                    </a>
-                                </div>
-                                <div>
-                                    <a href="#" class="text-default font-weight-semibold letter-icon-title">Flour Mills</a>
-                                    <div class="text-muted font-size-sm"><span class="badge badge-mark border-blue mr-1"></span> Active</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <a href="#" class="text-default">
-                                <div class="font-weight-semibold">[#1183] Issues on SOKOTO Order</div>
-                                <span class="text-muted">What's the status report on this Sokoto Order...</span>
-                            </a>
-                        </td>
-                        <td class="text-center">
-                            <div class="list-icons">
-                                <div class="list-icons-item dropdown">
-                                    <a href="#" class="list-icons-item dropdown-toggle caret-0" data-toggle="dropdown"><i class="icon-menu7"></i></a>
-                                    <div class="dropdown-menu dropdown-menu-right">
-                                        <a href="#" class="dropdown-item"><i class="icon-undo"></i> Quick reply</a>
-                                        <a href="#" class="dropdown-item"><i class="icon-history"></i> Full history</a>
-                                        <div class="dropdown-divider"></div>
-                                        <a href="#" class="dropdown-item"><i class="icon-checkmark3 text-success"></i> Resolve issue</a>
-                                        <a href="#" class="dropdown-item"><i class="icon-cross2 text-danger"></i> Close issue</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    
-                </tbody>
-            </table>
-        </div>
-    </div>
-
     <input type="hidden" value="{{date('F, Y')}}" id="currentMonthInTheYear">
-
 </div>
 <!-- /main content -->
 <?php
     $current_day = date('d');
     $monthInView = date('M');
+    
     for($i=1; $i<= $current_day; $i++){
         $daysIntheMonth[] = $i.date("S-", mktime(0, 0, 0, 0, $i, 0)).$monthInView;
     }
@@ -439,20 +348,18 @@ input, select{
 
 @stop
 
-
 @section('script')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
 <script type="text/javascript" src="{{URL::asset('/js/validator/excelme.js')}}"></script>
-<script>
 
+<script type="text/javascript">
     $('.container').hide();
     $('button').click(function(){
         var target = "#" + $(this).data("target");
         $(".container").not(target).hide();
         $(target).show();
     });
-
-    var defaultbgcolors = [
+   var defaultbgcolors = [
         'rgba(255, 99, 132, 0.2)',
         'rgba(54, 162, 235, 0.2)',
         'rgba(255, 206, 86, 0.2)',
@@ -573,14 +480,15 @@ input, select{
                             beginAtZero: true
                         }
                     }]
-                }
-            }
+                },
+            },
         });
     }
 
 // <!-- Chart for waybill Process -->
     var waybillStatusCategory = <?php echo json_encode($waybillCategories); ?>;
     chartPlotter('bar', 'waybillChart', ['Good', 'Warning', 'Danger'], 'Waybill Status', waybillStatusCategory, waybillbgcolors);
+
 
 // <!-- Chart for Daily Gate out -->
     var dayssofar = <?php echo json_encode($daysIntheMonth); ?>;
@@ -823,7 +731,36 @@ input, select{
         });
     });
 
-    
+
+    //monthCountToggle monthCountView
+    $('.monthCountToggleDefault').click(function() {
+        $monthCountView = $(this).attr("value")
+        if($monthCountView == 1) {
+            $(this).addClass('d-none')
+            $('#allCounts').removeClass('d-none')
+        }
+        else {
+            $(this).addClass('d-none')
+            $('#exclusiveCount').removeClass('d-none')
+        }
+       
+        $.get('/real-stat', { traction: $monthCountView }, function(data) {
+            $gateOutForTheMonth = data[1];
+            $targetForTheSelectedMonth = data[0];
+            $remainder = $targetForTheSelectedMonth - $gateOutForTheMonth;
+            targetChart.data.labels[0] = 'Target' 
+            targetChart.data.datasets[0].data = [$remainder, $gateOutForTheMonth]
+            $('#gateOutMonthPlaceholder').text($gateOutForTheMonth);
+            $('#targetPlaceholder').text($targetForTheSelectedMonth);
+            $percentage = (($gateOutForTheMonth / $targetForTheSelectedMonth) * 100);
+            $('.percentageHolder').html($percentage.toFixed(2)+'% of '+$targetForTheSelectedMonth);
+            targetChart.update()
+
+            dailyGateOutChart.data.datasets[0].data = data[2]
+            dailyGateOutChart.update()  
+        })
+        
+    })
 </script>
 
 

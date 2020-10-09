@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AlterTableClients extends Migration
+class AlterTableClientPayments extends Migration
 {
     /**
      * Run the migrations.
@@ -28,7 +28,8 @@ class AlterTableClients extends Migration
     public function down()
     {
         Schema::table('tbl_kaya_clients', function (Blueprint $table) {
-            $table->dropColumn(['bank_name_payment', 'account_name_payment', 'account_no_payment']);
+            //$table->dropColumn('bank_name_payment')
+            // $table->dropColumn(['bank_name_payment', 'account_name_payment', 'account_no_payment']);
         });
     }
 }

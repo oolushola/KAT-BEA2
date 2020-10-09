@@ -41,8 +41,6 @@ class financialController extends Controller
                 'SELECT SUM(available_order) AS total_order FROM `tbl_kaya_cargo_availabilities`'
             )
         );
-
-        
         
         $monthlyTarget = target::WHERE('current_month', $current_month)
             ->WHERE('current_year', $current_year)->LIMIT(1)
@@ -125,10 +123,6 @@ class financialController extends Controller
         );
         $numberofdailygatedout = trip::WHEREDATE('gated_out', date('Y-m-d'))->GET()->COUNT();
         $gatedOutForTheMonth = trip::WHERE('month', $current_month)->WHERE('year', $current_year)->WHERE('tracker', '>=', 5)->GET()->COUNT();
-
-
-
-       
 
         $totalamountofinvoicedbutnotpaid = DB::SELECT(
             DB::RAW(

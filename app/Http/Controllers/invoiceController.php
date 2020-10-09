@@ -945,5 +945,108 @@ class invoiceController extends Controller
  
         return 'updated';
      }
-    
+
+
+    public function yetToReceiveWaybill(Request $request) {
+        $trips = DB::SELECT(
+            DB::RAW(
+                'SELECT a.id, a.gated_out, a.trip_id, a.exact_location_id, b.truck_no, c.waybill_status FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_trip_waybill_statuses c ON a.truck_id = b.id  WHERE trip_status = 1 AND tracker BETWEEN 5 AND 8 AND a.id = c.trip_id AND c.waybill_status = FALSE'
+            )
+        );
+        foreach($trips as $specificTrip) {
+            $waybillListings[] = tripWaybill::WHERE('trip_id', $specificTrip->id)->GET();
+        }
+
+        foreach($waybillListings as $waybills) {
+            foreach($waybills as $waybill) {
+                $waybillCollections[] = $waybill; 
+            }
+        }
+
+        $response = '<table class="table table-condensed">
+            <thead class="table-success font-size-sm text-primary">
+                <tr>
+                    <td colspan="7">
+                        <input type="text" placeholder="SEARCH" style="font-size:11px; border: 1px solid #ccc; outline:none; padding:5px; width:200px" id="searchTrips" />
+                    </td>
+                    <td>
+                        <button type="submit" class="btn btn-success font-size-xs font-weight-bold" id="receiveSelectedWaybill">RECEIVE SELECTED</button>
+                    </td>
+                </tr>
+                <tr class="text-center">
+                    <th>SN</th>
+                    <th>TRIP ID</th>
+                    <th>GATE OUT</th>
+                    <th>TRUCK NO</th>
+                    <th>DESTINATION</th>
+                    <th>SALES ORDER NO</th>
+                    <th>INVOICE NO</th>
+                    <th><input type="checkbox" id="checkAllTrips" /></th>
+                </tr>
+            </thead>
+            
+            <tbody class="font-size-xs" id="tripsToBeReceivedDB">';
+            if(count($trips)) {
+                $count = 1;
+                foreach($trips as $key => $trip) {
+                    if($count % 2 == 0) {
+                        $css = 'table-info';
+                    }
+                    else {
+                        $css = '';
+                    }
+                    $response.='<tr class="'.$css.' text-center">
+                        <td>'.$count++.'</td>
+                        <td>'.$trip->trip_id.'</td>
+                        <td>'.date('d-m-Y', strtotime($trip->gated_out)).'</td>
+                        <td>'.$trip->truck_no.'</td>
+                        <td>'.$trip->exact_location_id.'</td>
+                        <td>';
+                            foreach($waybillCollections as $waybillCollected) {
+                                if($waybillCollected->trip_id == $trip->id) {
+                                    $response.= $waybillCollected->sales_order_no.'<br>';
+                                }
+                            }
+                        $response.='</td>
+                        <td>';
+                        foreach($waybillCollections as $waybillCollected) {
+                            if($waybillCollected->trip_id == $trip->id) {
+                                $response.= $waybillCollected->invoice_no.'<br>';
+                            }
+                        }
+                        $response.='</td>
+                        <td>
+                            <input type="checkbox" class="receivedTripsSelected" name="tripIds[]" value="'.$trip->id.'" />
+                        </td>
+                    </tr>';
+                }
+            }
+            else {
+                $response.='<tr class="font-size-sm font-weight-semibold">
+                    <td colspan="7">You have no pending trip to invoice.</td>
+                </tr>';
+            }
+
+            $response.'</tbody>
+            </table>';
+            
+
+        return $response;
+    }
+
+    public function receiveWaybillsBulk(Request $request) {
+        if(!count($request->tripIds)) {
+            return 'aborted';
+        }
+        else {
+            $tripIds = $request->tripIds;
+            foreach($tripIds as $key => $trip_id) {
+                $waybillStatus = tripWaybillStatus::WHERE('trip_id', $trip_id)->GET()->FIRST();
+                $waybillStatus->comment = 'Recieved';
+                $waybillStatus->waybill_status = TRUE;
+                $waybillStatus->save();
+            }
+            return 'received';
+        }
+    }
 }

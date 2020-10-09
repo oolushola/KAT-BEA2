@@ -154,5 +154,26 @@
     text-align:right; top:20px;
  }
 
+ .notifier {
+     animation: blinker 5s  infinite;
+     cursor: pointer;
+     border:3px solid salmon;
+     font-weight: bold;
+ }
+
+ .defaultNotifier {
+    width:40px; padding:3px; height:40px; text-align:center; border-radius:100%; background: #D8000C; display:inline-block; position:right; font-size:10px; text-align:center; position:relative; left:-40px; top: -40px;
+ }
+
+ .defaultNotifier a {
+    color: #fff;
+ }
+
+ @keyframes blinker {
+     70% {
+         opacity: 0;
+     }
+ }
+
 
 

@@ -14,6 +14,9 @@ td{
 @stop
 @section('main')
 <div class="content-wrapper">
+        <ul class="pagination pagination-flat">
+            {{ $pagination->links() }}
+        </ul>
 
     <!-- Page header -->
     <div class="page-header page-header-light">
@@ -48,6 +51,8 @@ td{
 
     <!-- Content area -->
     <div class="content">
+    
+    <input type="hidden" name="page" value="">
 
         <!-- Invoice archive -->
         <div class="card">
@@ -68,12 +73,9 @@ td{
                         </thead>
                         <tbody>
                             <?php $count = 0; ?>
-                            @if(count($lposummary))
-                                @foreach($lposummary as $lpo)
-                                <?php 
-                                    $count++;
-                                
-                                ?>
+                            @if(count($pagination))
+                                @foreach($pagination as $lpo)
+                                <?php  $count++; ?>
                                 
                                     <tr class="hover" style="font-size:11px; cursor:pointer" onclick="window.location='local-purchase-order/{{$lpo->trip_id}}'">
                                         <td class="text-center">{!! $lpo->trip_id !!}</td>

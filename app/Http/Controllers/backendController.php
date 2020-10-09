@@ -26,6 +26,7 @@ use App\User;
 use App\cargoAvailability;
 use App\target;
 use Session;
+use App\PrsSession;
 
 class backendController extends Controller
 {
@@ -60,7 +61,6 @@ class backendController extends Controller
         $current_date = date('Y-m-d');
 
         $monthlyTarget = target::WHERE('current_month', $current_month)->WHERE('current_year', $current_year)->GET()->LAST();
-        $getGatedOutByMonth = trip::WHERE('month', $current_month)->WHERE('year', $current_year)->WHERE('tracker', '>=', 5)->GET()->COUNT();
 
         $gateIn = trip::WHERE('tracker', 1)->WHERE('trip_status', '!=', 0)->GET()->COUNT();
         $loadingBay = trip::WHERE('tracker', '>=', 2)->WHERE('tracker', '<=', '3')->WHERE('trip_status', '!=', 0)->GET()->COUNT();
@@ -74,16 +74,13 @@ class backendController extends Controller
         );
         
         $numberofdailygatedout = trip::WHEREDATE('gated_out', date('Y-m-d'))->GET()->COUNT();
-        $gatedOutForTheMonth = trip::WHERE('month', $current_month)->WHERE('year', $current_year)->WHERE('tracker', '>=', 5)->GET()->COUNT();
 
-        // comment out this section
         $lastOneWeek = date('Y-m-d', strtotime('last sunday'));
         $currentDate = date('Y-m-d');
 
         $noOfGatedOutTripForCurrentWeek = $this->specificDateRangeCount('COUNT(*)',  'weeklygateout', $lastOneWeek, $currentDate);
         $specificDataRecord = $this->specificDateRangeData($lastOneWeek, $currentDate);
-        // Down to this place
-        
+
         $allLoadingSites = loadingSite::SELECT('id', 'loading_site')->ORDERBY('loading_site', 'ASC')->GET();
 
         foreach($allLoadingSites as $loadingSite){
@@ -92,7 +89,6 @@ class backendController extends Controller
         }
 
         $allclients = client::ORDERBY('company_name', 'ASC')->GET();
-
         $advancePendingApproval = trip::WHERE('advance_request', TRUE)->WHERE('advance_paid', FALSE)->GET()->COUNT();
         $balancePendingApproval = DB::SELECT(
             DB::RAW(
@@ -101,12 +97,15 @@ class backendController extends Controller
         );
         $paymentRequested = $advancePendingApproval + $balancePendingApproval[0]->balancecount;
         $clients = client::WHERE('client_status', '1')->GET()->COUNT();
+        $prsSession = PrsSession::WHERE('user_id', Auth::user()->id)->WHERE('prs_starts', TRUE)->WHERE('prs_ends', FALSE)->GET()->LAST();
+
 
         Session::put([
             'payment_request' => $paymentRequested,
             'on_journey' => $onJourney,
             'client' => $clients,
-            'offloaded_trips' => $offloadedTrips
+            'offloaded_trips' => $offloadedTrips,
+            'prsSession' => $prsSession
         ]);
 
         $currentGateOutRecord = $this->displayRecordOfTrips('gated_out', $currentDate);
@@ -120,29 +119,58 @@ class backendController extends Controller
         $tripWaybills = tripWaybill::GET();
         $tripRecordsForTheMonth = $this->totalTripsForTheCurrentMonth();
         $totalGateOuts = trip::WHERE('gated_out', '<>', '')->WHERE('trip_status', '<>', 0)->GET()->COUNT();
-
-        foreach($tripRecordsForTheMonth as $key => $monthTripId) {
-            $monthlyGateOut[] = tripWaybill::SELECT('id', 'trip_id', 'sales_order_no', 'invoice_no', 'photo')->WHERE('trip_id', $monthTripId->id)->GET();
+        
+        
+        $monthlyGateOut = [];
+        $monthWaybillRecord = [];
+        
+        if(count($tripRecordsForTheMonth)) {
+            foreach($tripRecordsForTheMonth as $key => $monthTripId) {
+                $monthlyGateOut[] = tripWaybill::SELECT('id', 'trip_id', 'sales_order_no', 'invoice_no', 'photo')->WHERE('trip_id', $monthTripId->id)->GET();
+                
+            }
+        } else {
+            $tripRecordsForTheMonth = [];
         }
-
-        foreach($monthlyGateOut as $key => $values) {
-            foreach($values as $value) {
-                $monthWaybillRecord[] = $value;
+        
+        if(count($tripRecordsForTheMonth)){
+            foreach($monthlyGateOut as $key => $values) {
+                foreach($values as $value) {
+                    $monthWaybillRecord[] = $value;
+                }
+            }
+        }
+        
+        if(count($specificDataRecord)) {
+            foreach($specificDataRecord as $key => $dateRange) {
+                $gateOutForDateRange[] = tripWaybill::SELECT('id', 'trip_id', 'sales_order_no', 'invoice_no', 'photo')->WHERE('trip_id', $dateRange->id)->GET();
+                
+            }
+        } else {
+            $specificDataRecord = [];
+        }
+        
+        if(count($specificDataRecord)){
+            foreach($gateOutForDateRange as $key => $gateOutForDateRangeWaybills) {
+                foreach($gateOutForDateRangeWaybills as $gateOutForDateRangeWaybill) {
+                    $dateRangeWaybilllistings[] = $gateOutForDateRangeWaybill;
+                }
             }
         }
 
-               
         $todaysDate = date('d');
         $count=1;
         $dateYearAndMonth = date('Y-m');
         do{
             $newDate = $dateYearAndMonth.'-'.$count;
             $count++;
-            $noOfTripsPerDay[] = trip::whereDATE('gated_out',  $newDate)->GET()->COUNT();
+            $noOfTripsPerDay[] = trip::whereDATE('gated_out',  $newDate)->WHERE('client_id', '!=', 1)->WHERE('transporter_id', '!=', 141)->GET()->COUNT();
         }
         while($count <= $todaysDate);
         
-        $tripEventListing = tripEvent::ORDERBY('current_date', 'DESC')->GET();
+        foreach($onJourneyData as $trips) {
+            $tripEventListing[] = tripEvent::WHERE('trip_id', $trips->id)->GET()->LAST();
+        }
        
 
         $availableTrucks = DB::SELECT(
@@ -152,11 +180,37 @@ class backendController extends Controller
         );
 
         $tripWaybillYetToReceive = DB::SELECT(
-            DB::RAW('SELECT a.*, b.comment, c.loading_site, d.transporter_name, e.product, f.truck_no FROM tbl_kaya_trips a JOIN tbl_kaya_trip_waybill_statuses b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f ON a.id = b.trip_id AND a.loading_site_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id WHERE b.waybill_status = FALSE AND a.trip_status = 1'
+            DB::RAW('SELECT a.*, b.comment, c.loading_site, d.transporter_name, e.product, f.truck_no FROM tbl_kaya_trips a JOIN tbl_kaya_trip_waybill_statuses b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f ON a.id = b.trip_id AND a.loading_site_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id WHERE b.waybill_status = FALSE AND a.trip_status = 1 AND a.tracker >= 5 ORDER BY a.gated_out ASC'
+            )
+        );
+        
+        if(count($tripWaybillYetToReceive)) {
+            foreach($tripWaybillYetToReceive as $key => $waybillTripId) {
+                $yetToReceiveWaybill[] = tripWaybill::SELECT('id', 'trip_id', 'sales_order_no', 'invoice_no', 'photo')->WHERE('trip_id', $waybillTripId->id)->GET();
+            }
+        }
+        else {
+            $yetToReceiveWaybill = [];
+        }
+        
+        if(count($yetToReceiveWaybill)){
+            foreach($yetToReceiveWaybill as $key => $values) {
+                foreach($values as $value) {
+                    $yetToReceiveWaybillDetails[] = $value;
+                }
+            }
+        }
+        else {
+            $yetToReceiveWaybillDetails = [];
+        }
+
+        $getGatedOutByMonth = DB::SELECT(
+            DB::RAW(
+                'SELECT COUNT(*) as currentMonthGateOut FROM tbl_kaya_trips WHERE MONTH(gated_out)=MONTH(CURRENT_DATE()) AND YEAR(gated_out) = YEAR(CURRENT_DATE()) AND trip_status = 1 and tracker >= 5 AND client_id != "1" AND transporter_id != "141"'
             )
         );
 
-        return view('dashboard', compact('getGatedOutByMonth', 'allTrips', 'monthlyTarget', 'onJourney', 'atDestination', 'offloadedTrips',  'numberofdailygatedout', 'gatedOutForTheMonth', 'countDailyTripByLoadingSite', 'loading_sites', 'noOfGatedOutTripForCurrentWeek', 'loadingBay', 'gateIn', 'allclients', 'departedLoadingBay', 'currentGateOutRecord', 'tripWaybills', 'gateInData', 'atloadingbayData', 'departedLoadingBayData', 'onJourneyData', 'atDestinationData', 'offloadedData', 'tripRecordsForTheMonth', 'totalGateOuts', 'noOfTripsPerDay', 'availableTrucks', 'tripEventListing', 'tripWaybillYetToReceive', 'specificDataRecord', 'monthWaybillRecord'));
+        return view('dashboard', compact('getGatedOutByMonth', 'allTrips', 'monthlyTarget', 'onJourney', 'atDestination', 'offloadedTrips',  'numberofdailygatedout', 'countDailyTripByLoadingSite', 'loading_sites', 'noOfGatedOutTripForCurrentWeek', 'loadingBay', 'gateIn', 'allclients', 'departedLoadingBay', 'currentGateOutRecord', 'tripWaybills', 'gateInData', 'atloadingbayData', 'departedLoadingBayData', 'onJourneyData', 'atDestinationData', 'offloadedData', 'tripRecordsForTheMonth', 'totalGateOuts', 'noOfTripsPerDay', 'availableTrucks', 'tripEventListing', 'tripWaybillYetToReceive', 'specificDataRecord', 'monthWaybillRecord', 'yetToReceiveWaybillDetails', 'dateRangeWaybilllistings'));
     }
 
     function displayRecordOfTrips($fieldValue, $currentDate) {
@@ -171,7 +225,7 @@ class backendController extends Controller
     function recordTracker($firstTrack, $secondTrack) {
         $query = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker BETWEEN "'.$firstTrack.'" AND "'.$secondTrack.'"  ORDER BY a.trip_id DESC'
+                'SELECT a.*, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker BETWEEN "'.$firstTrack.'" AND "'.$secondTrack.'"  ORDER BY a.trip_id ASC'
             )
         );
         return $query;
@@ -189,17 +243,10 @@ class backendController extends Controller
     function totalTripsForTheCurrentMonth() {
         $query = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND MONTH(gated_out) = MONTH(CURRENT_DATE()) AND YEAR(gated_out) = YEAR(CURRENT_DATE()) ORDER BY a.gated_out DESC'
+                'SELECT a.*, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND MONTH(gated_out) = MONTH(CURRENT_DATE()) AND YEAR(gated_out) = YEAR(CURRENT_DATE()) ORDER BY a.gated_out DESC LIMIT 500'
             )
         );
         return $query;
-    }
-
-    public function waybillDetails() {
-        $record = $this->totalTripsForTheCurrentMonth();
-        foreach($record as $data) {
-            echo $data;
-        }
     }
 
     public function logout() {
@@ -308,7 +355,7 @@ class backendController extends Controller
 
                         $data.='<td>
                             <p class="font-weight-bold" style="margin:0">'.$specificRecord->customers_name.'</p>
-                            <p  style="margin:0">Location: '.$specificRecord->exact_location_id.'</p>
+                            <p  style="margin:0">Destination: '.$specificRecord->exact_location_id.'</p>
                             <p  style="margin:0">Product: '.$specificRecord-> product.'</p>
 
                         </td>
@@ -345,11 +392,11 @@ class backendController extends Controller
         );
         return $specificDateRecord;
     }
-
+    
     public function dailyGateOutRecord(Request $request) {
-        $selected_date = $request->selected_date;
+        preg_match_all('!\d+!', $request->selected_date, $specificDate);
         $currentMothAndYear = date('Y-m');
-        $user_selected_date = $currentMothAndYear.'-'.$selected_date[0];
+        $user_selected_date = $currentMothAndYear.'-'.$specificDate[0][0];
 
         $choosenDate = ltrim(date('dS \of F, Y', strtotime($user_selected_date)), '0');
         
@@ -393,11 +440,12 @@ class backendController extends Controller
                                 <a href="/trip-overview/'.$specificRecord->trip_id.'">
                                     <p class="font-weight-bold" style="margin:0">'.$specificRecord->trip_id.'</p>
                                 </a>
+
                                 <p>'.$specificRecord->loading_site.' <br> '.date('d-m-Y', strtotime($specificRecord->gated_out)).' <br> '.date('h:i A', strtotime($specificRecord->gated_out)).'</p>
                             </td>
                             <td>
                                 <span class="text-primary"><b>'.$specificRecord->truck_no.'</b></span>
-                                <p style="margin:0"><b>Truck Type</b>: '.$specificRecord->truck_type.' '.$specificRecord->tonnage / 1000 .'</p>
+                                <p style="margin:0"><b>Truck Type</b>: '.$specificRecord->truck_type.' '.$specificRecord->tonnage / 1000 .'T</p>
                                 <p style="margin:0"><b>Transporter</b>: '.$specificRecord->transporter_name.', '.$specificRecord->phone_no.'</p>
                             </td>
                             <td>';
@@ -406,7 +454,7 @@ class backendController extends Controller
                             </td>
                             <td>
                                 <p class="font-weight-bold" style="margin:0">'.$specificRecord->customers_name.'</p>
-                                <p  style="margin:0">Location: '.$specificRecord->exact_location_id.'</p>
+                                <p  style="margin:0">Destination: '.$specificRecord->exact_location_id.'</p>
                                 <p  style="margin:0">Product: '.$specificRecord-> product.'</p>
 
                             </td>
@@ -423,6 +471,47 @@ class backendController extends Controller
 
         return $choosenDate.'`'.$response;
     }
+
+    public function realStat(Request $request) {
+        $current_month = date('F');
+        $current_year = date('Y');
+        $monthlyTarget = target::WHERE('current_month', $current_month)->WHERE('current_year', $current_year)->GET()->LAST();
+        $traction = $request->traction;
+
+        $todaysDate = date('d');
+        $count=1;
+        $dateYearAndMonth = date('Y-m');
+
+        if($traction == 1) {
+            $getGatedOutByMonth = DB::SELECT(
+                DB::RAW(
+                    'SELECT COUNT(*) as currentMonthGateOut FROM tbl_kaya_trips WHERE MONTH(gated_out)=MONTH(CURRENT_DATE()) AND YEAR(gated_out) = YEAR(CURRENT_DATE()) AND trip_status = 1 and tracker >= 5'
+                )
+            );
+            do{
+                $newDate = $dateYearAndMonth.'-'.$count;
+                $count++;
+                $noOfTripsPerDay[] = trip::whereDATE('gated_out',  $newDate)->GET()->COUNT();
+            }
+            while($count <= $todaysDate);
+            return [$monthlyTarget->target, $getGatedOutByMonth[0]->currentMonthGateOut, $noOfTripsPerDay];
+        }
+        else {
+            do{
+                $newDate = $dateYearAndMonth.'-'.$count;
+                $count++;
+                $noOfTripsPerDay[] = trip::whereDATE('gated_out',  $newDate)->WHERE('client_id', '!=', 1)->WHERE('transporter_id', '!=', 141)->GET()->COUNT();
+            }
+            while($count <= $todaysDate);
+            $getGatedOutByMonth = DB::SELECT(
+                DB::RAW(
+                    'SELECT COUNT(*) as currentMonthGateOut FROM tbl_kaya_trips WHERE MONTH(gated_out)=MONTH(CURRENT_DATE()) AND YEAR(gated_out) = YEAR(CURRENT_DATE()) AND trip_status = 1 and tracker >= 5 AND client_id != "1" AND transporter_id != "141"'
+                )
+            );
+            return [$monthlyTarget->target, $getGatedOutByMonth[0]->currentMonthGateOut, $noOfTripsPerDay];
+        }
+    }
 }
+
 
 

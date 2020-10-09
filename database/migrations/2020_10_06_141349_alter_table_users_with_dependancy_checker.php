@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AlterTableTripEventDestinations extends Migration
+class AlterTableUsersWithDependancyChecker extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AlterTableTripEventDestinations extends Migration
      */
     public function up()
     {
-        Schema::table('tbl_kaya_trip_events', function (Blueprint $table) {
-            $table->string('gate_in_time_destination')->after('time_arrived_destination')->nullable();
+        Schema::table('users', function (Blueprint $table) {
+            $table->boolean('has_dependant')->default(FALSE);
         });
     }
 
@@ -25,8 +25,8 @@ class AlterTableTripEventDestinations extends Migration
      */
     public function down()
     {
-        Schema::table('tbl_kaya_trip_events', function (Blueprint $table) {
-            $table->dropColumn('gate_in_time_destination');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('has_dependant');
         });
     }
 }

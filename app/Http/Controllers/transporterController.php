@@ -100,8 +100,8 @@ class transporterController extends Controller
             if($documentDescriptions){
                 foreach($documentDescriptions as $key => $descriptions){
                     if(isset($descriptions) && $descriptions != ''){
-                        $recid = transporterDocuments::firstOrNew(['description' => $descriptions]);
-                        $recid->transporter_id = $id;
+                        $recid = transporterDocuments::firstOrNew(['transporter_id' => $id, 'description' => $descriptions]);
+                        // $recid->transporter_id = $id;
                         $recid->description = $descriptions;     
                         $recid->save();
                     }
@@ -171,6 +171,10 @@ class transporterController extends Controller
     public function advanceRequestPayment(Request $request) {
         $advanceRequestedAt = date('d-m-Y, H:i:s A');
         $recid = trip::findOrFail($request->trip_id);
+        $transporter = transporter::findOrFail($recid->transporter_id);
+        if($transporter->transporter_status == FALSE) {
+            return 'blackListed';
+        }
         $user_id = $request->user_id;
         $tripRate = $recid->transporter_rate;
         $standardAdvanceRate = $tripRate * 0.7;
@@ -282,71 +286,77 @@ class transporterController extends Controller
 
     public function balanceRequestPayment(Request $request) {
         $balanceRequestedAt = date('d-m-Y, H:i:s A');
-        $checkOffloadWaybill = offloadWaybillRemark::WHERE('trip_id', $request->trip_id)->GET()->COUNT();
-        if($checkOffloadWaybill) {
-            $id = $request->trip_id;
-
-            $balanceRequest = trip::findOrFail($id);
-            $balanceRequest->balance_request = TRUE;
-            $balanceRequest->balance_requested_by = $request->user_id;
-            $balanceRequest->balance_requested_at = $balanceRequestedAt;
-            $balanceRequest->save();
-
-            $newChunkBalance = 0;
-            $data = $this->transactQueryBalance($id);
-            $balanceRequest = $data[0]->balance;
-            $transporter_id = $data[0]->transporter_id;
-            $trip_id = str_replace('KAID', '', $data[0]->trip_id);
-            $transporterChunkPayment = bulkPayment::WHERE('transporter_id', $transporter_id)->GET();
-            if(sizeof($transporterChunkPayment)>0) {
-                $availableBalance = $transporterChunkPayment[0]->balance;
-                if($availableBalance >= $balanceRequest){
-                    $amountPayable = $balanceRequest;
-                    $newChunkBalance = $availableBalance - $balanceRequest;
-                }
-                else {
-                    $amountPayable = $availableBalance - $balanceRequest;
-                }
-                $updateAccountBalance = bulkPayment::firstOrNew(['transporter_id' => $transporter_id]);
-                $updateAccountBalance->balance = $newChunkBalance;
-                $updateAccountBalance->save();
-            }
-            else{
-                $availableBalance = 0;
-                $amountPayable = $balanceRequest;
-            }
-            $getWaybillCredentials = tripWaybill::WHERE('trip_id', $trip_id)->GET();
-            $tripid = $data[0]->trip_id;
-
-            //create a payment history log here.
-            $payment = PaymentHistory::CREATE(['trip_id' => $request->trip_id]);
-            $payment->amount = $balanceRequest;
-            $payment->payment_mode = 'Balance Requested';
-            $payment->save();
-
-            // Mail::send('initiate-balance', array(
-            //     'tripid' => $tripid,
-            //     'getWaybillCredentials' => $getWaybillCredentials,
-            //     'destination' => $data[0]->transporter_destination.', '.$data[0]->state,
-            //     'transporter_name' => $data[0]->transporter_name,
-            //     'bank_name' => $data[0]->bank_name,
-            //     'account_name' => $data[0]->account_name,
-            //     'account_number' => $data[0]->account_number,
-            //     'tonnage' => $data[0]->tonnage,
-            //     'truck_no' => $data[0]->truck_no,
-            //     'product_name' => $data[0]->product,
-            //     'customer_name' => $data[0]->customers_name,
-            //     'current_balance' => $availableBalance,
-            //     'balance_request' => $balanceRequest,
-            //     'amountPayable' => $amountPayable,
-            //     'available_balance' => $newChunkBalance,
-            // ), function($message) use ($request, $tripid) {
-            //     $message->from('no-reply@kayaafrica.co', 'KAYA-FINACE');
-            //     $message->to('kayaafricafin@gmail.com', 'Finance')->subject('Payment for TRIP: '.$tripid);
-            // });
-            return 'requestSent';
+        $checkTransporterStatus = trip::SELECT('transporter_id')->WHERE('id', $request->trip_id)->GET()->FIRST();
+        $transporter = transporter::findOrFail($checkTransporterStatus->transporter_id);
+        if($transporter->transporter_status == FALSE) {
+            return 'blackListed';
         } else {
-            return 'abort';
+            $checkOffloadWaybill = offloadWaybillRemark::WHERE('trip_id', $request->trip_id)->GET()->COUNT();
+            if($checkOffloadWaybill) {
+                $id = $request->trip_id;
+
+                $balanceRequest = trip::findOrFail($id);
+                $balanceRequest->balance_request = TRUE;
+                $balanceRequest->balance_requested_by = $request->user_id;
+                $balanceRequest->balance_requested_at = $balanceRequestedAt;
+                $balanceRequest->save();
+
+                $newChunkBalance = 0;
+                $data = $this->transactQueryBalance($id);
+                $balanceRequest = $data[0]->balance;
+                $transporter_id = $data[0]->transporter_id;
+                $trip_id = str_replace('KAID', '', $data[0]->trip_id);
+                $transporterChunkPayment = bulkPayment::WHERE('transporter_id', $transporter_id)->GET();
+                if(sizeof($transporterChunkPayment)>0) {
+                    $availableBalance = $transporterChunkPayment[0]->balance;
+                    if($availableBalance >= $balanceRequest){
+                        $amountPayable = $balanceRequest;
+                        $newChunkBalance = $availableBalance - $balanceRequest;
+                    }
+                    else {
+                        $amountPayable = $availableBalance - $balanceRequest;
+                    }
+                    $updateAccountBalance = bulkPayment::firstOrNew(['transporter_id' => $transporter_id]);
+                    $updateAccountBalance->balance = $newChunkBalance;
+                    $updateAccountBalance->save();
+                }
+                else{
+                    $availableBalance = 0;
+                    $amountPayable = $balanceRequest;
+                }
+                $getWaybillCredentials = tripWaybill::WHERE('trip_id', $trip_id)->GET();
+                $tripid = $data[0]->trip_id;
+
+                //create a payment history log here.
+                $payment = PaymentHistory::CREATE(['trip_id' => $request->trip_id]);
+                $payment->amount = $balanceRequest;
+                $payment->payment_mode = 'Balance Requested';
+                $payment->save();
+
+                // Mail::send('initiate-balance', array(
+                //     'tripid' => $tripid,
+                //     'getWaybillCredentials' => $getWaybillCredentials,
+                //     'destination' => $data[0]->transporter_destination.', '.$data[0]->state,
+                //     'transporter_name' => $data[0]->transporter_name,
+                //     'bank_name' => $data[0]->bank_name,
+                //     'account_name' => $data[0]->account_name,
+                //     'account_number' => $data[0]->account_number,
+                //     'tonnage' => $data[0]->tonnage,
+                //     'truck_no' => $data[0]->truck_no,
+                //     'product_name' => $data[0]->product,
+                //     'customer_name' => $data[0]->customers_name,
+                //     'current_balance' => $availableBalance,
+                //     'balance_request' => $balanceRequest,
+                //     'amountPayable' => $amountPayable,
+                //     'available_balance' => $newChunkBalance,
+                // ), function($message) use ($request, $tripid) {
+                //     $message->from('no-reply@kayaafrica.co', 'KAYA-FINACE');
+                //     $message->to('kayaafricafin@gmail.com', 'Finance')->subject('Payment for TRIP: '.$tripid);
+                // });
+                return 'requestSent';
+            } else {
+                return 'abort';
+            }
         }
     }
 

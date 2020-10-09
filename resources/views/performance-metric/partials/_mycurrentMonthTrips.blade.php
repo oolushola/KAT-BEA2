@@ -2,8 +2,8 @@
 <div id="myCurrentMonthGateOut" class="modal fade">
     <form method="POST" id="frmUpdateClientRate">
         @csrf
-        <div class="modal-dialog">
-            <div class="modal-content" style="width:1100px; position:relative; left:-200px">
+        <div class="modal-dialog modal-full">
+            <div class="modal-content">
                 <div class="modal-header" style="padding:5px; background:#324148">
                     <h5 class="font-weight-sm font-weight-bold text-warning">Total Gate Out: as at {{ date('d-m-Y') }}</h5>
                     <span class="ml-2"></span>
@@ -15,7 +15,7 @@
                 </div>
                 
                 <div class="modal-body">
-                    <div class="row waybillStatus">
+                    <div class="row table-responsive">
                         <table class="table table-condensed">
                             <thead class="table-success">
                                 <tr class="font-weight-bold bg-success" style="font-size:10px;" >

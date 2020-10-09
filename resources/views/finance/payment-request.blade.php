@@ -809,7 +809,7 @@ function getPaymentInitiator($arrayRecord, $master) {
         $('.changeTransporterAtBalance').keypress(function($e) {        
             $oldValue = $(this).attr('value');
             if($e.keyCode === 13) {
-                $newValue = eval($('.changeTransporterAtBalance').val())
+                $newValue = eval($(this).val())
                 $paymentId = $(this).attr('title')
                 if($oldValue === $newValue) {
                     $url = '/payment-request'
