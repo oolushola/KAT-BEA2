@@ -14,6 +14,6 @@ class StaffEducation extends Model
         'sch_start_from',
         'sch_end',
         'qualification_obtained',
-        'specialization'
+        'specialization' 
     ];
 }

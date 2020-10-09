@@ -179,6 +179,7 @@
 									@if(Auth::user()->role_id == 6 && Auth::user()->email=='success.iziomo@kayaafrica.co') Transport Manager
 									@elseif(Auth::user()->role_id == 6) Transport Supervisor @endif
 									@if(Auth::user()->role_id == 7) Ad-hoc Staff @endif
+									@if(Auth::user()->role_id == 8) Human Resource Manager @endif
 								</div>
 							</div>
 
@@ -192,7 +193,7 @@
 				<div class="card card-sidebar-mobile">
 					<ul class="nav nav-sidebar" data-nav-type="accordion">
 
-						@if(($auth >= 1 && $auth <=4) || Auth::user()->email == 'success.iziomo@kayaafrica.co')
+						@if(($auth >= 1 && $auth <=4) || $auth == 8 || Auth::user()->email == 'success.iziomo@kayaafrica.co')
 						<li class="nav-item">
 							<a href="{{URL('dashboard')}}" class="nav-link">
 								<i class="icon-home4"></i>
@@ -210,7 +211,7 @@
 						</li>
 						@endif
 						
-						@if($auth != 5 && $auth != 7)
+						@if($auth != 5 && $auth != 7 && $auth !=8)
 						<li class="nav-item">
 							<a href="{{URL('performance-metrics')}}" class="nav-link">
 								<i class="icon-stats-bars3"></i>
@@ -219,6 +220,26 @@
 						</li>
 						@endif
 
+						@if(Session::get('prsSession'))
+						<li class="nav-item nav-item-submenu">
+							<a href="#" class="nav-link"><i class="icon-trophy4"></i> <span>Performance Review</span></a>
+
+							<ul class="nav nav-group-sub" data-submenu-title="Starter kit">
+								<li class="nav-item">
+									<a href="{{URL(Auth::user()->first_name.'-'.Auth::user()->last_name.'/job-description')}}" class="nav-link"><i class="icon-briefcase"></i>My Job Description</a>
+								</li>
+								<li class="nav-item">
+									<a href="{{URL(Auth::user()->first_name.'-'.Auth::user()->last_name.'/performance-review')}}" class="nav-link"><i class="icon-design"></i>Review</a>
+								</li>
+								<li class="nav-item">
+									<a href="#" class="nav-link"><i class="icon-deviantart2"></i>E.C.D.P</a>
+								</li>
+							</ul>
+						</li>
+						@endif
+						
+
+						@if($auth !==8)
 						<li class="nav-item-header">
                             <div class="text-uppercase font-size-xs line-height-xs">TRIPS
 							@if(Auth::user()->role_id <= 4)
@@ -264,14 +285,31 @@
 								@endif
 							</ul>
 						</li>
+						@endif
+
+
+						@if($auth == 1 || $auth == 8)  
+						<li class="nav-item-header">
+                            <div class="text-uppercase font-size-xs line-height-xs">Human Resource</div> 
+                            <i class="icon-menu" title="Forms"></i>
+                        </li>
+                        
+						<li class="nav-item">
+							<a href="{{URL('hr/dashboard')}}" class="nav-link">
+								<i class="icon-users4"></i>
+								<span>People Management</span>
+								<span class="badge bg-success align-self-center ml-auto"></span>
+							</a>
+						</li>
+						@endif
 
 
 						@if($auth == 1 || $auth == 3)
 						
 						<li class="nav-item-header"><div class="text-uppercase font-size-xs line-height-xs">FINANCE SECTION</div> <i class="icon-menu" title="Forms"></i></li>
-						<li class="nav-item nav-item-submenu nav-item-open">
+						<li class="nav-item nav-item-submenu">
 							<a href="#" class="nav-link"><i class="icon-piggy-bank"></i> <span>Financials</span></a>
-							<ul class="nav nav-group-sub" data-submenu-title="Menu levels" style="display: block;">
+							<ul class="nav nav-group-sub" data-submenu-title="Menu levels">
 								<li class="nav-item">
 									<a href="{{URL('financials/overview')}}" class="nav-link font-weight-semibold">
 										<i class="icon-meter2"></i>

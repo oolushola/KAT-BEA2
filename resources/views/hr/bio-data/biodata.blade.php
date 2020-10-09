@@ -190,28 +190,28 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Company</label>
-                                    <input type="text" name="experience-company" placeholder="Company name" class="form-control">
+                                    <input type="text" name="company_name" placeholder="Company name" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Post Held</label>
-                                    <input type="text" name="experience-position" placeholder="Company name" class="form-control">
+                                    <input type="text" name="position_held" placeholder="Company name" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>From</label>
-                                    <input type="date" name="experience-company" placeholder="Company name" class="form-control">
+                                    <input type="date" name="company_from" placeholder="Company name" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>To</label>
-                                    <input type="date" name="experience-position" placeholder="Company name" class="form-control">
+                                    <input type="date" name="company_to" placeholder="Company name" class="form-control">
                                 </div>
                             </div>
-                            <button class="btn btn-primary font-weight-bold font-size-xs mb-2 ml-2" id="addPersonalData">
+                            <button class="btn btn-primary font-weight-bold font-size-xs mb-2 ml-2" id="addExperience">
                                 ADD EXPERIENCE <i class="icon-paperplane"></i>
                             </button>
 
@@ -222,39 +222,35 @@
                     <h6 id="dependants" tabindex="-1" class="title">Dependants</h6>
                     <fieldset id="dependantsFrm" role="tabpanel" aria-labelledby="steps-uid-0-h-3" class="body d-none">
                         <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label class="d-block form-text text-muted">Do you have any dependant? <input type="checkbox" class="ml-2" /></label>
-                                </div>
-                            </div>
-                            
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Full Name</label>
-                                    <input type="text" name="experience-company" placeholder="Company name" class="form-control">
+                                    <input type="text" name="dependant_full_name" placeholder="John Doe" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Dependant Type</label>
-                                    <input type="text" name="experience-position" placeholder="Company name" class="form-control">
+                                    <input type="text" name="dependant_type" placeholder="Daughter" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Date of Birth</label>
-                                    <input type="date" name="experience-company" placeholder="Company name" class="form-control">
+                                    <input type="date" name="dependant_dob" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>To</label>
-                                    <input type="date" name="experience-position" placeholder="Company name" class="form-control">
+                                    <label>Address</label>
+                                    <input type="text" name="dependant_address" class="form-control" placeholder="23, Babatunde Jose, VI, Lagos." />
                                 </div>
                             </div>
-                            <button class="btn btn-primary font-weight-bold font-size-xs mb-2 ml-2" id="addPersonalData">
+                            @if($user->has_dependant == TRUE)
+                            <button class="btn btn-primary font-weight-bold font-size-xs mb-2 ml-2" id="addDependants">
                                 ADD DEPENDANTS <i class="icon-paperplane"></i>
                             </button>
+                            @endif
                         </div>
                     </fieldset>
 
@@ -264,44 +260,192 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Guarantor Full Name</label>
-                                    <input type="text" name="experience-company" placeholder="Company name" class="form-control">
+                                    <input type="text" name="guarantor_full_name" placeholder="John Doe" class="form-control">
                                 </div>
                                 <div class="form-group">
                                     <label>Guarantor Phone Number</label>
-                                    <input type="text" name="experience-position" placeholder="Company name" class="form-control">
+                                    <input type="text" name="guarantor_phone_no" placeholder="0802*******" class="form-control">
                                 </div>
                                 <div class="form-group">
                                     <label>Guarantor Address</label>
-                                    <textarea class="form-control"></textarea>
+                                    <textarea class="form-control" name="guarantor_address"></textarea>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Next of Kin Full Name</label>
-                                    <input type="text" name="experience-company" placeholder="Company name" class="form-control">
+                                    <input type="text" name="nok_full_name" placeholder="Company name" class="form-control">
                                 </div>
                                 <div class="form-group">
                                     <label>Next of Kin Phone Number</label>
-                                    <input type="text" name="experience-position" placeholder="Company name" class="form-control">
+                                    <input type="text" name="nok_phone_no" placeholder="Company name" class="form-control">
                                 </div>
                                 <div class="form-group">
                                     <label>Next of Kin Address</label>
-                                    <textarea class="form-control"></textarea>
+                                    <textarea class="form-control" name="nok_address"></textarea>
                                 </div>
                             </div>
                             
                             <div>
-                                <button class="btn btn-primary font-weight-bold font-size-xs mb-2 ml-2 d-block" id="addPersonalData">
+                                <button class="btn btn-primary font-weight-bold font-size-xs mb-2 ml-2" id="addAdditionalInfo">
                                     ADD <i class="icon-paperplane"></i>
                                 </button>
+                                <button class="btn btn-primary font-weight-bold font-size-xs mb-2 ml-2 d-none" id="submitProfile">
+                                    COMPLETED <i class="icon-paperplane"></i>
+                                </button>
                             </div>
-                            <p>I confirm that all information supplied are accurate and incorrect <input type="checkbox" /></p>
+                            <p class="ml-2">Accept Terms & Conditions 
+                                <input type="checkbox" id="confirmSubmission" />
+                                <input type="hidden" value="" id="termsAndCondition">
+                            </p>
                         </div>
                     </fieldset>
                     <div id="loader"></div>
                 </div>
                 
             </form>
+        </div>
+        <div class="col-md-5">
+            <div class="table-responsive">
+                <table class="table  table-condensed">
+                    <thead class="table-info">
+                        <th>Profile</th>
+                        <th>Action</th>
+                    </thead>
+                    <tbody>
+                        <tr class="table-success">
+                            <td>
+                                <span class="font-weight-semibold text-primary">{{ $user->current_post_held }}</span>
+                                <h3 class="m-0 font-weight-bold">{{ ucwords($user->first_name) }}, {{ ucwords($user->last_name) }}</h3>
+                                <span class="text-danger font-weight-semibold">{{ $user->phone_no }}, {{ $user->email }}</span>
+                            </td>
+                            <td>
+                                <i class="icon-pencil"></i>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="table  table-bordered">
+                    <thead class="table-info">
+                        <th width="50%">School</th>
+                        <th>Duration</th>
+                        <th>Action</th>
+                    </thead>
+                    <tbody>
+                        @if(count($userEducation))
+                        @foreach($userEducation as $education)
+                        <tr class="table-success">
+                            <td>
+                                <span class="font-weight-semibold text-primary">{{ $education->qualification_obtained }}</span>
+                                <p class="m-0 font-weight-bold font-size-sm">{{ ucwords($education->school_name) }}</p>
+                            </td>
+                            <td class="font-size-xs">
+                                <span class="d-block">From: {{ date('d/m/Y', strtotime($education->sch_start_from)) }}</span>
+                                <span class="d-block">To: {{ date('d/m/Y', strtotime($education->sch_end)) }}</span>
+                            </td>
+                            <td>
+                                <i class="icon-pencil"></i>
+                            </td>
+                        </tr>
+                        @endforeach
+                        @else
+                        <tr>
+                            <td colspan="3">Education has not been added</td>
+                        </tr>
+                        @endif
+                    </tbody>
+                </table>
+                <table class="table  table-bordered">
+                    <thead class="table-info">
+                        <th width="50%">Company Name</th>
+                        <th>Duration</th>
+                        <th>Action</th>
+                    </thead>
+                    <tbody>
+                        @if(count($userExperiences))
+                        @foreach($userExperiences as $experience)
+                        <tr class="table-success">
+                            <td>
+                                <span class="font-weight-semibold text-primary">{{ $experience->position_held }}</span>
+                                <p class="m-0 font-weight-bold font-size-sm">{{ ucwords($experience->company_name) }}</p>
+                            </td>
+                            <td class="font-size-xs">
+                                <span class="d-block">From: {{ date('d/m/Y', strtotime($experience->company_from)) }}</span>
+                                <span class="d-block">To: {{ date('d/m/Y', strtotime($experience->company_to)) }}</span>
+                            </td>
+                            <td>
+                                <i class="icon-pencil"></i>
+                            </td>
+                        </tr>
+                        @endforeach
+                        @else
+                        <tr>
+                            <td colspan="3">Education has not been added</td>
+                        </tr>
+                        @endif
+                    </tbody>
+                </table>
+                
+                <div class="d-none">
+                    <table class="table  table-condensed">
+                        <thead class="table-info">
+                            <th>Dependants</th>
+                            <th>Action</th>
+                        </thead>
+                        <tbody>
+                            @if(count($userDependants)) 
+                            @foreach($userDependants as $dependant)
+                            <tr class="table-success">
+                                <td>
+                                    <span class="font-weight-semibold text-primary">{{ $dependant->dependant_type }}</span>
+                                    <h3 class="m-0 font-weight-bold">{{ ucwords($dependant->dependant_full_name) }}</h3>
+                                    <span class="text-danger font-weight-semibold">Date of Birth: {{ $dependant->dependant_dob }}</span>
+                                </td>
+                                <td>
+                                    <i class="icon-pencil"></i>
+                                </td>
+                            </tr>
+                            @endforeach
+                            @else
+                                <tr>
+                                    <td colspan="2">You do not have any dependant yet.</td>
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
+                    <table class="table  table-bordered">
+                        <thead class="table-info">
+                            <th>Guarantor</th>
+                            <th>Next of Kin</th>
+                            <th>Action</th>
+                        </thead>
+                        <tbody>
+                            @if(count($additionalInfos))
+                            @foreach($additionalInfos as $extra)
+                            <tr class="table-success">
+                                <td>
+                                    <span class="font-weight-semibold text-primary">{{ $extra->guarantor_phone_no }}</span>
+                                    <p class="m-0 font-weight-bold font-size-sm">{{ ucwords($extra->guarantor_full_name) }}</p>
+                                </td>
+                                <td>
+                                    <span class="font-weight-semibold text-primary">{{ $extra->nok_phone_no }}</span>
+                                    <p class="m-0 font-weight-bold font-size-sm">{{ ucwords($extra->nok_full_name) }}</p>
+                                </td>
+                                <td>
+                                    <i class="icon-pencil"></i>
+                                </td>
+                            </tr>
+                            @endforeach
+                            @else
+                            <tr>
+                                <td colspan="3">Additional information has not been added</td>
+                            </tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
+                <p class="font-size-xs font-weight-semibold mt-2 ml-2 text-danger pointer">Show All</p>
+            </div>
         </div>
     </div>
 </div>
@@ -383,6 +527,20 @@
         $('#additionalInfoFrm').removeClass('d-none')
     })
 
+    $('#confirmSubmission').click(function() {
+        $clickedStatus = $(this).is(':checked')
+        if($clickedStatus) {
+            $('#termsAndCondition').val(1)
+            $('#addAdditionalInfo').addClass('d-none')
+            $('#submitProfile').removeClass('d-none')
+        }
+        else{
+            $('#termsAndCondition').val('')
+            $('#addAdditionalInfo').addClass('d-none')
+            $('#submitProfile').removeClass('d-none')
+        }
+    })
+
 
     $('#addPersonalData').click(function($e) {
         $e.preventDefault();
@@ -411,7 +569,6 @@
             notification('#loader', '<i class="icon-x"></i>Account number is required')
             return false
         }
-        
         submitBioData('/store-bio-data', '#frmBioData', 'Profile')
     })
 
@@ -421,7 +578,22 @@
 
     $('#addEducation').click(function($e) {
         $e.preventDefault();
-        submitBioData('/store-user-education', '#frmBioData', 'User Education ')
+        submitBioData('/store-user-education', '#frmBioData', ' Education ')
+    })
+
+    $('#addExperience').click(function($e) {
+        $e.preventDefault()
+        submitBioData('/store-user-experience', '#frmBioData', ' Past Experiences ')
+    })
+
+    $('#addDependants').click(function($e) {
+        $e.preventDefault()
+        submitBioData('/store-user-dependants', '#frmBioData', ' Dependants ')
+    })
+
+    $('#addAdditionalInfo').click(function($e) {
+        $e.preventDefault()
+        submitBioData('/store-user-extras', '#frmBioData', ' Additional Info ')
     })
 
     const submitBioData = (url, frmName, section) => {

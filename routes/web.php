@@ -302,8 +302,19 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('{user}/bio-data', 'UserController@biodata');
     Route::post('/store-bio-data', 'UserController@storeBiodata');
     Route::post('/store-user-education', 'UserController@storeUserEducation');
-    Route::get('/update-transporter-rate-at-topup/{tripId}', 'overviewController@updateTransporterRateTopup');
+    Route::post('/store-user-experience', 'UserController@storeUserExperience');
+    Route::post('/store-user-dependants', 'UserController@storeUserDependants');
+    Route::post('/store-user-extras', 'UserController@storeUserExtras');
+    Route::get('/hr-biodata-preview', 'hrController@displayBiodata');
+    Route::get('hr-start-prs-session', 'PrsSessionController@startPrs');
+    Route::get('{user}/job-description', 'PrsSessionController@jobDescription');
+    Route::get('{user}/performance-review', 'PrsSessionController@performanceReview');
+    Route::get('{user}/ecdp', 'PrsSessionController@ecdp');
+    Route::get('hr-user-job-description', 'PrsSessionController@hrUserJd');
+    Route::get('hr-user-review', 'PrsSessionController@hrUserReview');
 
+    
+    Route::get('/update-transporter-rate-at-topup/{tripId}', 'overviewController@updateTransporterRateTopup');
     Route::get('notification-real-data', 'backendController@realTimeEvent');
     Route::get('real-stat', 'backendController@realStat');
 

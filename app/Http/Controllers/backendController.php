@@ -26,6 +26,7 @@ use App\User;
 use App\cargoAvailability;
 use App\target;
 use Session;
+use App\PrsSession;
 
 class backendController extends Controller
 {
@@ -96,12 +97,15 @@ class backendController extends Controller
         );
         $paymentRequested = $advancePendingApproval + $balancePendingApproval[0]->balancecount;
         $clients = client::WHERE('client_status', '1')->GET()->COUNT();
+        $prsSession = PrsSession::WHERE('user_id', Auth::user()->id)->WHERE('prs_starts', TRUE)->WHERE('prs_ends', FALSE)->GET()->LAST();
+
 
         Session::put([
             'payment_request' => $paymentRequested,
             'on_journey' => $onJourney,
             'client' => $clients,
-            'offloaded_trips' => $offloadedTrips
+            'offloaded_trips' => $offloadedTrips,
+            'prsSession' => $prsSession
         ]);
 
         $currentGateOutRecord = $this->displayRecordOfTrips('gated_out', $currentDate);
