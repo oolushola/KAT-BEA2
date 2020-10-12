@@ -7,7 +7,7 @@
             </span>
         </h6>
         <span></span>
-        
+
         <span style="font-size:8px; font-family:tahoma; cursor:pointer; color:blue; font-weight:bold" id="changeGateOutTime">Change Time and Date of Gate Out</span>
 
     </div>
@@ -59,6 +59,20 @@
                 <textarea class="form-control" name="customer_address" id="customerAddress"><?php if(isset($recid)) { echo $recid[0]->customer_address; } ?></textarea>
             </div>
         </div>
+
+        @if($recid[0]->truck_type == 'Flatbed')
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="font-weight-semibold">Trip Type</label>
+                    <div class="d-block">
+                        <input type="radio" name="tripType" class="tripType" value="2" />&nbsp; Return Empty
+                        <input type="radio" name="tripType" class="tripType ml-3" value="1" />&nbsp;No Return Empty
+                        <input type="hidden" value="" id="tripType" name="trip_type" />
+                    </div>
+                </div>
+            </div>
+        @endif
+
     </div>
     <div class="text-left  ml-3 mr-3 mb-3">
         @if(isset($recid) && ($recid[0]->tracker) <=4)
