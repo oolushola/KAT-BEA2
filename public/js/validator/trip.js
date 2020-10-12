@@ -278,6 +278,11 @@ $(function() {
             errorDisplay('#loader', 'Customer\'s address is required.', 'error');
             return false;
         } 
+        $tripType = $("#tripType").val();
+        if($tripType == "") {
+            errorDisplay('#loader', 'Truck type is required.', 'error');
+            return false;
+        } 
     }
 
     function loader(placeholder, loadingtext, cssName) {
@@ -331,6 +336,12 @@ $(function() {
         $('#gateOutPlaceholder').removeClass('hidden');
         $('#gatedOut').css({fontSize:'10px'});
     });
+
+
+    $('.tripType').click(function() {
+        $tripType = $(this).attr('value')
+        $('#tripType').val($tripType)
+    })
 
     
 

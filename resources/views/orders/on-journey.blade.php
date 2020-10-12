@@ -35,6 +35,8 @@ td:first-child, .headcol {
             <option value="ARRIVED DESTINATION">ARRIVED DESTINATION</option>
         </select>
         <input type="text" id="searchUncompletedTrips" class="ml-2 font-weight-semibold p-2" placeholder="What are you looking for?" style="border:1px solid #ccc; outline:none; font-size:11px; width:150px" />
+
+        <a href="{{ URL('/completed/not-drop-off') }}" class="mt-2 ml-4">Yet to drop off empty trips</a>
     </div>
 
     <form method="POST" id="frmCancelTrip">

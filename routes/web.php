@@ -317,7 +317,11 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('/update-transporter-rate-at-topup/{tripId}', 'overviewController@updateTransporterRateTopup');
     Route::get('notification-real-data', 'backendController@realTimeEvent');
     Route::get('real-stat', 'backendController@realStat');
+    Route::get('completed/not-drop-off', 'IssueTypeController@completedNotDropOff');
+    Route::get('update-semi-trip-location', 'IssueTypeController@updateSemitripLocation');
+    Route::get('drop-off-completed', 'IssueTypeController@dropOffCompleted');
 
 });
+
 
 

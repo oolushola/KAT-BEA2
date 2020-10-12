@@ -34,6 +34,8 @@ class trip extends Model
         'month',
         'year',
         'user_id',
-        'completed_trip_report'
+        'completed_trip_report',
+        'trip_type',
+        'last_known_location'
     ];
 }
