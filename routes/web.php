@@ -321,6 +321,10 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('update-semi-trip-location', 'IssueTypeController@updateSemitripLocation');
     Route::get('drop-off-completed', 'IssueTypeController@dropOffCompleted');
 
+    Route::get('/badge-trips', 'BadgingController@showTrips');
+    Route::post('/badge-truck', 'BadgingController@badgeTruck');
+    Route::post('/remove-badge-truck', 'BadgingController@removeBadgedTruck');
+
 });
 
 

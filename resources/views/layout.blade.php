@@ -355,6 +355,12 @@
 												<span>Vat Rate</span>
 											</a>
 										</li>
+										<li class="nav-item">
+											<a href="{{URL('badge-trips')}}" class="nav-link">
+												<i class="icon-ship"></i>
+												<span>Badge Trips</span>
+											</a>
+										</li>
 									</ul>
 								</li>
 								<li class="nav-item nav-item-submenu">
