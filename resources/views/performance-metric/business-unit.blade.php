@@ -447,6 +447,43 @@
         })
     })
 
+
+    $('#unlockTransporterRate').click(function(){
+        $(this).addClass("hidden");
+        $('#lockTransporterRate').removeClass('hidden');
+        $('#submitTransporterRate').removeClass('hidden');
+        $('.defaultTransporterRate').addClass('hidden');
+        $('.transporterRate').removeClass('hidden');
+        $('#transporterRateTitle').addClass('hidden');
+    });
+   
+    $('#lockTransporterRate').click(function(){
+        $(this).addClass("hidden");
+        $('#unlockTransporterRate').removeClass('hidden');
+        $('#submitTransporterRate').addClass('hidden');
+        $('.defaultTransporterRate').removeClass('hidden');
+        $('.transporterRate').addClass('hidden');
+        $('#transporterRateTitle').removeClass('hidden');
+    });
+
+    $('#submitTransporterRate').click(function(e) {
+        e.preventDefault();
+        $(this).html('<i class="spinner icon-spinner2"></i> Please wait...').attr('disabled', 'disabled');
+        $event = $(this);
+        $.post('/update-transporter-rate', $('#frmUpdateClientRate').serializeArray(), function(data) {
+            if(data == "saved") {
+                $event.html('<i class="icon-checkmark2"></i> Saved Successfully');
+                setTimeout(() => {
+                    window.location.href='';
+                }, 2000);
+            }
+            else{
+                alert('Oops! Something went wrong. Try again later.');
+                return false;
+            }
+        })
+    })
+
 </script>
 
 

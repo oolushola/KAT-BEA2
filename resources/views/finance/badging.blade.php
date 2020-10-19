@@ -25,11 +25,11 @@
             &nbsp;
 
                 <div class="card" >
-                    <div class="table-responsive" style="max-height:600px">
+                    <div class="table-responsive" style="max-height:1050px">
                         <table class="table table-bordered">
                             <thead>
                                 <tr>
-                                    <td class="table-primary font-weight-bold" colspan="4">AVAILABLE TRIPS</td>
+                                    <td class="table-primary font-weight-bold" colspan="5">AVAILABLE TRIPS</td>
                                 </tr>
                                 <tr>
                                     <td class="table-info" width="10%">
@@ -51,8 +51,16 @@
                                             <input type="checkbox" value="{{ $trip->id }}" class="availableTrips" name="availableTrucks[]" />
                                         </td>
                                         <td>{{ $trip->trip_id }}</td>
-                                        <td>{{ $trip->truck_no }}</td>
+                                        <td>
+                                            <span class="font-weight-semibold text-primary">{{ $trip->truck_no }}</span>
+                                            @foreach($availableTripsWaybill as $atw)
+                                            @if($atw->trip_id == $trip->id) 
+                                                <span class="d-block mt-1">{{ $atw->sales_order_no }}, {{ $atw->invoice_no }}</span>
+                                            @endif
+                                            @endforeach
+                                        </td>
                                         <td>{{ $trip->exact_location_id }}</td>
+                                        
                                     </tr>
                                 @endforeach
                                 @else
@@ -102,7 +110,14 @@
                                     <tr class="{{ $css }}">
                                         <td><input type="checkbox" class="badgedTrips" name="badgedTrips[]" value="{{ $badgeTrip->id }}" /></td>
                                         <td>{{ $badgeTrip->trip_id }}</td>
-                                        <td>{{ $badgeTrip->truck_no }}</td>
+                                        <td>
+                                            <span class="font-weight-semibold text-primary">{{ $badgeTrip->truck_no }}</span>
+                                            @foreach($badgedTripsWaybill as $btw)
+                                            @if($btw->trip_id == $badgeTrip->id) 
+                                                <span class="d-block mt-1">{{ $btw->sales_order_no }}, {{ $btw->invoice_no }}</span>
+                                            @endif
+                                            @endforeach
+                                        </td>
                                         <td>{{ $badgeTrip->exact_location_id }}</td>
                                     </tr>
                                 @endforeach

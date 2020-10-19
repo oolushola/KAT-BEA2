@@ -26,22 +26,42 @@ use App\AdhocStaffAssignRegion;
 use App\transporterRate;
 use App\offloadWaybillRemark;
 use Mail;
+use Auth;
 
 class offloadingClerkController extends Controller
 {
     public function showTripsForOffload() {
+        $user = Auth::user();
+        $myAssignedRegion = AdhocStaffAssignRegion::WHERE('user_id', $user->id)->GET();
+        foreach($myAssignedRegion as $key => $region) {
+            $onJourneyTripsOffloadingClerks[] = DB::SELECT(
+                DB::RAW(
+                    'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage, h.first_name, h.last_name FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN users h ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id AND a.user_id = h.id WHERE a.trip_status = \'1\' AND tracker >= \'5\' AND a.tracker BETWEEN \'5\' AND \'7\' AND exact_location_id = "'.$region->exact_location.'" ORDER BY a.trip_id DESC '
+                )
+            );
+        }
+
         $clients = client::SELECT('id', 'company_name')->ORDERBY('company_name', 'ASC')->GET();
         $transporters = transporter::SELECT('id', 'transporter_name')->ORDERBY('transporter_name', 'ASC')->GET();
         $loadingSites = loadingSite::SELECT('id', 'loading_site')->ORDERBY('loading_site', 'ASC')->GET();
 
-        $onJourneyTrips = DB::SELECT(
+        $masterOnJourneyTrips = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage, h.first_name, h.last_name FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN users h ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id AND a.user_id = h.id WHERE a.trip_status = \'1\' AND tracker >= \'5\' AND a.tracker BETWEEN \'5\' AND \'7\' ORDER BY a.trip_id DESC '
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage, h.first_name, h.last_name FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN users h ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id AND a.user_id = h.id WHERE a.trip_status = \'1\' AND a.tracker BETWEEN \'5\' AND \'7\' ORDER BY a.trip_id DESC '
             )
         );
-        
-        $tripWaybills = tripWaybill::GET();
-        $waybillstatuses = tripWaybillStatus::GET();
+
+        if($user->role_id == 7) {
+            $onJourneyTrips = $onJourneyTripsOffloadingClerks[0];
+        }
+        else {
+            $onJourneyTrips = $masterOnJourneyTrips;
+        }
+
+        foreach($onJourneyTrips as $myTrips) {
+            [$tripWaybills[]] = tripWaybill::WHERE('trip_id', $myTrips->id)->GET();
+        }        
+
         $products = product::SELECT('id', 'product')->ORDERBY('product')->GET();
         $states = DB::SELECT(
             DB::RAW(
@@ -57,7 +77,7 @@ class offloadingClerkController extends Controller
 
         $accountofficers = User::SELECT('id', 'first_name', 'last_name')->GET();
 
-        return view('orders.offloading-clerk-trips', compact('onJourneyTrips', 'tripWaybills', 'waybillstatuses', 'clients', 'loadingSites', 'transporters', 'products', 'states', 'adHocStaffList', 'accountofficers'));
+        return view('orders.offloading-clerk-trips', compact('onJourneyTrips', 'tripWaybills', 'clients', 'loadingSites', 'transporters', 'products', 'states', 'adHocStaffList', 'accountofficers'));
     }
 
     public function assignaddHocStaffToRegion() {
