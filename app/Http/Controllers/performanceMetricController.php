@@ -177,7 +177,24 @@ class performanceMetricController extends Controller
             if(isset($clientRates[$key]) && $clientRates[$key] != "") {
                 $tripRecord = trip::WHERE('trip_id', $trip_id)->FIRST();
                 $tripRecord->client_rate = $clientRates[$key];
+                if($tripRecord->client_id == 1) {
+                    $transporterRate = $clientRates[$key] * 0.9;
+                    $tripRecord->transporter_rate = $transporterRate;
+                }
                 $tripRecord->save();
+            }
+        }
+        return 'saved';
+    }
+
+    public function updateTransporterRate(Request $request) {
+        $transporterRates = $request->transporterRates;
+        $tripIds = $request->tripListings;
+        foreach($tripIds as $key => $trip_id) {
+            if(isset($transporterRates[$key]) && $transporterRates[$key] != '') {
+                $trip = trip::WHERE('trip_id', $trip_id)->FIRST();
+                $trip->transporter_rate = $transporterRates[$key];
+                $trip->save();
             }
         }
         return 'saved';

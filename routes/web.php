@@ -233,6 +233,7 @@ Route::group(['middleware' => 'auth'], function() {
         Route::get('specific-buh-performance', 'performanceMetricController@specificBuhPerformance');
         Route::get('performance-metrics/{userid}/{role_id}', 'performanceMetricController@businessUnitHead');
         Route::post('update-client-rate', 'performanceMetricController@updateClientRate');
+        Route::post('update-transporter-rate', 'performanceMetricController@updateTransporterRate');
     });
 
     Route::resource('buh-target', 'buhTargetMonthlyController');

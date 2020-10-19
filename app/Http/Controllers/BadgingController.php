@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Badging;
+use App\tripWaybill;
 
 
 class BadgingController extends Controller
@@ -17,10 +18,31 @@ class BadgingController extends Controller
         );
         return $query;
     }
+
+    function waybillInfoGetters($trips) {
+        $waybills = [];
+        foreach($trips as $tripObject) {
+            $waybill  = tripWaybill::SELECT('trip_id', 'sales_order_no', 'invoice_no')->WHERE('trip_id', $tripObject->id)->GET();
+            if(count($waybill)) {
+                [$waybills[]] = $waybill;
+            }
+        }
+        return $waybills;
+    }
+
     public function showTrips() {
         $availableTrips = $this->defaultQuerySorter('NOT IN');
         $badgedTrips = $this->defaultQuerySorter('IN');
-        return view('/finance.badging', compact('availableTrips', 'badgedTrips'));
+        $availableTripsWaybill = $this->waybillInfoGetters($availableTrips);
+        $badgedTripsWaybill = $this->waybillInfoGetters($badgedTrips);
+        return view('/finance.badging', 
+            compact(
+                'availableTrips', 
+                'badgedTrips', 
+                'availableTripsWaybill', 
+                'badgedTripsWaybill'
+            )
+        );
     }
 
     public function badgeTruck(Request $request) {
@@ -43,11 +65,14 @@ class BadgingController extends Controller
     function truckBadger() {
         $availableTrips = $this->defaultQuerySorter('NOT IN');
         $badgedTrips = $this->defaultQuerySorter('IN');
+        $availableTripsWaybill = $this->waybillInfoGetters($availableTrips);
+        $badgedTripsWaybill = $this->waybillInfoGetters($badgedTrips);
+
         $response = '<div class="row">
             <div class="col-md-5">
                 &nbsp;
                 <div class="card" >
-                    <div class="table-responsive" style="max-height:600px">
+                    <div class="table-responsive" style="max-height:1050px">
                         <table class="table table-bordered" class="badgeAndAvailableTrips">
                             <thead>
                                 <tr>
@@ -71,7 +96,14 @@ class BadgingController extends Controller
                                         $response.='<tr class="'.$cssStyle.'">
                                             <td><input type="checkbox" value="'.$trip->id.'" class="availableTrips" name="availableTrucks[]" /></td>
                                             <td>'.$trip->trip_id.'</td>
-                                            <td>'.$trip->truck_no.'</td>
+                                            <td>
+                                            <span class="font-weight-semibold text-primary">'.$trip->truck_no.'</span>';
+                                            foreach($availableTripsWaybill as $atw) {
+                                                if($atw->trip_id == $trip->id) {
+                                                    $response.='<span class="d-block mt-1">'.$atw->sales_order_no.', '.$atw->invoice_no.'</span>';
+                                                }
+                                            }
+                                            $response.='</td>
                                             <td>'.$trip->exact_location_id.'</td>
                                         </tr>';
                                     }
@@ -121,7 +153,14 @@ class BadgingController extends Controller
                                         $response.='<tr class="'.$css.'">
                                             <td><input type="checkbox" class="badgedTrips" name="badgedTrips[]" value="'.$badgeTrip->id.'" /></td>
                                             <td>'.$badgeTrip->trip_id.'</td>
-                                            <td>'.$badgeTrip->truck_no.'</td>
+                                            <td>
+                                                <span class="font-weight-semibold text-primary">'.$badgeTrip->truck_no.'</span>';
+                                                foreach($badgedTripsWaybill as $btw) {
+                                                    if($btw->trip_id == $badgeTrip->id) {
+                                                        $response.='<span class="d-block mt-1">'.$btw->sales_order_no.', '.$btw->invoice_no.'</span>';
+                                                    }
+                                                }
+                                            $response.='</td>
                                             <td>'.$badgeTrip->exact_location_id.'</td>
                                         </tr>';
                                     }

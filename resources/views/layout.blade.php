@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +7,6 @@
 	<meta name="description" content="Welcome to Kaya Africa.">
     <meta name="keywords" content="Transportation, Logistics, Confectionaries, Finance, Transport, Service, Cargo, Automation, Trucks">
     <meta name="author" content="Kaya Africa Technology">
-
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>@yield('title')</title>
 	<noscript>Hey, you need to enable javascript before using this application</noscript>
@@ -115,7 +115,7 @@
 					</a>
 
 					<div class="dropdown-menu dropdown-menu-right">
-						<a href="{{URL(Auth::user()->first_name.'-'.Auth::user()->last_name.'/bio-data')}}" class="dropdown-item">
+					    <a href="{{URL(Auth::user()->first_name.'-'.Auth::user()->last_name.'/bio-data')}}" class="dropdown-item">
 							<i class="icon-pencil"></i> Update Biodata
 						</a>
 						<a href="#uploadPhotoBox" data-toggle="modal" class="dropdown-item">
@@ -153,6 +153,7 @@
 				</a>
 			</div>
 
+
 			<div class="sidebar-content">
 				<div class="sidebar-user">
 					<div class="card-body">
@@ -174,12 +175,14 @@
 									@if(Auth::user()->role_id ==1) Super Admin @endif
 									@if(Auth::user()->role_id == 2) Admin Officer @endif
 									@if(Auth::user()->role_id == 3) Finance Officer @endif
-									@if(Auth::user()->role_id == 4) Visibility Officer @endif
+									@if(Auth::user()->role_id == 4 && Auth::user()->email=='oseghale.okonofua@kayaafrica.co') Operations Associate
+									@elseif(Auth::user()->role_id == 4 && Auth::user()->email=='success.iziomo@kayaafrica.co') Transport Manager
+									@elseif(Auth::user()->role_id == 4)Visibility Officer @endif
 									@if(Auth::user()->role_id == 5) Field Ops Officer @endif
-									@if(Auth::user()->role_id == 6 && Auth::user()->email=='success.iziomo@kayaafrica.co') Transport Manager
-									@elseif(Auth::user()->role_id == 6) Transport Supervisor @endif
+									@if(Auth::user()->role_id == 6) Transport Supervisor @endif
 									@if(Auth::user()->role_id == 7) Ad-hoc Staff @endif
-									@if(Auth::user()->role_id == 8) Human Resource Manager @endif
+								    @if(Auth::user()->role_id == 8) Human Resource Manager @endif
+
 								</div>
 							</div>
 
@@ -193,7 +196,7 @@
 				<div class="card card-sidebar-mobile">
 					<ul class="nav nav-sidebar" data-nav-type="accordion">
 
-						@if(($auth >= 1 && $auth <=4) || $auth == 8 || Auth::user()->email == 'success.iziomo@kayaafrica.co')
+						@if($auth >= 1 && $auth <=4)
 						<li class="nav-item">
 							<a href="{{URL('dashboard')}}" class="nav-link">
 								<i class="icon-home4"></i>
@@ -202,7 +205,14 @@
 						</li>
 						@endif
 
-						@if($auth == 6)
+						
+						<!--<li class="nav-item">-->
+						<!--	<a href="{{URL('performance-metrics/'.$userRole.'/'.$usertIdentity)}}" class="nav-link">-->
+						<!--		<i class="icon-stats-bars2"></i>-->
+						<!--		<span>Performance Metric</span>-->
+						<!--	</a>-->
+						<!--</li>-->
+						@if($auth == 6 || $auth == 4)
 						<li class="nav-item">
 							<a href="{{URL('performance-metrics/'.$userRole.'/'.$usertIdentity)}}" class="nav-link">
 								<i class="icon-stats-bars2"></i>
@@ -211,7 +221,7 @@
 						</li>
 						@endif
 						
-						@if($auth != 5 && $auth != 7 && $auth !=8)
+						@if($auth >= 1 && $auth <= 4 || $auth == 6) 
 						<li class="nav-item">
 							<a href="{{URL('performance-metrics')}}" class="nav-link">
 								<i class="icon-stats-bars3"></i>
@@ -219,7 +229,7 @@
 							</a>
 						</li>
 						@endif
-
+						
 						@if(Session::get('prsSession'))
 						<li class="nav-item nav-item-submenu">
 							<a href="#" class="nav-link"><i class="icon-trophy4"></i> <span>Performance Review</span></a>
@@ -238,12 +248,11 @@
 						</li>
 						@endif
 						
-
-						@if($auth !==8)
+                        @if($auth != 8)
 						<li class="nav-item-header">
                             <div class="text-uppercase font-size-xs line-height-xs">TRIPS
 							@if(Auth::user()->role_id <= 4)
-							<span class="badge bg-blue-400 align-right ml-auto">{!! Session::get('on_journey') !!} Unresolved</span>
+							<span class="badge bg-blue-400 align-right ml-auto">{!! Session::get('on_journey') !!} Uncompleted</span>
 							@endif
 							</div> 
                             <i class="icon-menu" title="Forms"></i>
@@ -280,14 +289,13 @@
 									Voided Trips</a>
 								</li>
 								<li class="nav-item"><a href="{{URL('generate-report')}}" class="nav-link">Report</a></li>
-								<li class="nav-item"><a href="{{URL('on-journey-trips')}}" class="nav-link">Trips on Journey</a></li>
+								<li class="nav-item"><a href="{{URL('on-journey-trips')}}" class="nav-link">Uncompleted Trips</a></li>
 								<li class="nav-item"><a href="{{URL('request-transporter-payment')}}" class="nav-link">Request Payment</a></li>
 								@endif
 							</ul>
 						</li>
 						@endif
-
-
+						
 						@if($auth == 1 || $auth == 8)  
 						<li class="nav-item-header">
                             <div class="text-uppercase font-size-xs line-height-xs">Human Resource</div> 
@@ -303,13 +311,13 @@
 						</li>
 						@endif
 
-
 						@if($auth == 1 || $auth == 3)
-						
-						<li class="nav-item-header"><div class="text-uppercase font-size-xs line-height-xs">FINANCE SECTION</div> <i class="icon-menu" title="Forms"></i></li>
+						<li class="nav-item-header">
+						    <div class="text-uppercase font-size-xs line-height-xs">FINANCE SECTION</div> <i class="icon-menu" title="Forms"></i>
+						</li>
 						<li class="nav-item nav-item-submenu">
 							<a href="#" class="nav-link"><i class="icon-piggy-bank"></i> <span>Financials</span></a>
-							<ul class="nav nav-group-sub" data-submenu-title="Menu levels">
+							<ul class="nav nav-group-sub" data-submenu-title="Finance Aspect">
 								<li class="nav-item">
 									<a href="{{URL('financials/overview')}}" class="nav-link font-weight-semibold">
 										<i class="icon-meter2"></i>
@@ -331,16 +339,16 @@
 												<span>Receivables Tracker</span>
 											</a>
 										</li>
-										<li class="nav-item">
-											<a href="{{URL('invoices')}}" class="nav-link">
-												<i class="icon-pencil3"></i>
-												<span>Invoices</span>
-											</a>
-										</li>
+										<!--<li class="nav-item">-->
+										<!--	<a href="{{URL('invoices')}}" class="nav-link">-->
+										<!--		<i class="icon-pencil3"></i>-->
+										<!--		<span>Invoices</span>-->
+										<!--	</a>-->
+										<!--</li>-->
 										<li class="nav-item">
 											<a href="{{URL('all-invoiced-trips')}}" class="nav-link">
 												<i class="icon-books"></i>
-												<span>Invoiced</span>
+												<span>Invoice</span>
 											</a>
 										</li>
 										<li class="nav-item">
@@ -370,42 +378,43 @@
 										</span>
 									</a>
 									<ul class="nav nav-group-sub" style="display: none;">
-									<li class="nav-item">
-										<a href="{{URL('payment-request')}}" class="nav-link">
-											<i class="icon-git-pull-request"></i>
-											<span>Payment Requests</span>
-										</a>
-									</li>
-									<li class="nav-item">
-										<a href="{{URL('transporter-rate')}}" class="nav-link">
-											<i class="icon-calculator3"></i>
-											<span>Transporter Rate</span>
-										</a>
-									</li>
-									<li class="nav-item">
-										<a href="{{URL('bulk-payment')}}" class="nav-link">
-											<i class="icon-spray"></i>
-											<span>Bulk Payment</span>
-										</a>
-									</li>
-									<li class="nav-item">
-										<a href="{{URL('local-purchase-order')}}" class="nav-link">
-											<i class="icon-feed"></i>
-											<span>L.P.O.</span>
-										</a>
-									</li>
-									<li class="nav-item">
-										<a href="{{URL('other-expenses')}}" class="nav-link">
-											<i class="icon-pencil"></i>
-											<span>Expenses</span>
-										</a>
-									</li>
-									<li class="nav-item">
-										<a href="{{URL('payment-request-master')}}" class="nav-link">
-											<i class="icon-coins"></i>
-											<span>All Pending Requests</span>
-										</a>
-									</li>
+    									<li class="nav-item">
+    										<a href="{{URL('payment-request')}}" class="nav-link">
+    											<i class="icon-git-pull-request"></i>
+    											<span>Payment Requests</span>
+    											
+    										</a>
+    									</li>
+    									<li class="nav-item">
+    										<a href="{{URL('transporter-rate')}}" class="nav-link">
+    											<i class="icon-calculator3"></i>
+    											<span>Transporter Rate</span>
+    										</a>
+    									</li>
+    									<li class="nav-item">
+    										<a href="{{URL('bulk-payment')}}" class="nav-link">
+    											<i class="icon-spray"></i>
+    											<span>Bulk Payment</span>
+    										</a>
+    									</li>
+    									<li class="nav-item">
+    										<a href="{{URL('local-purchase-order')}}" class="nav-link">
+    											<i class="icon-feed"></i>
+    											<span>L.P.O.</span>
+    										</a>
+    									</li>
+    									<li class="nav-item">
+    										<a href="{{URL('other-expenses')}}" class="nav-link">
+    											<i class="icon-pencil"></i>
+    											<span>Expenses</span>
+    										</a>
+									    </li>
+									 <!--   <li class="nav-item">-->
+										<!--    <a href="{{URL('payment-request-master')}}" class="nav-link">-->
+										<!--	<i class="icon-coins"></i>-->
+										<!--	<span>All Pending Requests</span>-->
+										<!--</a>-->
+									 <!--   </li>-->
 
 									</ul>
 								</li>
@@ -413,7 +422,7 @@
 						</li>
 						@endif
 
-						@if($auth == 1 || $auth == 4 || $auth == 7)  
+						@if($auth == 1 || $auth == 2 || $auth == 4 || $auth == 7)  
 						<li class="nav-item-header">
                             <div class="text-uppercase font-size-xs line-height-xs">FOR AD-HOC STAFFS</div> 
                             <i class="icon-menu" title="Forms"></i>
@@ -427,8 +436,8 @@
 							</a>
 						</li>
 						@endif
-
-						@if($auth == 1 || $auth == 4)  
+						
+						@if($auth == 1 || $auth == 2 || $auth == 4)  
 						<li class="nav-item nav-item-submenu">
 							<a href="#" class="nav-link {{request()->is('view-orders') ? 'active' : ''}}"><i class="icon-cog"></i> <span>Operations</span></a>
 
@@ -493,6 +502,7 @@
 
 								<ul class="nav nav-group-sub" data-submenu-title="Starter kit">
 									<li class="nav-item"><a href="{{URL('companies-profile')}}" class="nav-link active">Kaya Profile</a></li>
+									<li class="nav-item"><a href="{{URL('payment-request-master')}}" class="nav-link"><i class="icon-coins"></i><span>All Pending Requests</span></a></li>
 									<li class="nav-item"><a href="{{URL('product-category')}}" class="nav-link">Product Category</a></li>
 									<li class="nav-item">
 										<a href="{{URL('products')}}" class="nav-link">Products</a>
