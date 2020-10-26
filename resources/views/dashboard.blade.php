@@ -111,7 +111,12 @@ input, select{
                     <a href="index.html" class="breadcrumb-item"><i class="icon-home2 mr-2"></i> Home</a>
                     <span class="breadcrumb-item active">Dashboard</span>
                 </div>
-
+                <div class="breadcrumb justify-content-center text-danger ml-4">
+                    <a href=".quickTripFinder" id="quickTripFinder" class="breadcrumb-elements-item font-weight-semibold text-primary" data-toggle="modal">
+                        <i class="icon-search4  text-danger"></i>
+                        FINDER
+                    </a>
+                </div>
                 <a href="#" class="header-elements-toggle text-default d-md-none"><i class="icon-more"></i></a>
             </div>
 
@@ -128,6 +133,7 @@ input, select{
                         Flagged Trips
                     </a>
                 </div>
+                
             </div>
         </div>
     </div>
@@ -345,6 +351,7 @@ input, select{
 @include('_partials.waybill_report')
 @include('_partials.specific_date_range_trip')
 @include('_partials.daily-gate-out-record')
+@include('_partials._finder')
 
 @stop
 
@@ -758,9 +765,50 @@ input, select{
 
             dailyGateOutChart.data.datasets[0].data = data[2]
             dailyGateOutChart.update()  
-        })
-        
+        })  
     })
+    
+    $('#quickTripFinder').click(function() {
+        $.get('/last-trip-id', function(data) {
+           $('#finderRangeTo').val(data.trip_id)
+        })
+        $('.findTrip').keypress(function($e) {
+            $rangeFrom = $('#finderRangeFrom').val()
+            $rangeTo = $('#finderRangeTo').val()
+            if($e.keyCode === 13) {
+                $('#finderLoader').html('<i class="icon-spinner3 spinner"></i>Please wait...')
+                $.get('/trip-finders', { rangeFrom: $rangeFrom, rangeTo: $rangeTo }, function(data) {
+                    $('#finderLoader').html('')
+                    $('#finderResult').html(data)
+                })
+            }
+        })
+    })
+
+    $(document).on('click', '#quickTripDownload', function(event){
+        event.preventDefault();
+        $rangeFrom = $('#finderRangeFrom').val()
+        $rangeTo = $('#finderRangeTo').val()
+        $("#exportTableDataFinder").table2excel({
+            filename:`trip-log-${$rangeFrom}-${$rangeTo}.xls`
+        });
+    });
+
+    //$('#searchTripFinder')
+    $('#searchTripFinder').on("keyup", function($e) {
+        var value = $(this).val().toLowerCase();
+        $(`tbody tr`).filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+        if($e.keyCode === 13) {
+            $('#finderLoader').html('<i class="icon-spinner3 spinner"></i>Please wait...')
+            $.get('/trip-finder-search', { search:value }, function(data) {
+                $('#finderLoader').html('')
+                $('#finderResult').html(data)
+            })
+        }
+    });
+
 </script>
 
 

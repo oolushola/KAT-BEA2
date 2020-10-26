@@ -325,6 +325,9 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('/badge-trips', 'BadgingController@showTrips');
     Route::post('/badge-truck', 'BadgingController@badgeTruck');
     Route::post('/remove-badge-truck', 'BadgingController@removeBadgedTruck');
+    Route::get('/last-trip-id', 'dashboardController@lastTripId');
+    Route::get('/trip-finders', 'dashboardController@tripFinders');
+    Route::get('trip-finder-search', 'dashboardController@searchTripFinder');
 
 });
 
