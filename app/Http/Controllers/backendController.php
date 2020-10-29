@@ -41,16 +41,15 @@ class backendController extends Controller
         ]);
         $loginCredentials = [
             'email' => $request->email,
-            'password' => $request->password
+            'password' => $request->password,
+            'status' => TRUE
         ];
 
         if(Auth::attempt($loginCredentials)){
             $getTripId = trip::SELECT('id', 'trip_id')->ORDERBY('trip_id', 'ASC')->GET();
-            
             return redirect('dashboard');
-
         } else {
-            return back()->with('error', 'Invalid Login Details');
+            return back()->with('error', 'Access Denied! Invalid Login Details');
         }
     }
 

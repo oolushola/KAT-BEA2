@@ -63,7 +63,7 @@
 <!-- /page header -->
 
 <div class="row mt-3">
-    <div class="col-md-3 mb-2" data-toggle="modal" href="#currentGateOutInformation">
+    <div class="col-md-3 mb-2">
         <div class="dashboardbox text-center">
             <!-- <canvas id="gaugeChart"  height="200"></canvas> -->
             <div id="chart_div" style="height:120px; margin: 0 auto; position:relative; left:60px"></div>
@@ -96,7 +96,6 @@
 </div>
 
 <div class="row mt-3">
-    
     <div class="col-md-6 mb-2">
         <div class="dashboardbox">
             <span>
@@ -114,11 +113,13 @@
 
     <div class="col-md-6 col-sm-12 mb-2" id="">
         <div class="dashboardbox">
-            <canvas id="receivablesStack" height="200"></canvas>
+            <canvas id="receivablesStack" height="200" data-toggle="modal" href=".paymentModel"></canvas>
         </div>
     </div>
-
 </div>
+
+@include('finance.financials._payment-model')
+
 @stop
 
 @section('script')
@@ -235,7 +236,6 @@
             },
         });
 
-
         //For client Measureables
         var companyNames = <?php echo json_encode($companyNames); ?>;
         var yetToDueDifference = <?php echo json_encode($yetToDueDifference); ?>;
@@ -280,6 +280,27 @@
                     text: 'Client Outstanding Payments (₦)',
                     position: 'top',
                     display: true
+                },
+                onClick: function(c, i) {
+                    e = i[0];
+                    if(e) {
+                        var xValue = this.data.labels[e._index];
+                        var yValue = this.data.datasets[0].data[e._index];
+                        //$('#paymentStatistics').html('<i class="icon-spinner3 spinner"></i>Please wait, fetching client payments. This might take some time.')
+                        $('#selectedClient').html(xValue)
+                        $.get('/client-payment-model', { client: xValue }, function(data) {
+                            $('#selectedClient').html(data.clientInfo.company_name+`<span class=" text-center ml-1 text-danger font-weight-semibold font-size-sm"> ${data.avg_payment_days} days payment expectation</span>`);
+                            $('#paymentStatistics').html(data.model)
+                            
+                            noOfDaysTaken.data.labels = data.invoiceNos
+                            noOfDaysTaken.data.datasets[0].data = data.no_days_paid
+                            noOfDaysTaken.update()
+                            
+                        })
+                    }
+                    else{
+                        return false;
+                    }
                 }
             },
         });
@@ -309,7 +330,6 @@
             chart.draw(data, options);
         }
 
-
         $('#sortClientRevenue').change(function() {
             $client = $(this).val();
             $('#revenueLoader').html('<span class="font-size-sm"><i class="icon-spinner3 spinner"></i>Please wait while we generate report</span>')
@@ -321,13 +341,63 @@
                 else {
                     myClientRevenueChart.data.labels = data[0];
                     myClientRevenueChart.data.datasets[0].data = data[1];
-                    
                 }
                 myClientRevenueChart.update();
                 $('#revenueLoader').html('')
-            })
-            
+            }) 
         })
+
+        var paymentTrajectory = document.getElementById('paymentTrajectory')
+        var noOfDaysTaken = new Chart(paymentTrajectory, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'No of Days Taken',
+                    data: [],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                },
+            }
+        });
+
+        $(document).on('change', '#filterPayments', function() {
+            var value = $(this).val().toLowerCase();
+            $(`#paymentsLog .col-md-2`).filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        })
+
+        $(document).on("keyup", '#searchFilteredPayments', function() {
+            var value = $(this).val().toLowerCase();
+            $(`#paymentsLog .col-md-2`).filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
     });
 </script>
 @stop

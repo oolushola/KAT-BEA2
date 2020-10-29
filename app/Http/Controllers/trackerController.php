@@ -235,4 +235,188 @@ class trackerController extends Controller
         $clientRevenueForYearInView = array_column($getRevenueResult, 'revenuePerMonth');
         return [$periods, $clientRevenueForYearInView];
     }
+
+    public function clientPaymentModel(Request $request) {
+        $client = client::WHERE('client_alias', $request->client)->GET()->FIRST();
+        $allInvoicedTrips = DB::SELECT(
+            DB::RAW(
+                'SELECT SUM((client_rate * (vat_used / 100)) + client_rate ) as gtv  FROM tbl_kaya_trips a JOIN tbl_kaya_complete_invoices b ON a.id = b.trip_id WHERE client_id = "'.$client->id.'" AND b.paid_status = FALSE'
+            )
+        );
+        $totalReceived = DB::SELECT(
+            DB::RAW(
+                'SELECT SUM((client_rate * (vat_used / 100)) + client_rate ) as received_amount  FROM tbl_kaya_trips a JOIN tbl_kaya_complete_invoices b ON a.id = b.trip_id WHERE client_id = "'.$client->id.'" AND acknowledged = TRUE AND b.paid_status = TRUE'
+            )
+        );
+        $acknowledgedNotReceived = DB::SELECT(
+            DB::RAW(
+                'SELECT SUM((client_rate * (vat_used / 100)) + client_rate ) as ack_np  FROM tbl_kaya_trips a JOIN tbl_kaya_complete_invoices b ON a.id = b.trip_id WHERE client_id = "'.$client->id.'" AND acknowledged = TRUE AND b.paid_status = FALSE'
+            )
+        );
+
+        $allUnpaidInvoices = DB::SELECT(
+            DB::RAW(
+                'SELECT DISTINCT invoice_no, completed_invoice_no, vat_used, acknowledged_date, paid_status FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b ON a.trip_id = b.id AND client_id = "'.$client->id.'" WHERE acknowledged = TRUE ORDER BY invoice_no DESC'
+            )
+        );
+
+        $lastTwentyTrips = DB::SELECT(
+            DB::RAW(
+                'SELECT * FROM (SELECT DISTINCT invoice_no, completed_invoice_no, DATEDIFF(date_paid, a.acknowledged_date) AS no_of_days FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b on a.trip_id = b.id WHERE paid_status =  TRUE AND client_id = "'.$client->id.'" ORDER BY invoice_no DESC LIMIT 20) tbl_kaya_complete_invoices ORDER BY completed_invoice_no DESC'
+            )
+        );
+        $totalDays = 0;
+        $maxDays = 0;
+        if(count($lastTwentyTrips)) {
+            foreach($lastTwentyTrips as $lastTwenty) {
+                $totalDays+= $lastTwenty->no_of_days;
+                $invoices[] = $lastTwenty->completed_invoice_no;
+                $days[] = $lastTwenty->no_of_days;
+            }
+            $avgDayToPayment = floor($totalDays / count($lastTwentyTrips));
+            if($avgDayToPayment > 14) {
+                $maxDays = 14;
+            }
+            else{
+                $maxDays = $avgDayToPayment;
+            }
+        }
+
+        $acknowledgedTrips = DB::SELECT(
+            DB::RAW(
+                'SELECT a.trip_id, client_rate, vat_used, invoice_no, completed_invoice_no, acknowledged_date, (client_rate * (vat_used / 100)) + client_rate  as ack_np, c.amount, c.incentive_description  FROM tbl_kaya_trips a LEFT JOIN tbl_kaya_complete_invoices b ON a.id = b.trip_id LEFT JOIN tbl_kaya_trip_incentives c ON a.id = c.trip_id WHERE client_id = "'.$client->id.'" AND acknowledged = TRUE AND acknowledged_date <> \'NULL\' AND b.paid_status = FALSE'
+            )
+        );
+
+        $response = '
+        <div class="row">
+            <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="card">
+                    <div class="card-body text-primary-300 text-center">
+                        <span class="font-weight-bold"><i class="icon-pencil3 mr-1"></i>Invoiced</span>
+                        <h5 class="m-0 p-0 mt-1 ml-3 font-weight-semibold">&#x20a6;'.number_format($allInvoicedTrips[0]->gtv, 2).'</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <span class="font-weight-bold"><i class="icon-coins mr-1"></i>Expected Amount: '.date('d/m/Y').'</span>';
+                        if(count($acknowledgedTrips)) {
+                            $sumOfAcknowledgedTrips = 0;
+                            foreach($acknowledgedTrips as $key=> $tripAcknowledged) {
+                                $today = time();
+                                $acknowledgedTrip = strtotime($tripAcknowledged->acknowledged_date);
+                                $date_diff = $acknowledgedTrip - $today;
+                                $nod = (floor($date_diff / (60 * 60 * 24)) * -1) -1;
+                                if($nod > $maxDays) {
+                                    $sumOfAcknowledgedTrips += $tripAcknowledged->ack_np + $tripAcknowledged->amount;
+                                }
+                            }
+                            $expectedAmount = $sumOfAcknowledgedTrips;
+                        }
+                        else{
+                            $expectedAmount = 0;
+                        }
+                        $response.='
+                            <h5 class="m-0 p-0 mt-1 ml-3 font-weight-semibold">&#x20a6;'.number_format($expectedAmount, 2).'</h5>
+                    </div>                            
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="card">
+                    <div class="card-body text-success text-center">
+                        <span class="font-weight-bold"><i class="icon-bag mr-1"></i>Total Amount Received</span>
+                        <h5 class="m-0 p-0 mt-1 ml-3 font-weight-semibold">&#x20a6;'.number_format($totalReceived[0]->received_amount, 2).'</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="card">
+                    <div class="card-body text-info text-center">
+                        <span class="font-weight-bold">
+                            <i class="icon-coins mr-1"></i>Acknowledged not Received</span>
+                        <h5 class="m-0 p-0 mt-1 ml-3 font-weight-semibold">&#x20a6;'.number_format($acknowledgedNotReceived[0]->ack_np, 2).'</h5>
+                    </div>
+                </div>
+            </div> 
+        </div>
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="card"  style="border:none">
+                    <div class="card-body">
+                        <span class="font-weight-bold d-block mb-1  text-danger-300">
+                            <select style="font-size:10px; outline:none; padding:5px; border: none" id="filterPayments">
+                                <option>All Invoices</option>
+                                <option>Overdue</option>
+                                <option>Paid</option>
+                                <option>Not Due</option>
+                            </select>';
+                            if(count($allUnpaidInvoices) > 12) {
+                                $response.='<input type="text" style="padding:4px; outline:none; border:none; " placeholder="FIND AN INVOICE" class="font-size-sm font-weight-semibold" id="searchFilteredPayments"  />';
+                            }
+                            
+                        $response.='</span>
+                        
+                        <div class="row" style="max-height:200px; overflow:auto" id="paymentsLog">';
+                            if(count($allUnpaidInvoices)) {
+                                foreach($allUnpaidInvoices as $key=> $unpaidInvoice) {
+                                    $now = time();
+                                    $acknowledged = strtotime($unpaidInvoice->acknowledged_date);
+                                    $datediff = $acknowledged - $now;
+                                    $numberofdays = (floor($datediff / (60 * 60 * 24)) * -1) -1;
+        
+                                    $response.='
+                                    <div class="col-md-2">
+                                        <a href="/invoice-trip/'.$unpaidInvoice->completed_invoice_no.'" target="_blank" style="color:#333">
+                                        <div class="card">
+                                            <div class="invoice-receivables">
+                                                <div>'.$numberofdays.'</div>
+                                            </div>
+                                            <div class="card-body text-center">
+                                                <span class="font-weight-bold d-block">'.$unpaidInvoice->completed_invoice_no.'</span>
+                                                <span class="d-block font-weight-semibold text-primary-400 font-size-xs">
+                                                    '.ltrim(date('dS \of F, Y', strtotime($unpaidInvoice->acknowledged_date)), '0').'
+                                                </span>'; 
+                                                if($unpaidInvoice->paid_status) {
+                                                    $response.='<span class="badge badge-success"><i class="icon-checkmark2"></i>Paid</span>';
+                                                }
+                                                else{
+                                                    if($numberofdays > $maxDays) {
+                                                        $response.='<span class="badge badge-danger">Overdue</span>';
+                                                    }
+                                                    else {
+                                                        $response.='<span class="badge badge-primary">Not Due</span>';
+                                                    }
+                                                }
+                                            $response.='
+                                            </div>
+                                        </div></a>
+                                    </div>';
+                                }
+                            }
+                            else {
+                                $response.='<div class="col-md-12 text-center">
+                                    <p class="font-weight-semibold text-danger">There are no pending invoice for this client</p>
+                                </div>';
+                            }
+                            
+                            
+
+                        $response.='</div>
+                    </div>
+                </div>
+            </div>
+            
+            
+        </div>';
+
+        return array(
+            'clientInfo' => $client,
+            'model' => $response,
+            'invoiceNos' => $invoices,
+            'no_days_paid' => $days,
+            'avg_payment_days' => $avgDayToPayment
+        );
+    }
 }
