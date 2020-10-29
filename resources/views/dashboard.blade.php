@@ -793,19 +793,41 @@ input, select{
             filename:`trip-log-${$rangeFrom}-${$rangeTo}.xls`
         });
     });
+    
+    $('#searchByWaybill').click(function() {
+        $('#SearchByOthers').removeClass('d-none')
+        $(this).addClass('d-none')
+        $('#searchTripFinder').attr('data-value', "2")
+        $('#searchTripFinder').attr('placeholder', 'Enter a waybill info')
+
+    })
+
+    $('#SearchByOthers').click(function() {
+        $('#searchByWaybill').removeClass('d-none')
+        $(this).addClass('d-none')
+        $('#searchTripFinder').attr('data-value', "1")
+        $('#searchTripFinder').attr('placeholder', 'What are you looking for?')
+    })
 
     //$('#searchTripFinder')
     $('#searchTripFinder').on("keyup", function($e) {
         var value = $(this).val().toLowerCase();
-        $(`tbody tr`).filter(function() {
-            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-        });
-        if($e.keyCode === 13) {
-            $('#finderLoader').html('<i class="icon-spinner3 spinner"></i>Please wait...')
-            $.get('/trip-finder-search', { search:value }, function(data) {
-                $('#finderLoader').html('')
-                $('#finderResult').html(data)
-            })
+        var checker = $(this).attr('data-value')
+        
+        if(value === '') {
+            return false
+        }
+        else {
+            $(`tbody tr`).filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+            if($e.keyCode === 13) {
+                $('#finderLoader').html('<i class="icon-spinner3 spinner"></i>Please wait...')
+                $.get('/trip-finder-search', { search:value, checker: checker }, function(data) {
+                    $('#finderLoader').html('')
+                    $('#finderResult').html(data)
+                })
+            }
         }
     });
 

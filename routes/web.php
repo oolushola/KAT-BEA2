@@ -329,6 +329,9 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('/trip-finders', 'dashboardController@tripFinders');
     Route::get('trip-finder-search', 'dashboardController@searchTripFinder');
 
+    Route::get('/client-payment-model', 'trackerController@clientPaymentModel');
+
+
 });
 
 
