@@ -331,6 +331,9 @@ Route::group(['middleware' => 'auth'], function() {
 
     Route::get('/client-payment-model', 'trackerController@clientPaymentModel');
 
+    Route::get('/financial/report', 'FinancialReportController@financialReporting');
+    Route::get('rt-notification/{time}', 'dashboardController@realTimeNotification');
+    Route::get('/finance/waybill-status', 'FinancialReportController@waybillStatus');
 
 });
 

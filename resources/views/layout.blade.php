@@ -418,6 +418,12 @@
 
 									</ul>
 								</li>
+								<li class="nav-item">
+									<a href="{{URL('financial/report')}}" class="nav-link font-weight-semibold">
+										<i class="icon-book"></i>
+										<span>Report</span>
+									</a>
+								</li>
 							</ul>
 						</li>
 						@endif

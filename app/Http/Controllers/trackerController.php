@@ -148,7 +148,7 @@ class trackerController extends Controller
             $companyNames[] = $clientListings->client_alias;
             $clientOutStandingPayment[] = DB::SELECT(
                 DB::RAW(
-                    'SELECT a.id, a.trip_id, a.client_id, a.client_rate, b.id AS invoiceTripId, b.invoice_no, b.completed_invoice_no, b.acknowledged_date FROM tbl_kaya_trips a JOIN `tbl_kaya_complete_invoices` b ON a.id = b.trip_id WHERE client_id = "'.$clientListings->id.'" AND tracker = 8 AND trip_status = 1 AND b.`acknowledged` = true AND b.date_paid IS NULL'
+                    'SELECT a.id, a.trip_id, a.client_id, a.client_rate, b.id AS invoiceTripId, b.invoice_no, b.completed_invoice_no, b.acknowledged_date FROM tbl_kaya_trips a JOIN `tbl_kaya_complete_invoices` b ON a.id = b.trip_id WHERE client_id = "'.$clientListings->id.'" AND tracker = 8 AND trip_status = 1 AND b.date_paid IS NULL'
                 )
             );
 
@@ -256,7 +256,7 @@ class trackerController extends Controller
 
         $allUnpaidInvoices = DB::SELECT(
             DB::RAW(
-                'SELECT DISTINCT invoice_no, completed_invoice_no, vat_used, acknowledged_date, paid_status FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b ON a.trip_id = b.id AND client_id = "'.$client->id.'" WHERE acknowledged = TRUE ORDER BY invoice_no DESC'
+                'SELECT DISTINCT invoice_no, completed_invoice_no, vat_used, acknowledged_date, paid_status, a.created_at FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b ON a.trip_id = b.id AND client_id = "'.$client->id.'" ORDER BY invoice_no DESC'
             )
         );
 
@@ -362,21 +362,24 @@ class trackerController extends Controller
                             if(count($allUnpaidInvoices)) {
                                 foreach($allUnpaidInvoices as $key=> $unpaidInvoice) {
                                     $now = time();
-                                    $acknowledged = strtotime($unpaidInvoice->acknowledged_date);
-                                    $datediff = $acknowledged - $now;
+                                    $dateInvoiced = strtotime($unpaidInvoice->created_at);
+                                    $datediff = $dateInvoiced - $now;
                                     $numberofdays = (floor($datediff / (60 * 60 * 24)) * -1) -1;
         
                                     $response.='
                                     <div class="col-md-2">
                                         <a href="/invoice-trip/'.$unpaidInvoice->completed_invoice_no.'" target="_blank" style="color:#333">
-                                        <div class="card">
-                                            <div class="invoice-receivables">
-                                                <div>'.$numberofdays.'</div>
-                                            </div>
-                                            <div class="card-body text-center">
+                                        <div class="card">';
+                                            if(!$unpaidInvoice->paid_status) {
+                                                $response.='
+                                                <div class="invoice-receivables">
+                                                    <div>'.$numberofdays.'</div>
+                                                </div>';
+                                            }
+                                            $response.='<div class="card-body text-center">
                                                 <span class="font-weight-bold d-block">'.$unpaidInvoice->completed_invoice_no.'</span>
                                                 <span class="d-block font-weight-semibold text-primary-400 font-size-xs">
-                                                    '.ltrim(date('dS \of F, Y', strtotime($unpaidInvoice->acknowledged_date)), '0').'
+                                                    '.ltrim(date('dS \of M, Y', strtotime($unpaidInvoice->created_at)), '0').'
                                                 </span>'; 
                                                 if($unpaidInvoice->paid_status) {
                                                     $response.='<span class="badge badge-success"><i class="icon-checkmark2"></i>Paid</span>';
@@ -400,8 +403,6 @@ class trackerController extends Controller
                                     <p class="font-weight-semibold text-danger">There are no pending invoice for this client</p>
                                 </div>';
                             }
-                            
-                            
 
                         $response.='</div>
                     </div>

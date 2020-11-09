@@ -117,7 +117,7 @@ class backendController extends Controller
 
         $tripWaybills = tripWaybill::GET();
         $tripRecordsForTheMonth = $this->totalTripsForTheCurrentMonth();
-        $totalGateOuts = trip::WHERE('gated_out', '<>', '')->WHERE('trip_status', '<>', 0)->GET()->COUNT();
+        $totalGateOuts = trip::WHERE('tracker', '>=', 5)->WHERE('trip_status', '<>', 0)->GET()->COUNT();
         
         
         $monthlyGateOut = [];
