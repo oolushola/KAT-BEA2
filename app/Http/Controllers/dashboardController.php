@@ -8,6 +8,9 @@ use App\User;
 use Auth;
 use App\trip;
 use Illuminate\Support\Facades\DB;
+use App\truckAvailability;
+use App\loadingSite;
+use App\target;
 
 class dashboardController extends Controller
 {
@@ -153,5 +156,92 @@ class dashboardController extends Controller
             $response.='</tbody>
         </table>';
         return $response;
+    }
+
+    public function realTimeNotification(Request $request) {
+        $current_date = date('Y-m-d');
+        $totalGateOutCount = trip::WHERE('trip_status', 1)->WHERE('tracker', '>=', 5)->GET()->COUNT();
+        $availableTrucks = truckAvailability::WHERE('status', !TRUE)->GET()->COUNT();
+        $highValueTrips = DB::SELECT(
+            DB::RAW(
+                'SELECT COUNT(*) as currentMonthGateOut FROM tbl_kaya_trips WHERE MONTH(gated_out)=MONTH(CURRENT_DATE()) AND YEAR(gated_out) = YEAR(CURRENT_DATE()) AND trip_status = 1 and tracker >= 5 AND client_id != "1" AND transporter_id != "141"'
+            )
+        );
+
+        $gateIn = trip::WHERE('tracker', 1)->WHERE('trip_status', '!=', 0)->GET()->COUNT();
+        $loadingBay = trip::WHERE('tracker', '>=', 2)->WHERE('tracker', '<=', '3')->WHERE('trip_status', '!=', 0)->GET()->COUNT();
+        $departedLoadingBay = trip::WHERE('tracker', 4)->WHERE('trip_status', '!=', 0)->GET()->COUNT();
+        $onJourney = trip::WHERE('tracker', '>=', '5')->WHERE('tracker', '<=', 6)->WHERE('trip_status', '!=', 0)->GET()->COUNT();
+        $atDestination = trip::WHERE('tracker', 7)->GET()->COUNT();
+        $offloadedTrips = DB::SELECT(
+            DB::RAW(
+                'SELECT COUNT(*) as offloadedTrips FROM tbl_kaya_trips a JOIN tbl_kaya_trip_events b ON a.id = b.trip_id WHERE offloading_status = TRUE AND DATE(offload_start_time) = "'.$current_date.'" AND a.tracker = \'8\''
+            )
+        );
+        $numberofdailygatedout = trip::WHEREDATE('gated_out', date('Y-m-d'))->GET()->COUNT();
+        $todaysDate = date('d');
+        $count=1;
+        $dateYearAndMonth = date('Y-m');
+        do{
+            $newDate = $dateYearAndMonth.'-'.$count;
+            $count++;
+            $noOfTripsPerDay[] = trip::whereDATE('gated_out',  $newDate)->WHERE('client_id', '!=', 1)->WHERE('transporter_id', '!=', 141)->GET()->COUNT();
+        }
+        while($count <= $todaysDate);
+        $getGatedOutByMonth = DB::SELECT(
+            DB::RAW(
+                'SELECT COUNT(*) as currentMonthGateOut FROM tbl_kaya_trips WHERE MONTH(gated_out)=MONTH(CURRENT_DATE()) AND YEAR(gated_out) = YEAR(CURRENT_DATE()) AND trip_status = 1 and tracker >= 5 AND client_id != "1" AND transporter_id != "141"'
+            )
+        );
+        $lastOneWeek = date('Y-m-d', strtotime('last sunday'));
+        $currentDate = date('Y-m-d');
+        $noOfGatedOutTripForCurrentWeek = $this->specificDateRangeCount('COUNT(*)',  'currentWeekCount', $lastOneWeek, $currentDate);
+        $lastOneMonth = DB::SELECT(
+            DB::RAW(
+                'SELECT COUNT(*) AS monthlyGateOutTrip FROM tbl_kaya_trips WHERE trip_status = \'1\' AND tracker >= \'5\' AND MONTH(gated_out) = MONTH(CURRENT_DATE()) AND YEAR(gated_out) = YEAR(CURRENT_DATE())'
+            )
+        );
+        $allLoadingSites = loadingSite::SELECT('id', 'loading_site')->ORDERBY('loading_site', 'ASC')->GET();
+
+        foreach($allLoadingSites as $loadingSite){
+            $countDailyTripByLoadingSite[] = trip::WHERE('loading_site_id', $loadingSite->id)->WHEREDATE('gated_out', date('Y-m-d'))->WHERE('tracker', '>=', 5)->GET()->COUNT();
+            $loading_sites[] = strtoupper($loadingSite->loading_site);
+        }
+        $target = target::SELECT('target')->GET()->LAST();
+        $achieved = $highValueTrips[0]->currentMonthGateOut;
+
+        $remainder = $target->target - $achieved;
+        if($remainder <= 0) {
+            $leftOver = 0;
+        }
+        else {
+            $leftOver = $remainder;
+        }
+
+        $percentageTarget = number_format(($achieved / $target->target) * 100, 1);
+
+        return array(
+            'total_gate_out' => $totalGateOutCount,
+            'truck_available' => $availableTrucks,
+            'high_value_trips' => $achieved,
+            'trip_status' => [$gateIn, $loadingBay, $departedLoadingBay, $onJourney, $atDestination, $offloadedTrips[0]->offloadedTrips],
+            'current_day_gate_out_count' => $numberofdailygatedout,
+            'trips_per_day' => $noOfTripsPerDay,
+            'current_week_gate_out' => $noOfGatedOutTripForCurrentWeek[0]->currentWeekCount,
+            'loading_site_daily_count' => $countDailyTripByLoadingSite,
+            'loading_site' => $loading_sites,
+            'target' => [$leftOver, $achieved],
+            'percentage' => $percentageTarget,
+            'achieved' => $achieved,
+            'monthlyTarget' => $target->target
+        );
+    }
+
+    function specificDateRangeCount($condition, $alias, $start, $finish){
+        return DB::SELECT(
+            DB::RAW(
+                'SELECT '.$condition.' as '.$alias.'  FROM tbl_kaya_trips WHERE DATE(gated_out) BETWEEN "'.$start.'" and "'.$finish.'" and tracker >= 5'
+            )
+        );
     }
 }

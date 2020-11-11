@@ -331,6 +331,16 @@ Route::group(['middleware' => 'auth'], function() {
 
     Route::get('/client-payment-model', 'trackerController@clientPaymentModel');
 
+    Route::get('/financial/report', 'FinancialReportController@financialReporting');
+    Route::get('rt-notification/{time}', 'dashboardController@realTimeNotification');
+    Route::get('/finance/waybill-status', 'FinancialReportController@waybillStatus');
+    Route::get('/finance/unpaid-invoices', 'FinancialReportController@unpaidInvoices');
+    Route::get('/finance/paid-invoices', 'FinancialReportController@paidInvoices');
+    Route::get('/finance/uninvoiced-trips', 'FinancialReportController@uninvoicedTrips');
+    Route::get('/finance/invoiced-trips', 'FinancialReportController@invoicedTrips');
+    Route::get('/finance/transporter-account', 'FinancialReportController@transporterAccount');
+    Route::get('/finance/outstanding-bills', 'FinancialReportController@outstandingBills');
+    Route::get('/finance/trip-search', 'FinancialReportController@tripSearch');
 
 });
 
