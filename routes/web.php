@@ -328,6 +328,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('/last-trip-id', 'dashboardController@lastTripId');
     Route::get('/trip-finders', 'dashboardController@tripFinders');
     Route::get('trip-finder-search', 'dashboardController@searchTripFinder');
+    Route::get('trip-status-result', 'dashboardController@tripStatusResult');
 
     Route::get('/client-payment-model', 'trackerController@clientPaymentModel');
 
@@ -341,6 +342,10 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('/finance/transporter-account', 'FinancialReportController@transporterAccount');
     Route::get('/finance/outstanding-bills', 'FinancialReportController@outstandingBills');
     Route::get('/finance/trip-search', 'FinancialReportController@tripSearch');
+
+    Route::get('/update-operations-remark', 'dashboardController@updateOperationsRemark');
+    Route::get('/truck-availability-data', 'dashboardController@truckAvailabilityData');
+    Route::get('/today-gate-out-data', 'dashboardController@todayGateOut');
 
 });
 

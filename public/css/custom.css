@@ -264,5 +264,13 @@ td:first-child, .headcol {
     background:#ccc;
 }
 
+.tripStatusMenu {
+    display: inline-flex;
+    position: relative;
+    margin: 0px 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
 
 

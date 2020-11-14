@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\truckAvailability;
 use App\loadingSite;
 use App\target;
+use App\tripEvent;
 
 class dashboardController extends Controller
 {
@@ -29,7 +30,6 @@ class dashboardController extends Controller
     }
 
     public function changePassword(Request $request) {
-        
         $this->validate($request, [
             'old_password' => 'required',
             'new_password' => 'required_with:confirm_new_password|min:6',
@@ -243,5 +243,320 @@ class dashboardController extends Controller
                 'SELECT '.$condition.' as '.$alias.'  FROM tbl_kaya_trips WHERE DATE(gated_out) BETWEEN "'.$start.'" and "'.$finish.'" and tracker >= 5'
             )
         );
+    }
+
+    public function tripStatusResult(Request $request) {
+        $currentDate = date('Y-m-d');
+        $status = $request->trip_status;
+        if($status == 'Gate In') { 
+            $trips = $this->recordTracker(1, 1);  $fieldId = 'gate_in'; $tracker = 1;
+        }
+        if($status == 'At Loading Bay'){ 
+            $trips = $this->recordTracker(2, 3); $fieldId = 'arrival_at_loading_bay';  $tracker = 2;
+        }
+        if($status == 'Departed Loading Bay'){ 
+            $trips = $this->recordTracker(4, 4); $fieldId = 'departure_date_time'; $tracker = 4;
+        }
+        if($status == 'On Journey'){ 
+            $trips = $this->recordTracker(5, 6); $fieldId = 'gated_out'; $tracker = 5;
+        }
+        if($status == 'At Destination'){ 
+            $trips = $this->recordTracker(7, 7); $fieldId = 'gated_out'; $tracker = 7;
+        }
+        if($status == 'Offloaded'){ 
+            $trips = $this->offloadedRecords($currentDate); $fieldId = 'gated_out'; $tracker = 8;
+        }
+        
+        $tripEventListing = [];
+        foreach($trips as $trip) {
+            $tripEventListing[] = tripEvent::WHERE('trip_id', $trip->id)->GET()->LAST();
+        }
+        $response = $this->displayRecords(strtoupper($status), $trips, $fieldId, $tripEventListing, $tracker);
+        return $response;
+    }
+
+    function recordTracker($firstTrack, $secondTrack) {
+        $query = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker BETWEEN "'.$firstTrack.'" AND "'.$secondTrack.'"  ORDER BY a.trip_id ASC'
+            )
+        );
+        return $query;
+    }
+
+    function offloadedRecords($current_date) {
+        $query = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN tbl_kaya_trip_events h ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id AND h.trip_id = a.id WHERE a.trip_status = \'1\' AND offloading_status = TRUE AND DATE(offload_start_time) = "'.$current_date.'" AND a.tracker = \'8\' ORDER BY a.trip_id DESC'
+            )
+        );
+        return $query;
+    }
+
+    function displayRecords($activeSubheading, $arrayObject, $fieldLabel, $tripEvent, $tracker) {
+        $data = '<div class="table-responsive">
+            <table class="table table-striped table-hover">
+            <thead>
+                <tr class="table-success">
+                    <th class="text-center">SN</th>
+                    <th>'.$activeSubheading.'</th>
+                    <th>TRUCK</th>
+                    <th>ORDER DETAILS</th>';
+                    if($tracker >=5 && $tracker <= 6){
+                        $data.= '<th>LAST SEEN</th>';
+                    }
+                    if($tracker == 7){
+                        $data.= '<th>ARRIVED AT?</th>';
+                    }
+                $data.='
+                </tr>
+            </thead>
+            <tbody id="masterDataTable">';
+                if(count($arrayObject)) {
+                    $count = 0;
+                    foreach($arrayObject as $object) {
+                        $count +=1;
+                        $data.='<tr>
+                        <td class="text-center">('.$count.')</td>
+                        <td>
+                            <a href="/trip-overview/'.$object->trip_id.'" target="_blank">
+                                <p class="font-weight-bold" style="margin:0">'.$object->trip_id.'</p>
+                            </a>
+                            <p  style="margin:0; "class="text-warning font-weight-bold">'.$object->loading_site.',</p>';
+                            if($tracker <=5) {
+                                $data.='<p>'.date('d-m-Y', strtotime($object->$fieldLabel)).' <br> '.date('H:i A', strtotime($object->$fieldLabel)).'</p>';
+                            }
+                        $data.='
+                        </td>
+                        <td width="30%">
+                            <span class="text-primary"><b>'.$object->truck_no.'</b></span>
+                            <p style="margin:0"><b>Truck Type</b>: '.$object->truck_type.', '.$object->tonnage/1000 .'T</p>
+                            <p style="margin:0"><b>Transporter</b>: '.$object->transporter_name.', '.$object->phone_no.'</p>
+                        </td>
+                        
+                        <td><p style="margin:0" class="text-primary font-weight-bold">Destination</p>
+                            <p style="margin-bottom:3px">'.$object->exact_location_id.'</p>
+                            <p  style="margin:0" class="text-primary font-weight-bold">Product</p>
+                            <p style="margin:0">'.$object->product.'</p>
+                        </td>';
+                        if($tracker >=5 && $tracker <=6){
+                            $data.='<td width="25%">';
+                            $counter = 1;
+                            
+                            foreach($tripEvent as $onJourneyTrips) {
+                                if($onJourneyTrips && $onJourneyTrips->trip_id === $object->id) {
+                                    if($onJourneyTrips->location_check_two) {
+                                        $data.='
+                                            <p class="font-size-sm ml-1 font-weight-bold d-block m-0">
+                                                '.$onJourneyTrips->location_two_comment.',
+                                            </p>';
+                                        $data.='
+                                            <p class="font-size-xs d-block ml-1 m-0">
+                                                '.date('d-m-Y, H:i A', strtotime($onJourneyTrips->location_check_two)).'
+                                                <i class="icon-comment ml-4 text-danger operationsUpdate pointer" id="'.$object->trip_id.'"></i>
+                                            <p>';
+                                        $data.='
+                                            <span class="font-size-xs text-danger d-block ml-2">
+                                                '.$onJourneyTrips->afternoon_issue_type.'
+                                            </span>';
+
+                                    }
+                                    else {
+                                        $data.='
+                                            <p class="font-size-sm ml-1 font-weight-bold d-block m-0">
+                                                '.$onJourneyTrips->location_one_comment.',
+                                            </p>';
+                                        $data.='
+                                            <p class="font-size-xs d-block ml-1 m-0">
+                                                '.date('d-m-Y, H:i A', strtotime($onJourneyTrips->location_check_one)).'
+                                                <i class="icon-comment ml-4 text-danger operationsUpdate pointer" id="'.$object->trip_id.'"></i>
+                                            <p>';
+                                        $data.='
+                                            <span class="font-size-xs text-danger d-block ml-2">
+                                                '.$onJourneyTrips->morning_issue_type.'
+                                            </span>';
+                                    }
+
+                                    $data.='
+                                    <input type="text" class="mt-2 d-none" id="operations'.$object->trip_id.'" value="'.$object->operations_remark.'" />';
+
+                                    $object->operations_remark ? $classes = 'ml-1 d-block bg-info font-size-xs p-1' : $classes = '';
+
+                                    $data.='<span id="defaultOPR'.$object->trip_id.'" class="'.$classes.'">
+                                    '.$object->operations_remark.'</span>
+                                    <span id="oploader'.$object->trip_id.'"></span>';
+                                }
+                            }
+                            $now = time(); // or your date as well
+                            $your_date = strtotime($object->gated_out);
+                            $datediff = $now - $your_date;
+                            $noOfDays = round($datediff / (60 * 60 * 24));
+
+                            $noOfDays > 5 ? $className = 'notifier' : $className = '';
+
+                            $data.= '<p class=" defaultNotifier '.$className.'">
+                                <a href="trip-overview/'.$object->trip_id.'"> '.$noOfDays.' Days </a>
+                                </p>';
+                            $data.='
+                            <input type="text" class="finance-report__input d-none"  />
+                            </td>';
+                        }
+                        if($tracker == 7){
+                            $data.='<td>';
+                            foreach($tripEvent as $tripActivities){
+                                if($tripActivities && $tripActivities->trip_id == $object->id){
+                                    if($tripActivities->time_arrived_destination == ''){
+                                        $timeArrivedDestination = '';
+                                    } else {
+                                        $timeArrivedDestination = date('d-m-Y, H:i A', strtotime($tripActivities->time_arrived_destination));
+                                    } 
+                                    $data.='<span class="text-primary font-weight-bold font-size-sm">'.$timeArrivedDestination.'</span>';
+                                }
+                                
+                            }
+                            $data.='</td>';
+                        }
+                        $data.='
+                        </tr>';
+                    }
+                }
+                else {
+                    $data.='<tr><td colspan="3">No record is available.</td></tr>';
+                }
+                
+            $data.='</tbody>
+        </table>
+         </div>';
+        return $data;
+    }
+
+    public function updateOperationsRemark(Request $request) {
+        $trip_id = $request->trip_id;
+        $remark = $request->remark;
+        $remarks = trip::WHERE('trip_id', $trip_id)->GET()->LAST();
+        $remarks->operations_remark = $remark;
+        $remarks->save();
+        return 'updated';
+    }
+
+    public function truckAvailabilityData(Request $request) {
+        $availableTrucks = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.company_name, c.loading_site, d.truck_no, e.transporter_name, e.phone_no, f.driver_first_name, f.driver_last_name, f.driver_phone_number, f.motor_boy_first_name, f.motor_boy_last_name, f.motor_boy_phone_no, g.product, h.state, i.first_name, i.last_name, j.tonnage, j.truck_type FROM tbl_kaya_truck_availabilities a JOIN tbl_kaya_clients b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_trucks d JOIN tbl_kaya_transporters e JOIN tbl_kaya_drivers f JOIN tbl_kaya_products g JOIN tbl_regional_state h JOIN users i JOIN tbl_kaya_truck_types j ON a.client_id = b.id AND a.loading_site_id = c.id AND a.truck_id = d.id AND a.transporter_id = e.id and a.driver_id = f.id and a.product_id = g.id and a.destination_state_id = h.regional_state_id and a.reported_by = i.id AND d.truck_type_id = j.id  WHERE a.status = FALSE'
+            )
+        );
+        
+        $response =
+        '<table class="table table-striped table-hover">
+            <thead>
+                <tr class="table-success font-size-sm">
+                    <th>SN</th>
+                    <th width="25%">AVAILABLE FOR</th>
+                    <th>TRUCK DETAILS</th>
+                    <th>STATUS</th>
+                </tr>
+            </thead>';
+
+            $response.='
+            <tbody id="monthlyGatedOutData">';
+                $count = 1; 
+                if(count($availableTrucks)) {
+                    foreach($availableTrucks as $availableTruck) {
+                    $response.='
+                    <tr>
+                        <td>('.$count++.')</td>
+                        <td>
+                            <p class="font-weight-bold" style="margin:0; padding:0">'.$availableTruck->loading_site.'</p>
+                            <p style="margin:0"><span class="text-primary font-weight-bold">Location</span>: '.$availableTruck->exact_location_id.'</p>
+                            <p style="margin:0"><span class="text-primary font-weight-bold">Product:</span>'.$availableTruck->product.'</p>
+                        </td>
+                        <td>
+                            <span class="text-primary"><b>'.$availableTruck->truck_no.'</b></span>
+                            <p style="margin:0" class="font-size-xs"><b>Truck Type</b>: '.$availableTruck->truck_type.' '.$availableTruck->tonnage / 1000 .'T</p>
+                            <p style="margin:0"><b>'.$availableTruck->transporter_name.'</b>: '.$availableTruck->phone_no.'</p>
+                        </td>
+                        <td>
+                            <p style="margin:0" class="text-primary-400 font-weight-bold">Status: '.$availableTruck->truck_status.'</p>
+                            <p class="font-size-sm">Profiled by: '.ucfirst($availableTruck->first_name).' '.ucfirst($availableTruck->last_name).', at '.date('d-m-Y H:i A', strtotime($availableTruck->updated_at)).'</p>
+                            
+
+                        </td>
+                    </tr>';
+                    }
+                }
+                else
+                {
+                    $response.=
+                    '<tr>
+                        <td colspan="4">No trip is available</td>
+                    </tr>';
+                }
+            $response.='
+            </tbody>
+        </table>';
+
+        return $response;
+    }
+
+    public function todayGateOut(Request $request) {
+        $currentDate = date('Y-m-d');
+        $currentGateOutRecord = $this->displayRecordOfTrips('gated_out', $currentDate);
+        $data = 
+        '<table class="table table-striped table-hover">
+            <thead class="table-success font-size-sm" style="font-size:11px">
+                <tr>
+                    <th width="20%" class="text-center font-weight-bold">GATE OUT DETAILS</th>
+                    <th width="30%" class="font-weight-bold">TRUCK</th>
+                    <th width="20%" class="font-weight-bold">WAYBILL DETAILS</th>
+                    <th width="30%" class="font-weight-bold">CONSIGNEE DETAILS</th>
+                </tr>
+            </thead>
+            <tbody id="currentGateOutData">';
+                if(count($currentGateOutRecord)) {
+                    foreach($currentGateOutRecord as $specificRecord) {
+                    $data.='<tr>
+                        <td class="text-center">
+                            <p class="font-weight-bold" style="margin:0">'.$specificRecord->trip_id.'</p>
+                            <p>'.$specificRecord->loading_site.' <br> '.date('d-m-Y', strtotime($specificRecord->gated_out)).' <br> '.date('h:i A', strtotime($specificRecord->gated_out)).' </p>
+                        </td>
+                        <td>
+                            <span class="text-primary"><b>'.$specificRecord->truck_no.'</b></span>
+                            <p style="margin:0"><b>Truck Type</b>: '.$specificRecord->truck_type.' '.$specificRecord->tonnage / 1000 .' T</p>
+                            <p style="margin:0"><b>Transporter</b>: '.$specificRecord->transporter_name.', '.$specificRecord->phone_no.'</p>
+                        </td>
+                        <td>';
+                            foreach($tripWaybills as $tripWaybill) {
+                                if($specificRecord->id == $tripWaybill->trip_id) {
+                                $data.='<span class="mb-2"><a href="assets/img/waybills/'.$tripWaybill->photo.'" target="_blank" title="View waybill '.$tripWaybill->sales_order_no.'">'.$tripWaybill->sales_order_no.'
+                                '.$tripWaybill->invoice_no.'</a></span>';
+                                }
+                            }
+                        $data.='
+                        </td>
+                        <td>
+                            <p class="font-weight-bold" style="margin:0">'.$specificRecord->customers_name.'</p>
+                            <p  style="margin:0">Location: '.$specificRecord->exact_location_id.'</p>
+                            <p  style="margin:0">Product: '.$specificRecord->product.'</p>
+                        </td>
+                    </tr>';
+                    }
+                }
+                else {
+                    $data.='<tr><td colspan="4">No record is available.</td></tr>';
+                }
+                $data.='
+            </tbody>
+        </table>';
+
+        return $data;
+    }
+
+    function displayRecordOfTrips($fieldValue, $currentDate) {
+        $query = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND DATE('.$fieldValue.') = "'.$currentDate.'" ORDER BY a.trip_id DESC'
+            )
+        );
+        return $query;
     }
 }

@@ -101,7 +101,7 @@ input, select{
                     </a>
                     <a href="#truckAvailability" data-toggle="modal"  class="btn btn-link btn-float text-default">
                         <h2 style="margin:0; padding:10px; letter-spacing:10px;" class="bg-primary font-weight-bold"  id="truckAvailabilityCount">
-                            {{ count($availableTrucks) }}
+                            {{ $availableTrucks }}
                         </h2>
                         <p class="text-primary font-weight-bold">TRUCK AVAILABILITY</p>
                     </a>
@@ -151,9 +151,6 @@ input, select{
                         <td class="font-size-xs font-weight-bold text-center">
                             <i class="icon-trophy3 text-warning-400 text-center monthCountToggleDefault" value="1" style="font-size:22px; cursor:pointer" id="exclusiveCount"></i>
                             <i class="icon-trophy3 text-primary-400 text-center monthCountToggleAll monthCountToggleDefault  d-none" value="0" style="font-size:22px; cursor:pointer" id="allCounts"></i>
-
-
-                            
                             <span class="d-block">Current Month Target</span>
                         </td>
                         <td colspan="2" class="font-weight-semibold" id="target-label">
@@ -195,7 +192,6 @@ input, select{
                 <span id="target-percentage">
                     <sub id="target-percentage__value" class="percentageHolder">{{$gatedOutPercentageRate}}% 0f {{$targetforthemonth}}</sub>
                 </span>
-                
             </div>
         </div>
 
@@ -226,23 +222,17 @@ input, select{
                     <span>At Destination</span>
                     <span>Offloaded</span>
                 </canvas>
-                
-                    <?php
-                        $offloadedTrips = $offloadedTrips[0]->offloadedTrips;
-                        $stagesOfOperation = [$gateIn, $loadingBay, $departedLoadingBay, $onJourney, $atDestination, $offloadedTrips];
-
-                    ?>
+                <?php
+                    $offloadedTrips = $offloadedTrips[0]->offloadedTrips;
+                    $stagesOfOperation = [$gateIn, $loadingBay, $departedLoadingBay, $onJourney, $atDestination, $offloadedTrips];
+                ?>
             </div>
-            
         </div>
-
-        
     </div>
-
 
     <!-- Waybill and Daily line chart of Operation -->
     <div class="row mt-3">
-        <div class="col-md-4 mb-2" data-toggle="modal" href="#currentGateOutInformation">
+        <div class="col-md-4 mb-2" data-toggle="modal" href="#currentGateOutInformation" id="todayGateOut">
             <div class="dashboardbox">
                 <canvas id="myProjectionChart"  height="200"></canvas>
             </div>
@@ -252,10 +242,7 @@ input, select{
                 <canvas id="dailyGateOutChart" height="130" data-toggle="modal" href=".dailyGateOutChart"></canvas>
             </div>
         </div>
-
-        
     </div>
-
 
     <div class="row mt-3">
         <div class="col-md-4 mb-2">
@@ -362,13 +349,6 @@ input, select{
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
 <script type="text/javascript" src="{{URL::asset('/js/validator/excelme.js')}}"></script>
 <script type="text/javascript">
-
-    $('.container').hide();
-    $('button').click(function(){
-        var target = "#" + $(this).data("target");
-        $(".container").not(target).hide();
-        $(target).show();
-    });
    var defaultbgcolors = [
         'rgba(255, 99, 132, 0.2)',
         'rgba(54, 162, 235, 0.2)',
@@ -510,6 +490,22 @@ input, select{
                     })
                 }
             },
+            onClick: function(c, i) {
+                e = i[0];
+                var xValue = this.data.labels[e._index];
+                $('#selectedStatus').text(xValue)
+                $('.tripStatusMenu').each((i, v)=> {
+                    if(v.innerHTML === xValue) {
+                        $('#'+v.id).addClass('badge badge-success')
+                    }
+                    else{
+                        $('#'+v.id).removeClass('badge badge-success')
+                    }
+                })
+                $.get('/trip-status-result', { trip_status: xValue }, function(data) {
+                    $('#tripStatusResponse').html(data)
+                })
+            }
         },
     });
 
@@ -986,6 +982,50 @@ input, select{
             loadingSiteCountChart.update()
         })
     }, 60000);
+
+    $('.tripStatusMenu').click(function() {
+        $('.tripStatusMenu').removeClass('badge badge-success')
+        $(this).addClass('badge badge-success')
+        $status = this.innerHTML
+        $('#selectedStatus').text($status)
+        $.get('/trip-status-result', { trip_status: $status }, function(data) {
+            $('#tripStatusResponse').html(data).removeClass('font-size-xs')
+        })
+    })
+
+    $(document).on('click', '.operationsUpdate', function() {
+        $id = $(this).attr('id')
+        $('#operations'+$id).removeClass('d-none')
+        $('#defaultOPR'+$id).addClass('d-none').removeClass('d-block')
+        $(document).on('keyup', '#operations'+$id, function(e) {
+            $remark = $(this).val()
+            if(e.keyCode === 13) {
+                $('#oploader'+$id).html('<i class="icon-spinner spinner"></i>').addClass('font-size-xs')
+                $.get('/update-operations-remark', { trip_id: $id, remark: $remark }, function(data) {
+                    if(data === 'updated') {
+                        $('#operations'+$id).addClass('d-none')
+                        $('#defaultOPR'+$id).removeClass('d-none').addClass('ml-1 d-block bg-info font-size-xs p-1').html($remark)
+                        $('#oploader'+$id).html('')
+                    }
+                    else{
+                        return false
+                    }
+                })
+            }
+        })
+    })
+
+    $('#truckAvailabilityCount').click(function() {
+        $.get('/truck-availability-data', function(data) {
+            $('#truckAvailabilityResponse').html(data)
+        })
+    })
+
+    $('#todayGateOut').click(function() {
+        $.get('/today-gate-out-data', function(data) {
+            $('#todayGateOutView').html(data)
+        })
+    })
 </script>
 @stop
 @endif
