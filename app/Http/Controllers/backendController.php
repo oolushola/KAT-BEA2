@@ -27,6 +27,7 @@ use App\cargoAvailability;
 use App\target;
 use Session;
 use App\PrsSession;
+use App\truckAvailability;
 
 class backendController extends Controller
 {
@@ -171,12 +172,7 @@ class backendController extends Controller
             $tripEventListing[] = tripEvent::WHERE('trip_id', $trips->id)->GET()->LAST();
         }
        
-
-        $availableTrucks = DB::SELECT(
-            DB::RAW(
-                'SELECT a.*, b.company_name, c.loading_site, d.truck_no, e.transporter_name, e.phone_no, f.driver_first_name, f.driver_last_name, f.driver_phone_number, f.motor_boy_first_name, f.motor_boy_last_name, f.motor_boy_phone_no, g.product, h.state, i.first_name, i.last_name, j.tonnage, j.truck_type FROM tbl_kaya_truck_availabilities a JOIN tbl_kaya_clients b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_trucks d JOIN tbl_kaya_transporters e JOIN tbl_kaya_drivers f JOIN tbl_kaya_products g JOIN tbl_regional_state h JOIN users i JOIN tbl_kaya_truck_types j ON a.client_id = b.id AND a.loading_site_id = c.id AND a.truck_id = d.id AND a.transporter_id = e.id and a.driver_id = f.id and a.product_id = g.id and a.destination_state_id = h.regional_state_id and a.reported_by = i.id AND d.truck_type_id = j.id  WHERE a.status = FALSE'
-            )
-        );
+        $availableTrucks = truckAvailability::WHERE('status', !TRUE)->GET()->COUNT();
 
         $tripWaybillYetToReceive = DB::SELECT(
             DB::RAW('SELECT a.*, b.comment, c.loading_site, d.transporter_name, e.product, f.truck_no FROM tbl_kaya_trips a JOIN tbl_kaya_trip_waybill_statuses b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f ON a.id = b.trip_id AND a.loading_site_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id WHERE b.waybill_status = FALSE AND a.trip_status = 1 AND a.tracker >= 5 ORDER BY a.gated_out ASC'
@@ -316,7 +312,8 @@ class backendController extends Controller
         $tripWaybills = tripWaybill::GET();
 
 
-        $data = '<table class="table table-striped table-hover">
+        $data = '
+        <table class="table table-striped table-hover">
             <thead class="table-success" style="font-size:10px;">
             <tr>
                 <th>SN</th>
