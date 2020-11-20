@@ -367,4 +367,23 @@ class paymentExceptionController extends Controller
        
         return 'updated';
     }
+
+    public function declineAdvanceRequest(Request $request) {
+        $recid = trip::WHERE('trip_id', $request->id)->GET()->LAST();
+        $recid->advance_request = FALSE;
+        $recid->advance_requested_by = NULL;
+        $recid->advance_requested_at = NULL;
+        $recid->save();
+        return 'declined';
+
+    }
+
+    public function declineBalanceRequest(Request $request) {
+        $recid = trip::WHERE('trip_id', $request->id)->GET()->LAST();
+        $recid->balance_requested_by = NULL;
+        $recid->balance_requested_at = NULL;
+        $recid->balance_request = FALSE;
+        $recid->save();
+        return 'declined';
+    }
 }

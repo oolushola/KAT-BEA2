@@ -23,7 +23,7 @@ td:first-child, .headcol {
 @section('main')
 
 @include('orders._helpers')
-
+@include('orders.partials._transloaded')
 
 <div class="card">
     <div class="page-title d-flex ml-2">
@@ -81,7 +81,10 @@ td:first-child, .headcol {
                             </p>
                         </td>
                         <td>
-                            <span class="font-weight-bold">{{strtoupper($trip->truck_no)}}</span>
+                            <span class="font-weight-bold">
+                                {{strtoupper($trip->truck_no)}} 
+                                <i class="icon-git-compare transloadTruck" href=".transloader" data-toggle="modal" value="{{ $trip->trip_id }}" id="{{ $trip->transporter_id }}" data-value="{{ $trip->id }}"></i>  
+                            </span>
                             <p class="m-0"> 
                                 <span class="badge badge-success p-1 mt-1">{{ strtoupper($trip->exact_location_id) }}</span>
                                 <span class="badge badge-success p-1 mt-1">{{ strtoupper($trip->product) }}</span>
@@ -132,31 +135,121 @@ td:first-child, .headcol {
 @section('script')
 <script src="{{URL::asset('js/validator/trip-event.js')}}"></script>
 <script type="text/javascript">
-//$(function() {
-    // $selectedCriteria = localStorage.getItem('filtered')
-    // if($selectedCriteria) {
-    //     $(`#uncompletedTrips tr`).filter(function() {
-    //         $(this).toggle($(this).text().toLowerCase().indexOf($selectedCriteria) > -1)
-    //     });
-    // }
+$(function() {
+    $('.transloadTruck').click(function() {
+        $tripId = $(this).attr('value')
+        $('#selectedTripPlaceHolder').text('Transload '+$tripId)
+        $('#transporterId').val($(this).attr("id"))
+        $('#transloadTripId').val($(this).attr('data-value'))
 
-    // autosearch("change", "#filterSelection", "#uncompletedTrips")
-    // autosearch("keyup", "#searchUncompletedTrips", "#uncompletedTrips")
+        $('.driverDetailsChanged :input[type="text"]').attr('disabled', true)
 
-    // function autosearch(event, searchBoxId, dataSetId) {
-    //     $(searchBoxId).on(event, function() {
-    //         var value = $(this).val().toLowerCase();
-    //         if(event == "change") {
-    //             localStorage.setItem('filtered', value)
-    //         }
-    //         $(`${dataSetId} tr`).filter(function() {
-    //             $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-    //         });
-    //     });
-    // }
+        $.get('/transloaded-trip-info', { trip_id: $tripId }, function(response) {
+            var data = response.tripInfo
+            var preview = response.preview
+            $('#previousTruckNo').val(data[0].truck_no)
+            $('#previousTruckType').val(data[0].truck_type)
+            $('#previousTonnage').val(data[0].tonnage)
 
-    
+            $('#previousDriverName').val(data[0].driver_first_name+' '+data[0].driver_last_name)
+            $('#previousDriverNo').val(data[0].driver_phone_number)
+            $('#previousMotorBoy').val(data[0].motor_boy_first_name+' '+data[0].motor_boy_last_name+' '+data[0].motor_boy_phone_no)
 
-//});
+            $('#previousTruckId').val(data[0].truck_id);
+            $('#previousDriverId').val(data[0].driver_id);
+
+            $('#previewLog').html(preview)
+        })
+    })
+
+    $('#previousDriverNo').keyup(function($e) {
+        $e.preventDefault();
+        $driverPhoneNo = $(this).val()
+        $driverName = $('#previousDriverName').val()
+        $motorboy = $('#previousMotorBoy').val()
+        $driverId = $('#previousDriverId').val()
+        if($e.keyCode === 13) {
+            $('#placeholderLabel').html('Please wait...')
+            $.get('/update-drivers-info', { driver: $driverId, name: $driverName, phoneNo: $driverPhoneNo, motorBoy: $motorboy }, function(data) {
+                if(data === 'updated') {
+                    $('#placeholderLabel').html('Driver Info updated successfully.')
+                    window.location = '/on-journey-trips';
+                }
+            })
+        }
+    })
+
+
+    $('#transload').click(function($e) {
+        $e.preventDefault();
+        $truckNo = $('#truckNo').val();
+        if($truckNo === '') {
+            messageDisplay('Truck number is required.')
+            return false;
+        }
+        $truckType = $('#truckType').val();
+        if($truckType == '0') {
+            messageDisplay('Truck type is required.')
+            return false;
+        }
+        $tonnage = $('#tonnage').val();
+        if($tonnage == '0') {
+            messageDisplay('Truck tonnage is required.')
+            return false;
+        }
+        $sameDriver = $('#sameDriverChecker').is(':checked');
+        if(!$sameDriver) {
+            $tDriverName = $('#tdriverNo').val();
+            if($tDriverName === '') {
+                messageDisplay('Driver full name is required.')
+                return false;
+            }
+            $tdriverNo = $('#tdriverNo').val();
+            if($tdriverNo === '') {
+                messageDisplay('Driver phone number is required.')
+                return false;
+            }
+        }
+        $transloadingComment = $('#transloadinComment').val();
+        if($transloadingComment === '') {
+            messageDisplay('Reason for transloading is required.')
+            
+        }
+        $('#placeholderLabel').html('<i class="icon-spinner3 spinner"></i> Please wait...').addClass('font-size-sm')
+        $.post('/truck-transload', $('#frmTripTransload').serializeArray(), function(data) {
+            if(data === 'truckInPipeline') {
+                $('#placeholderLabel').html('You can\'t transload to a truck that is in our trip pipeline. ').addClass('font-size-sm')
+                return false;
+            }
+            else if(data === 'sameTruckNo') {
+                $('#placeholderLabel').html('Why do you want to transload to the same truck? Is it crack?').addClass('font-size-sm')
+                return false;
+            }
+            else{
+                if(data === 'transloadingCompleted') {
+                    $('#placeholderLabel').html('Successfully transloaded').addClass('font-size-sm')
+                    window.location='/on-journey-trips'
+                }
+            }
+        })
+    })
+
+    $('#sameDriverChecker').click(function() {
+        $checker = $(this).is(":checked");
+        if($checker === true) {
+            $('.driverDetailsChanged :input[type="text"]').attr('disabled', true)
+        }
+        else{
+            $('.driverDetailsChanged :input[type="text"]').attr('disabled', false)
+        }
+    })
+
+    function messageDisplay(message) {
+        $('#placeholderLabel').html(message).addClass('font-weight-semibold font-size-xs text-success').fadeIn(2000).delay(3000).fadeOut(2000)
+
+    }
+
+
+});
 </script>
 @stop
