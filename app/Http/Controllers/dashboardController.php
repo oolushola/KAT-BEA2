@@ -331,7 +331,7 @@ class dashboardController extends Controller
                         <td width="30%">
                             <span class="text-primary"><b>'.$object->truck_no.'</b></span>
                             <p style="margin:0"><b>Truck Type</b>: '.$object->truck_type.', '.$object->tonnage/1000 .'T</p>
-                            <p style="margin:0"><b>Transporter</b>: '.$object->transporter_name.', '.$object->phone_no.'</p>
+                            <p style="margin:0"><b>Transporter</b>: '.$object->transporter_name.', <a href="tel:+'.$object->phone_no.'"> '.$object->phone_no.'</a> </p>
                         </td>
                         
                         <td><p style="margin:0" class="text-primary font-weight-bold">Destination</p>

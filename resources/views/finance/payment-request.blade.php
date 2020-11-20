@@ -73,7 +73,7 @@ function getPaymentInitiator($arrayRecord, $master) {
                 @if(count($allpendingadvanceRequests))
                 <?php $advanceIterator = 1; ?>
                     @foreach($allpendingadvanceRequests as $key => $advancePayment)
-                        <section class="col-md-3 mt-2 col-sm-12 col-12 mb-2">
+                        <section class="col-md-3 mt-2 col-sm-12 col-12 mb-2" id="advanceHouse{{$advancePayment->trip_id}}">
                             <!--<span class="bg-danger font-weight-bold" style="border-radius:100%; padding:15px; margin-left:-20px;">{{ $advanceIterator++ }}</span>-->
                             <div class="card">
                                 <div class="table-responsive">
@@ -165,6 +165,9 @@ function getPaymentInitiator($arrayRecord, $master) {
                                             <tr>
                                                 <td>
                                                     <a href="#advancePaymentExceptionModal" class="badge btn-warning except pointer align-right ml-auto" role="{{$advancePayment->trip_id}}" value="{{$advancePayment->amount}}" id="{{$advancePayment->id}}" data-toggle="modal">Exception</a>
+
+                                                    <span class="badge badge-danger pointer ml-1 declineAdvanceRequest" value="{{ $advancePayment->trip_id }}">Decline</span>
+
                                                 </td>
                                                 <td class="font-size-sm font-weight-bold" style="font-size:11px;">
                                                     <input type="checkbox" class="advanceValue" value="{{$advancePayment->id}}" name="approveAdvance[]"> Paid
@@ -218,7 +221,7 @@ function getPaymentInitiator($arrayRecord, $master) {
                 @if(count($allpendingbalanceRequests))
                     <?php $balanceIterator = 1; ?>
                     @foreach($allpendingbalanceRequests as $key => $balancePayment)
-                        <section class="col-md-4 mt-2 col-sm-12 col-12 mb-4 ml-2">
+                        <section class="col-md-4 mt-2 col-sm-12 col-12 mb-4 ml-2" id="balanceHouse{{ $balancePayment->trip_id }}">
                             <!--<span class="bg-danger font-weight-bold" style="border-radius:100%; padding:15px; margin-left:-20px;">{{ $balanceIterator++ }}</span>-->
                             <div class="card">
                                 <div class="table-responsive">
@@ -321,6 +324,9 @@ function getPaymentInitiator($arrayRecord, $master) {
                                             <tr>
                                                 <td>
                                                     <a href="#balancePaymentExceptionModal" class="badge balanceExcept bg-warning pointer align-right ml-auto" role="{{$balancePayment->trip_id}}" value="{{$balancePayment->exact_location_id}},{{$balancePayment->advance}},{{$balancePayment->balance}},{{$balancePayment->transporter_id}},{{$balancePayment->trip_id}}" id="{{$balancePayment->id}}" data-toggle="modal">Exception</a>
+
+                                                    <span class="badge badge-danger pointer ml-1 declineBalanceRequest" data-id="{{ $balancePayment->trip_id }}">Decline</span>
+
                                                 </td>
                                                 <td class="font-weight-sm font-weight-bold" style="font-size:9px;"><input type="checkbox" value="{{$balancePayment->id}}" name="approveBalance[]"> Mark as paid</td>
                                         </tbody>
@@ -906,6 +912,29 @@ function getPaymentInitiator($arrayRecord, $master) {
                 }
             })
         })
+
+        
+        paymentDecline('.declineAdvanceRequest', 'value', '/decline-advance-request', '#advanceHouse')
+        paymentDecline('.declineBalanceRequest', 'data-id', '/decline-balance-request', '#balanceHouse')
+
+        // $('.declineBalanceRequest').click(function() {
+        //     var tripId = $(this).attr('data-id')
+        //     $.get('/decline-balance-request', { id: tripId }, function(data) {
+                
+        //     })
+        // })
+
+
+        function paymentDecline(className, attr, url, indicator) {
+            $(className).click(function() {
+                var tripId = $(this).attr(attr)
+                $.get(url, { id: tripId }, function(data) {
+                    if(data == 'declined') {
+                        $(indicator+''+tripId).addClass('bg-danger-400')
+                    }
+                })
+            })
+        }
     })
 </script>
 @stop

@@ -1127,8 +1127,11 @@ class ordersController extends Controller
                 'SELECT lga_name FROM tbl_regional_local_govt WHERE regional_country_id = \'94\' ORDER BY lga_name ASC '
             )
         );
+        $truckTypes = truckType::SELECT('truck_type')->DISTINCT()->GET();
+        $tonnages = truckType::ORDERBY('tonnage', 'ASC')->SELECT('tonnage')->DISTINCT()->GET();
 
-        return view('orders.on-journey', compact('onJourneyTrips', 'tripWaybills', 'tripEvents', 'waybillstatuses', 'clients', 'loadingSites', 'transporters', 'products', 'states', 'invoiceCriteria', 'trippayments', 'onjourneyIssueTypes', 'offloadIssueTypes', 'lgas'));
+
+        return view('orders.on-journey', compact('onJourneyTrips', 'tripWaybills', 'tripEvents', 'waybillstatuses', 'clients', 'loadingSites', 'transporters', 'products', 'states', 'invoiceCriteria', 'trippayments', 'onjourneyIssueTypes', 'offloadIssueTypes', 'lgas', 'truckTypes', 'tonnages'));
     }
     
     public function eventLog(Request $request) {

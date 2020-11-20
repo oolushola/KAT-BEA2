@@ -347,6 +347,13 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('/truck-availability-data', 'dashboardController@truckAvailabilityData');
     Route::get('/today-gate-out-data', 'dashboardController@todayGateOut');
 
+    Route::get('transloaded-trip-info', 'IssueTypeController@exactTrip');
+    Route::post('truck-transload', 'IssueTypeController@transloadTruck');
+    Route::get('update-drivers-info', 'IssueTypeController@changeDriverInfo');
+    Route::get('decline-advance-request', 'paymentExceptionController@declineAdvanceRequest');
+    Route::get('decline-balance-request', 'paymentExceptionController@declineBalanceRequest');
+
+    
 });
 
 

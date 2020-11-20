@@ -71,6 +71,10 @@ td{
                                             </tr>
                                             <tr>
                                                 <td>
+                                                    @if(!$trip->last_known_location) 
+                                                        <span class="lastKnownLocation" id="{{ $trip->id }}">Update</span>
+                                                    
+                                                    @endif
                                                     <span class="lastKnownLocation" id="{{ $trip->id }}">{{ $trip->last_known_location }}</span>
                                                     <input type="text" value="{{ $trip->last_known_location }}" style="width:100px; border:1px solid #ccc; outline:none " class="d-none"  id="lastKnownLocationInput{{ $trip->id }}" />
                                                 </td>
