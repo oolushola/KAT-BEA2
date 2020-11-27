@@ -308,6 +308,9 @@ class dashboardController extends Controller
                     if($tracker == 7){
                         $data.= '<th>ARRIVED AT?</th>';
                     }
+                    if($tracker <= 4) {
+                        $data.= '<th>COMMENT</th>';
+                    }
                 $data.='
                 </tr>
             </thead>
@@ -316,6 +319,17 @@ class dashboardController extends Controller
                     $count = 0;
                     foreach($arrayObject as $object) {
                         $count +=1;
+
+                        $comment = '<i class="icon-comment ml-4 text-danger operationsUpdate pointer" id="'.$object->trip_id.'"></i>';
+                        $object->operations_remark ? $classes = 'ml-1 d-block bg-info font-size-xs p-1' : $classes = '';
+                        $operationResult = '
+                        <span id="defaultOPR'.$object->trip_id.'" class="'.$classes.'">
+                            '.$object->operations_remark.' <strong class="d-block">'.$object->opr_remarks_timestamp.'</strong>
+                        </span>
+                        <span id="oploader'.$object->trip_id.'"></span>';
+
+                        $inputText = '<input type="text" class="mt-2 d-none" id="operations'.$object->trip_id.'" value="'.$object->operations_remark.'" />';
+
                         $data.='<tr>
                         <td class="text-center">('.$count.')</td>
                         <td>
@@ -335,13 +349,21 @@ class dashboardController extends Controller
                             <span class="text-primary"><b>'.$object->truck_no.'</b></span>
                             <p style="margin:0"><b>Truck Type</b>: '.$object->truck_type.', '.$object->tonnage/1000 .'T</p>
                             <p style="margin:0"><b>Transporter</b>: '.$object->transporter_name.', <a href="tel:+'.$object->phone_no.'"> '.$object->phone_no.'</a> </p>
-                        </td>
-                        
-                        <td><p style="margin:0" class="text-primary font-weight-bold">Destination</p>
+                        </td>';
+                        $data.='<td><p style="margin:0" class="text-primary font-weight-bold">Destination</p>
                             <p style="margin-bottom:3px">'.$object->exact_location_id.'</p>
                             <p  style="margin:0" class="text-primary font-weight-bold">Product</p>
                             <p style="margin:0">'.$object->product.'</p>
                         </td>';
+                        if($tracker <= 4) {
+                            $data.='
+                            <td width="25%">
+                                <p>'.$comment.'</p>
+                                '.$inputText.'
+                                <p>'.$operationResult.'</p>
+                            </td>';
+                        }
+                        
                         if($tracker >=5 && $tracker <=6){
                             $data.='<td width="25%">';
                             $counter = 1;
@@ -356,12 +378,12 @@ class dashboardController extends Controller
                                         $data.='
                                             <p class="font-size-xs d-block ml-1 m-0">
                                                 '.date('d-m-Y, H:i A', strtotime($onJourneyTrips->location_check_two)).'
-                                                <i class="icon-comment ml-4 text-danger operationsUpdate pointer" id="'.$object->trip_id.'"></i>
+                                                '.$comment.'
                                             <p>';
                                         $data.='
-                                            <span class="font-size-xs text-danger d-block ml-2">
-                                                '.$onJourneyTrips->afternoon_issue_type.'
-                                            </span>';
+                                        <span class="font-size-xs text-danger d-block ml-2">
+                                            '.$onJourneyTrips->afternoon_issue_type.'
+                                        </span>';
 
                                     }
                                     else {
@@ -372,7 +394,7 @@ class dashboardController extends Controller
                                         $data.='
                                             <p class="font-size-xs d-block ml-1 m-0">
                                                 '.date('d-m-Y, H:i A', strtotime($onJourneyTrips->location_check_one)).'
-                                                <i class="icon-comment ml-4 text-danger operationsUpdate pointer" id="'.$object->trip_id.'"></i>
+                                                '.$comment.'
                                             <p>';
                                         $data.='
                                             <span class="font-size-xs text-danger d-block ml-2">
@@ -380,14 +402,9 @@ class dashboardController extends Controller
                                             </span>';
                                     }
 
-                                    $data.='
-                                    <input type="text" class="mt-2 d-none" id="operations'.$object->trip_id.'" value="'.$object->operations_remark.'" />';
+                                    $data.= $inputText;
 
-                                    $object->operations_remark ? $classes = 'ml-1 d-block bg-info font-size-xs p-1' : $classes = '';
-
-                                    $data.='<span id="defaultOPR'.$object->trip_id.'" class="'.$classes.'">
-                                    '.$object->operations_remark.' <strong class="d-block">'.$object->opr_remarks_timestamp.'</strong></span>
-                                    <span id="oploader'.$object->trip_id.'"></span>';
+                                    $data.= $operationResult;
                                 }
                             }
                             $now = time(); // or your date as well
@@ -405,7 +422,7 @@ class dashboardController extends Controller
                             </td>';
                         }
                         if($tracker == 7){
-                            $data.='<td>';
+                            $data.='<td width="25%">';
                             foreach($tripEvent as $tripActivities){
                                 if($tripActivities && $tripActivities->trip_id == $object->id){
                                     if($tripActivities->time_arrived_destination == ''){
@@ -413,11 +430,15 @@ class dashboardController extends Controller
                                     } else {
                                         $timeArrivedDestination = date('d-m-Y, H:i A', strtotime($tripActivities->time_arrived_destination));
                                     } 
-                                    $data.='<span class="text-primary font-weight-bold font-size-sm">'.$timeArrivedDestination.'</span>';
+                                    $data.='<span class="text-primary font-weight-semibold font-size-sm">'.$timeArrivedDestination.' '.$comment.'</span>';
+                                    $data.=$inputText.'
+                                    <p>'.$operationResult.'</p>
+                                </td>';
                                 }
-                                
                             }
                             $data.='</td>';
+                            
+                           
                         }
                         $data.='
                         </tr>';

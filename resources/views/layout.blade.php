@@ -454,8 +454,11 @@
 								<li class="nav-item">
 									<a href="{{URL('issue-types')}}" class="nav-link"><i class="icon-eye2"></i>Issue Types</a>
 								</li>
-								<li class="nav-item">
+								<!-- <li class="nav-item">
 									<a href="#" class="nav-link"><i class="icon-brain"></i>Issue Intelligence</a>
+								</li> -->
+								<li class="nav-item">
+									<a href="#" class="nav-link"><i class="icon-target2"></i>C.A.M.T</a>
 								</li>
 							</ul>
 						</li>
