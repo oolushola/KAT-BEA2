@@ -334,7 +334,7 @@ class paymentExceptionController extends Controller
     public function paymentTopUp() {
         $trips = DB::SELECT(
             DB::RAW(
-                'SELECT a.trip_id, a.client_rate, c.truck_no, b.id, b.amount, b.advance, b.balance, b.exception, d.transporter_name FROM tbl_kaya_trips a JOIN tbl_kaya_trip_payments b JOIN tbl_kaya_trucks c JOIN tbl_kaya_transporters d ON a.id = b.trip_id AND a.truck_id = c.id AND a.transporter_id = d.id WHERE a.tracker BETWEEN 4 AND 6 AND b.advance_paid = TRUE AND b.exception <> 3 ORDER BY a.trip_id DESC'
+                'SELECT a.trip_id, a.client_rate, c.truck_no, b.id, b.amount, b.advance, b.balance, b.exception, d.transporter_name FROM tbl_kaya_trips a JOIN tbl_kaya_trip_payments b JOIN tbl_kaya_trucks c JOIN tbl_kaya_transporters d ON a.id = b.trip_id AND a.truck_id = c.id AND a.transporter_id = d.id WHERE a.tracker BETWEEN 4 AND 8 AND b.advance_paid = TRUE AND b.balance_paid = FALSE AND b.exception <> 3 ORDER BY a.trip_id DESC'
             )
         );
         return view('finance.payment-top-up', compact('trips'));
