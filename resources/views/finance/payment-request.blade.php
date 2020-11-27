@@ -221,7 +221,7 @@ function getPaymentInitiator($arrayRecord, $master) {
                 @if(count($allpendingbalanceRequests))
                     <?php $balanceIterator = 1; ?>
                     @foreach($allpendingbalanceRequests as $key => $balancePayment)
-                        <section class="col-md-4 mt-2 col-sm-12 col-12 mb-4 ml-2" id="balanceHouse{{ $balancePayment->trip_id }}">
+                        <section class="col-md-4 mt-2 col-sm-12 col-12 mb-4" id="balanceHouse{{ $balancePayment->trip_id }}">
                             <!--<span class="bg-danger font-weight-bold" style="border-radius:100%; padding:15px; margin-left:-20px;">{{ $balanceIterator++ }}</span>-->
                             <div class="card">
                                 <div class="table-responsive">

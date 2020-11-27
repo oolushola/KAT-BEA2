@@ -1,5 +1,5 @@
 <div class="modal fade receivedWaybillLog">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-full">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="mt-md-2 font-weight-semibold m-0" id="invoiceNoPlaceholder">RECEIVE TRIPS</h5>

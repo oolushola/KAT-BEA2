@@ -326,6 +326,9 @@ class dashboardController extends Controller
                             if($tracker <=5) {
                                 $data.='<p>'.date('d-m-Y', strtotime($object->$fieldLabel)).' <br> '.date('H:i A', strtotime($object->$fieldLabel)).'</p>';
                             }
+                            if($object->$fieldLabel >= 5 && $object->truck_type == 'Flatbed') {
+                                $data.='<p class="font-size-xs font-weight-bold">'.$object->loaded_weight.'</p>';
+                            }
                         $data.='
                         </td>
                         <td width="30%">
@@ -383,7 +386,7 @@ class dashboardController extends Controller
                                     $object->operations_remark ? $classes = 'ml-1 d-block bg-info font-size-xs p-1' : $classes = '';
 
                                     $data.='<span id="defaultOPR'.$object->trip_id.'" class="'.$classes.'">
-                                    '.$object->operations_remark.'</span>
+                                    '.$object->operations_remark.' <strong class="d-block">'.$object->opr_remarks_timestamp.'</strong></span>
                                     <span id="oploader'.$object->trip_id.'"></span>';
                                 }
                             }
@@ -431,10 +434,12 @@ class dashboardController extends Controller
     }
 
     public function updateOperationsRemark(Request $request) {
+        $currentTimeAndDate = date('d-m-Y, H:i:s A');
         $trip_id = $request->trip_id;
         $remark = $request->remark;
         $remarks = trip::WHERE('trip_id', $trip_id)->GET()->LAST();
         $remarks->operations_remark = $remark;
+        $remarks->opr_remarks_timestamp = $currentTimeAndDate;
         $remarks->save();
         return 'updated';
     }
