@@ -289,7 +289,6 @@
 									Voided Trips</a>
 								</li>
 								<li class="nav-item"><a href="{{URL('generate-report')}}" class="nav-link">Report</a></li>
-								<li class="nav-item"><a href="{{URL('on-journey-trips')}}" class="nav-link">Uncompleted Trips</a></li>
 								<li class="nav-item"><a href="{{URL('request-transporter-payment')}}" class="nav-link">Request Payment</a></li>
 								@endif
 							</ul>
@@ -458,7 +457,12 @@
 									<a href="#" class="nav-link"><i class="icon-brain"></i>Issue Intelligence</a>
 								</li> -->
 								<li class="nav-item">
-									<a href="#" class="nav-link"><i class="icon-target2"></i>C.A.M.T</a>
+									<a href="{{URL('on-journey-trips')}}" class="nav-link"><i class="icon-alert"></i>Uncompleted Trips</a>
+								</li>
+						@endif
+						@if($auth == 1 || $auth == 2)
+								<li class="nav-item">
+									<a href="{{ URL('camt/client-target') }}" class="nav-link"><i class="icon-target2"></i>A.M.T</a>
 								</li>
 							</ul>
 						</li>
@@ -526,13 +530,7 @@
 										<a href="{{URL('cargo-availability')}}" class="nav-link">Available Cargo</a>
 									</li>
 									<li class="nav-item">
-										<a href="{{URL('kaya-target')}}" class="nav-link">Targets</a>
-									</li>
-									<li class="nav-item">
 										<a href="{{URL('invoice-subheading')}}" class="nav-link">Invoice Subheading</a>
-									</li>
-									<li class="nav-item">
-										<a href="{{URL('buh-target')}}" class="nav-link">BUH Monthly Target</a>
 									</li>
 								</ul>
 							</li>

@@ -8,6 +8,7 @@ use App\buhMonthlyTarget;
 use App\trip;
 use Illuminate\Support\Facades\DB;
 use App\truckAvailability;
+use App\transporter;
 
 
 class performanceMetricController extends Controller
@@ -48,10 +49,28 @@ class performanceMetricController extends Controller
             
             $tripCount[] = trip::WHEREMONTH('gated_out', now())->WHEREYEAR('gated_out', now())->WHERE('trip_status', 1)->WHERE('account_officer_id', $unitHead->user_id)->GET()->COUNT();
 
+            [$clientAccountManager[]] = DB::SELECT(
+                DB::RAW(
+                    'SELECT SUM(target) as target FROM tbl_kaya_account_manager_targets a JOIN tbl_kaya_client_account_manager b ON a.client_id = b.client_id WHERE current_year = '.DATE("Y").' and current_month = '.DATE("m").' AND user_id = "'.$unitHead->user_id.'" '
+                )
+            );
+            $monthlyTripRemainder[] = $clientAccountManager[$key]->target - $tripCount[$key];
+            if($monthlyTripRemainder[$key] < 0) {
+                $monthlyTripRemainder[$key] = 0;
+            }
+            else{
+                $monthlyTripRemainder[$key] = $monthlyTripRemainder[$key];
+            }
+
+            $transportersGained[] = transporter::WHEREYEAR('registration_completed', date('Y'))->WHEREMONTH('registration_completed', date('m'))->WHERE('assign_user_id', $unitHead->user_id)->GET()->COUNT();
+            
         }
 
-        $currentMonthOverview = array('unitHeadInformation' =>  $unitHeadInformation, 'unitHeadSpecificTargets' => $unitHeadSpecificTargets, 'myGrossMargin' => $myGrossMargin, 'myOutstanding' => $myOutstanding, 'unitHeadCurrentMarkUp' => $unitHeadCurrentMarkUp, 'trip_count' => $tripCount);
-    
+        $currentMonthOverview = array('unitHeadInformation' =>  $unitHeadInformation, 'unitHeadSpecificTargets' => $unitHeadSpecificTargets, 'myGrossMargin' => $myGrossMargin, 'myOutstanding' => $myOutstanding, 'unitHeadCurrentMarkUp' => $unitHeadCurrentMarkUp, 'trip_count' => $tripCount, 'remainingTrip' => $monthlyTripRemainder, 'transporter_gained' => $transportersGained);
+        
+        
+
+
         return view('performance-metric.master', $currentMonthOverview);
     }
 
@@ -243,6 +262,21 @@ class performanceMetricController extends Controller
                 
                 $tripCount[] = trip::WHEREMONTH('gated_out', $selectedMonth)->WHEREYEAR('gated_out', $currentYear)->WHERE('trip_status', 1)->WHERE('account_officer_id', $unitHead->user_id)->GET()->COUNT();
 
+                [$clientAccountManager[]] = DB::SELECT(
+                    DB::RAW(
+                        'SELECT SUM(target) as target FROM tbl_kaya_account_manager_targets a JOIN tbl_kaya_client_account_manager b ON a.client_id = b.client_id WHERE current_year = '.$currentYear.' and current_month = '.$selectedMonth.' AND user_id = "'.$unitHead->user_id.'" '
+                    )
+                );
+                $monthlyTripRemainder[] = $clientAccountManager[$key]->target - $tripCount[$key];
+                if($monthlyTripRemainder[$key] <= 0) {
+                    $monthlyTripRemainder[$key] = 0;
+                }
+                else{
+                    $monthlyTripRemainder[$key] = $monthlyTripRemainder[$key];
+                }
+    
+                $transportersGained[] = transporter::WHEREYEAR('registration_completed', $currentYear)->WHEREMONTH('registration_completed', $selectedMonth)->WHERE('assign_user_id', $unitHead->user_id)->GET()->COUNT();
+
             } 
     
             $currentMonthOverview = array(
@@ -252,7 +286,9 @@ class performanceMetricController extends Controller
                 'myOutstanding' => $myOutstanding, 
                 'unitHeadCurrentMarkUp' => $unitHeadCurrentMarkUp, 
                 'tripCount' => $tripCount,
-                'selectedMonth' => $currentMonth.', '.$currentYear 
+                'selectedMonth' => $currentMonth.', '.$currentYear,
+                'monthlyTripRemainder' => $monthlyTripRemainder,
+                'transportersGained' => $transportersGained
             );
             return $currentMonthOverview;
         }

@@ -95,12 +95,13 @@
         </div>
     </div>
 
-    
-
     <div class="card">
         <div class="row">
             <div class="col-md-6">
                 <canvas id="numbersForTheMonth" height="120" data-toggle="modal" href="#specificBuh"></canvas>
+            </div>
+            <div class="col-md-6">
+                <canvas id="newTransporterGained" height="120"></canvas>
             </div>
         </div>
     </div>
@@ -121,6 +122,8 @@
     var deficit = <?php echo json_encode($myOutstanding); ?>;
     var currentMonthMarkup = <?php echo json_encode($unitHeadCurrentMarkUp); ?>;
     var tripCount = <?php echo json_encode($trip_count); ?>;
+    var remainingTrips = <?php echo json_encode($remainingTrip); ?>;
+    var transporterGained = <?php echo json_encode($transporter_gained); ?>;
 
     var ctx = document.getElementById('stackedBar');
     var myChart = new Chart(ctx, {
@@ -208,7 +211,7 @@
         data: {
             labels: [],
             datasets: [{
-                label: 'My Daily Gate out for April, 2020',
+                label: 'My Daily Gate out for the current month',
                 data: [],
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.2)',
@@ -290,20 +293,28 @@
         type: 'bar',
         data: {
             labels: unitHeadInformations,
-            datasets: [{
-                label: 'Number of Trips',
-                data: tripCount,
-                backgroundColor: backgroundColor,
-                borderColor: borderColor,
-                borderWidth: 1
-            }]
+            datasets: [
+                {
+                    label: 'Number of Trips Done',
+                    data: tripCount,
+                    backgroundColor: '#73c2fb',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Expected Number of Trips',
+                    data: remainingTrips,
+                    backgroundColor: '#ff6347',
+                    borderWidth: 1
+                }
+            ]
         },
         options: {
             scales: {
                 yAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
+                    stacked: true
+                }],
+                xAxes: [{
+                    stacked: true
                 }]
             },
             onClick: function(c, i) {
@@ -340,6 +351,32 @@
             }
         },
     });
+
+    var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+    var date = new Date();
+    var ctxTransporters = document.getElementById('newTransporterGained');
+    var transporterChart = new Chart(ctxTransporters, {
+        type: 'bar',
+        data: {
+            labels: unitHeadInformations,
+            datasets: [{
+                label: 'Transporter Gained for '+months[date.getMonth()]+','+date.getFullYear(),
+                data: transporterGained,
+                backgroundColor: backgroundColor,
+                borderColor: borderColor,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            },
+        },
+    });
     
     
     $('#currentMonth').change(function() {
@@ -354,7 +391,6 @@
                 myChart.data.labels = res.unitHeadInformation
                 myChart.data.datasets[0].data = res.unitHeadSpecificTargets
                 myChart.data.datasets[1].data = res.myGrossMargin
-                //myChart.data.datasets[2].data = res.myOutstanding
                 myChart.update()
 
                 markUpChart.data.labels = res.unitHeadInformation
@@ -362,11 +398,16 @@
                 markUpChart.data.datasets[0].data = res.unitHeadCurrentMarkUp
                 markUpChart.update()
 
-                numberOfTripsChart.data.labels = res.unitHeadInformation
+                numberOfTripsChart.data.labels = res.unitHeadInformation 
                 numberOfTripsChart.data.datasets[0].data = res.tripCount
+                numberOfTripsChart.data.datasets[1].data = res.monthlyTripRemainder
                 numberOfTripsChart.update()
 
-                $('#loader').html('<i class="icon-checkmark2"></i>Touché, Completed.').addClass('mt-2 font-size-xs font-weight-semibold').fadeIn(3000).delay(2000).fadeOut(2000)
+                transporterChart.data.datasets[0].label = `Transporter Gained for ${res.selectedMonth}`
+                transporterChart.data.datasets[0].data = res.transportersGained
+                transporterChart.update()
+
+                $('#loader').html('')
             }
         })
     })
@@ -378,15 +419,6 @@
         });
     })
 
-
-    //
-
-
-
-
-
-
-   
 </script>
 
 
