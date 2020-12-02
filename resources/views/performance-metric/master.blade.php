@@ -98,13 +98,21 @@
     <div class="card">
         <div class="row">
             <div class="col-md-6">
-                <canvas id="numbersForTheMonth" height="120" data-toggle="modal" href="#specificBuh"></canvas>
+                <canvas id="numbersForTheMonth" height="150" data-toggle="modal" href="#specificBuh"></canvas>
             </div>
             <div class="col-md-6">
-                <canvas id="newTransporterGained" height="120"></canvas>
+                <canvas id="newTransporterGained" height="150"></canvas>
             </div>
         </div>
     </div>
+
+    <!-- <div class="card"> -->
+        <div class="row">
+            <div class="col-md-12">
+                <canvas id="expectedTripsFromClient" height="100"></canvas>
+            </div>
+        </div>
+    <!-- </div> -->
     
 </div>
 
@@ -116,6 +124,8 @@
 @section('script')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
 <script>
+
+
     var unitHeadInformations = <?php echo json_encode($unitHeadInformation); ?>;
     var expectedMargin = <?php echo json_encode($unitHeadSpecificTargets); ?>;
     var achieved = <?php echo json_encode($myGrossMargin); ?>;
@@ -317,6 +327,7 @@
                     stacked: true
                 }]
             },
+            
             onClick: function(c, i) {
                 e = i[0];
                 var xValue = this.data.labels[e._index];
@@ -377,7 +388,47 @@
             },
         },
     });
-    
+
+    var clientNames = <?php echo json_encode($clientNames); ?>;
+    var tripDoneWithClient = <?php echo json_encode($tripDoneWithClient); ?>;
+    var pendingTrips = <?php echo json_encode($pendingTrips); ?>;
+
+    var ctxClientExpectedTrips = document.getElementById('expectedTripsFromClient');
+    var clientExpectedTripsChart = new Chart(ctxClientExpectedTrips, {
+        type: 'bar',
+        data: {
+            labels: clientNames,
+            datasets: [
+                {
+                    label: 'Number of Trips Done',
+                    data: tripDoneWithClient,
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Expected Number of Trips',
+                    data: pendingTrips,
+                    backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    stacked: true
+                }],
+                xAxes: [{
+                    stacked: true
+                }]
+            },
+            title: {
+                    display: true,
+                    position: 'top',
+                    text: 'Client trip count for,  '+months[date.getMonth()]+' '+date.getFullYear()
+                }
+        },
+    });
     
     $('#currentMonth').change(function() {
         $year = $('#currentYear').val();
@@ -406,6 +457,12 @@
                 transporterChart.data.datasets[0].label = `Transporter Gained for ${res.selectedMonth}`
                 transporterChart.data.datasets[0].data = res.transportersGained
                 transporterChart.update()
+
+                clientExpectedTripsChart.data.labels = res.nameOfClient
+                clientExpectedTripsChart.data.datasets[0].data = res.tripDoneForClient
+                clientExpectedTripsChart.data.datasets[1].data = res.tripRemainder
+                clientExpectedTripsChart.update()
+                clientExpectedTripsChart.options.title.text = `Client trip count for ${res.selectedMonth}`
 
                 $('#loader').html('')
             }
