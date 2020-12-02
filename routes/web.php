@@ -352,7 +352,13 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('update-drivers-info', 'IssueTypeController@changeDriverInfo');
     Route::get('decline-advance-request', 'paymentExceptionController@declineAdvanceRequest');
     Route::get('decline-balance-request', 'paymentExceptionController@declineBalanceRequest');
+    Route::get('camt/client-target', 'camtController@clientTargetSetter');
+    Route::post('camt/client-account-target', 'camtController@clientAccountTarget');
+    Route::get('camt/client-account-manager', 'camtController@clientAccountManager');
+    Route::post('assign-client-account-manager', 'camtController@assignClientAccountManager');
+    Route::post('remove-assigned-account-manager', 'camtController@removeAssignedAccountManager');
 
+    
     
 });
 

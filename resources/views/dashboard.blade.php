@@ -1004,7 +1004,9 @@ input, select{
                 $.get('/update-operations-remark', { trip_id: $id, remark: $remark }, function(data) {
                     if(data === 'updated') {
                         $('#operations'+$id).addClass('d-none')
-                        $('#defaultOPR'+$id).removeClass('d-none').addClass('ml-1 d-block bg-info font-size-xs p-1').html($remark)
+                        var date = new Date();
+                        $currentDate = date.getDate()+'-'+date.getHours()+'-'+date.getFullYear()+' '+date.getHours()+':'+date.getMinutes()+':'+date.getSeconds()
+                        $('#defaultOPR'+$id).removeClass('d-none').addClass('ml-1 d-block bg-info font-size-xs p-1').html($remark+'<br><b>'+$currentDate+'</b>')
                         $('#oploader'+$id).html('')
                     }
                     else{

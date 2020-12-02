@@ -8,6 +8,9 @@ use App\buhMonthlyTarget;
 use App\trip;
 use Illuminate\Support\Facades\DB;
 use App\truckAvailability;
+use App\transporter;
+use App\client;
+use App\AccountManagerTarget;
 
 
 class performanceMetricController extends Controller
@@ -48,10 +51,46 @@ class performanceMetricController extends Controller
             
             $tripCount[] = trip::WHEREMONTH('gated_out', now())->WHEREYEAR('gated_out', now())->WHERE('trip_status', 1)->WHERE('account_officer_id', $unitHead->user_id)->GET()->COUNT();
 
+            [$clientAccountManager[]] = DB::SELECT(
+                DB::RAW(
+                    'SELECT SUM(target) as target FROM tbl_kaya_account_manager_targets a JOIN tbl_kaya_client_account_manager b ON a.client_id = b.client_id WHERE current_year = '.DATE("Y").' and current_month = '.DATE("m").' AND user_id = "'.$unitHead->user_id.'" '
+                )
+            );
+            $monthlyTripRemainder[] = $clientAccountManager[$key]->target - $tripCount[$key];
+            if($monthlyTripRemainder[$key] < 0) {
+                $monthlyTripRemainder[$key] = 0;
+            }
+            else{
+                $monthlyTripRemainder[$key] = $monthlyTripRemainder[$key];
+            }
+
+            $transportersGained[] = transporter::WHEREYEAR('registration_completed', now())->WHEREMONTH('registration_completed', now())->WHERE('assign_user_id', $unitHead->user_id)->GET()->COUNT();
+        }
+        
+        $clients = client::ORDERBY('client_alias', 'ASC')->SELECT('id', 'company_name', 'client_alias')->WHERE('client_status', "1")->GET();
+        $clientTarget = [];
+        foreach($clients  as $key => $client) {
+            $accountManagerTarget[] = AccountManagerTarget::SELECT('id', 'client_id', 'target')->WHERE('current_year', date('Y'))->WHERE('current_month', date('m'))->WHERE('client_id', $client->id)->GET()->LAST();
+            if($accountManagerTarget[$key] == NULL) {
+                $clientTarget[] = 0;
+            }
+            else{
+                $clientTarget[] = $accountManagerTarget[$key]->target;
+            }
+            $clientTripCount[] = trip::WHERE('client_id', $client->id)->WHEREYEAR('gated_out', now())->WHEREMONTH('gated_out', now())->GET()->COUNT();
+            $clientNames[] = $client->client_alias;
+
+            $uncompletedTrips[] = $clientTarget[$key] - $clientTripCount[$key];
+            if($uncompletedTrips[$key] <= 0) {
+                $uncompletedTrips[$key] = 0;
+            }
+            else {
+                $uncompletedTrips[$key] = $uncompletedTrips[$key];
+            }
         }
 
-        $currentMonthOverview = array('unitHeadInformation' =>  $unitHeadInformation, 'unitHeadSpecificTargets' => $unitHeadSpecificTargets, 'myGrossMargin' => $myGrossMargin, 'myOutstanding' => $myOutstanding, 'unitHeadCurrentMarkUp' => $unitHeadCurrentMarkUp, 'trip_count' => $tripCount);
-    
+        $currentMonthOverview = array('unitHeadInformation' =>  $unitHeadInformation, 'unitHeadSpecificTargets' => $unitHeadSpecificTargets, 'myGrossMargin' => $myGrossMargin, 'myOutstanding' => $myOutstanding, 'unitHeadCurrentMarkUp' => $unitHeadCurrentMarkUp, 'trip_count' => $tripCount, 'remainingTrip' => $monthlyTripRemainder, 'transporter_gained' => $transportersGained, 'clientNames' => $clientNames, 'tripDoneWithClient' => $clientTripCount, 'pendingTrips' => $uncompletedTrips);
+        
         return view('performance-metric.master', $currentMonthOverview);
     }
 
@@ -137,7 +176,6 @@ class performanceMetricController extends Controller
                     'yetTogateOut' => $yetTogateOutData,
                     'totalTripsData' => $totalTripsData,
                     'currentMonthData' => $currentMonthData,
-
                 )
             );
         //}
@@ -243,7 +281,43 @@ class performanceMetricController extends Controller
                 
                 $tripCount[] = trip::WHEREMONTH('gated_out', $selectedMonth)->WHEREYEAR('gated_out', $currentYear)->WHERE('trip_status', 1)->WHERE('account_officer_id', $unitHead->user_id)->GET()->COUNT();
 
+                [$clientAccountManager[]] = DB::SELECT(
+                    DB::RAW(
+                        'SELECT SUM(target) as target FROM tbl_kaya_account_manager_targets a JOIN tbl_kaya_client_account_manager b ON a.client_id = b.client_id WHERE current_year = '.$currentYear.' and current_month = '.$selectedMonth.' AND user_id = "'.$unitHead->user_id.'" '
+                    )
+                );
+                $monthlyTripRemainder[] = $clientAccountManager[$key]->target - $tripCount[$key];
+                if($monthlyTripRemainder[$key] <= 0) {
+                    $monthlyTripRemainder[$key] = 0;
+                }
+                else{
+                    $monthlyTripRemainder[$key] = $monthlyTripRemainder[$key];
+                }
+    
+                $transportersGained[] = transporter::WHEREYEAR('registration_completed', $currentYear)->WHEREMONTH('registration_completed', $selectedMonth)->WHERE('assign_user_id', $unitHead->user_id)->GET()->COUNT();
             } 
+
+            $clients = client::ORDERBY('client_alias', 'ASC')->SELECT('id', 'company_name', 'client_alias')->WHERE('client_status', "1")->GET();
+            $clientTarget = [];
+            foreach($clients  as $key => $client) {
+                $accountManagerTarget[] = AccountManagerTarget::SELECT('id', 'client_id', 'target')->WHERE('current_year', $currentYear)->WHERE('current_month', $selectedMonth)->WHERE('client_id', $client->id)->GET()->LAST();
+                if($accountManagerTarget[$key] == NULL) {
+                    $clientTarget[] = 0;
+                }
+                else{
+                    $clientTarget[] = $accountManagerTarget[$key]->target;
+                }
+                $clientTripCount[] = trip::WHERE('client_id', $client->id)->WHEREYEAR('gated_out', $currentYear)->WHEREMONTH('gated_out', $selectedMonth)->GET()->COUNT();
+                $clientNames[] = $client->client_alias;
+
+                $uncompletedTrips[] = $clientTarget[$key] - $clientTripCount[$key];
+                if($uncompletedTrips[$key] <= 0) {
+                    $uncompletedTrips[$key] = 0;
+                }
+                else {
+                    $uncompletedTrips[$key] = $uncompletedTrips[$key];
+                }
+            }
     
             $currentMonthOverview = array(
                 'unitHeadInformation' =>  $unitHeadInformation, 
@@ -252,8 +326,14 @@ class performanceMetricController extends Controller
                 'myOutstanding' => $myOutstanding, 
                 'unitHeadCurrentMarkUp' => $unitHeadCurrentMarkUp, 
                 'tripCount' => $tripCount,
-                'selectedMonth' => $currentMonth.', '.$currentYear 
-            );
+                'selectedMonth' => $currentMonth.', '.$currentYear,
+                'monthlyTripRemainder' => $monthlyTripRemainder,
+                'transportersGained' => $transportersGained,
+                'nameOfClient' => $clientNames,
+                'tripRemainder' => $uncompletedTrips,
+                'tripDoneForClient' => $clientTripCount
+
+,            );
             return $currentMonthOverview;
         }
     }

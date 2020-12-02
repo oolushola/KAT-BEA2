@@ -91,7 +91,7 @@ class trackerController extends Controller
         
         $lastOneYearAndMonth = DB::SELECT(
             DB::RAW(
-                'SELECT DISTINCT YEAR(gated_out) AS "years", MONTH(gated_out) AS "months" FROM tbl_kaya_trips WHERE gated_out <> "" LIMIT '.$opsStarted.', 13'
+                'SELECT DISTINCT YEAR(gated_out) AS "years", MONTH(gated_out) AS "months" FROM tbl_kaya_trips WHERE gated_out <> "" LIMIT 5, 13'
             )  
         );
 
@@ -99,9 +99,10 @@ class trackerController extends Controller
             $periods[] = date('M', mktime(0,0,0,$period->months, 1, date('Y'))).', '.$period->years;
             [$getRevenueResult[]] = DB::SELECT(
                 DB::RAW(
-                    'SELECT ROUND(SUM((client_rate * 1.025) / 1000000), 2) AS revenuePerMonth FROM tbl_kaya_trips WHERE year(gated_out) = "'.$period->years.'" AND MONTH(gated_out) = "'.$period->months.'" AND trip_status = 1 '
+                    'SELECT SUM(client_rate * 1.025) as clientRate,  SUM(amount * 1.025) as incentives FROM tbl_kaya_trips a  LEFT JOIN tbl_kaya_trip_incentives b ON a.id = b.trip_id WHERE YEAR(gated_out) = "'.$period->years.'" AND MONTH(gated_out) = "'.$period->months.'" AND trip_status = 1 '
                 )
             );
+            $revenues[] = number_format(($getRevenueResult[$key]->clientRate + $getRevenueResult[$key]->incentives) / 1000000, 2);
 
             [$tripmarginpermonth[]] = DB::SELECT(
                 DB::RAW(
@@ -124,10 +125,7 @@ class trackerController extends Controller
 
             $profitAndLoss[] = number_format((float)$tripmarginpermonth[$key]->margin - $monthlyExpenses[$key], 2);
         }
-
         $margins = array_column($tripmarginpermonth, 'margin');
-        $revenues = array_column($getRevenueResult, 'revenuePerMonth');
-
         $sumOfTotalMargin = DB::SELECT(
             DB::RAW(
                 'SELECT SUM(client_rate * 1.025) AS totalRevenue, SUM(transporter_rate) AS totalCost, ROUND(SUM((client_rate * 1.025) - transporter_rate), 2) AS totalMargin FROM tbl_kaya_trips'
