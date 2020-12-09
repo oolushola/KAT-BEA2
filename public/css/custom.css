@@ -249,7 +249,8 @@ td:first-child, .headcol {
     left: 0px;
     font-weight: bold;
     background-color: #fbfbfb;
-    color:#333
+    color:#333;
+    z-index: 10000
 }
 
 .finance-report__select {
