@@ -44,6 +44,11 @@ td{
            </div>
        </div>
        <div class="col-md-2">
+           <div class="card hover filter" data-id="show">
+               <div class="card-body font-weight-bold" id="shootByVoidedTrips">VOIDED TRIPS</div>
+           </div>
+       </div>
+       <div class="col-md-2">
        <input type="text" class="form-control mt-2" placeholder="Search Record" id="searchDataset" />
             <div class="card-body font-weight-bold"></div>
        </div>
@@ -58,10 +63,11 @@ td{
             <option value="{{ $client->id}}">{{ $client->company_name }}</option>
             @endforeach
         </select>
-        <select id="clientLoadingSite" class="filterStyle">
-            <option value="">Loading Site</option>
-            <option value="2">GPF - APAPA</option>
-        </select>
+        <div id="loadingsitePlace">
+            <select id="clientLoadingSite" class="filterStyle">
+                <option value="">Loading Site</option>
+            </select>
+        </div>
         
         <select id="clientTripStatus" class="filterStyle">
             <option value="">Trip Status</option>
@@ -102,7 +108,7 @@ td{
     </div>
 
     <div class="row mt-1 ml-3 mb-3 hidden display" id="showTripStatus">
-        <select id="transporterTripStatus" class="filterStyle">
+        <select id="trackerStatus" class="filterStyle">
             <option value="">Trip Status</option>
             <option value="1">Gate In</option>
             <option value="2">At Loading Bay</option>
@@ -113,7 +119,7 @@ td{
             <option value="7">At Destination</option>
             <option value="8">Offloaded</option>
         </select>
-        <button id="shootByTransporter" class="filterStyle btn-primary cursor" style="border:none; font-weight:bold" >SHOOT</button>
+        <button id="shootByTripStatusOnly" class="filterStyle btn-primary cursor" style="border:none; font-weight:bold" >SHOOT</button>
     </div>
     
     
@@ -235,16 +241,5 @@ td{
             // ajax call get data from server and append to the div
         }
     });
-
-    $('.filter').click(function() {
-        $('.filter').removeClass('bg-danger')
-        $(this).addClass('bg-danger')
-
-        $showDataIdentity = $(this).attr('data-id');
-        $('.display').addClass('hidden')
-        $(`#${$showDataIdentity}`).removeClass('hidden')
-    })
-
-
 </script>
 @stop

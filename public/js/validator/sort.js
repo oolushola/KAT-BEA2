@@ -21,7 +21,6 @@ $(function() {
         })
     })
 
-
     //FILTER THE DATABASE TO GET THE BEST OF EVERY RESULT
 
     $('#shootByClient').click(function() {
@@ -92,9 +91,35 @@ $(function() {
         }
     })
 
+    $('#shootByVoidedTrips').click(function($e) {
+        $e.preventDefault;
+        const payload = '';
+        submit('trips/voided', payload);
+    })
+
+    $('#shootByTripStatusOnly').click(function() {
+        $trackerStatus = $('#trackerStatus').val();
+        const payload = {
+            tracker: $trackerStatus
+        }
+        submit('trips/trip-status', JSON.stringify(payload))
+    })
 
 
+    $('.filter').click(function() {
+        $('.filter').removeClass('bg-danger')
+        $(this).addClass('bg-danger')
 
+        $showDataIdentity = $(this).attr('data-id');
+        $('.display').addClass('hidden')
+        $(`#${$showDataIdentity}`).removeClass('hidden')
+    })
+
+    $('#clients').change(function() {
+        $.get('/orders-loading-sites', { client_id: $(this).val() }, function(data) {
+            $('#loadingsitePlace').html(data)
+        })
+    })
 
     function submit  (url, payload)  {
         $('#contentPlaceholder').html('<i class="icon-spinner3 spinner "></i> Wait...')

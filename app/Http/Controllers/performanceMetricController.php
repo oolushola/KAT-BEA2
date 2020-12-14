@@ -119,8 +119,16 @@ class performanceMetricController extends Controller
                 tbl_kaya_trips', 
                 $userId
             );
+
+            $totalIncentive = DB::SELECT(
+                DB::RAW(
+                    'SELECT SUM(b.amount) AS total_incentive FROM tbl_kaya_trips a JOIN tbl_kaya_trip_incentives b ON a.id = b.trip_id WHERE MONTH(gated_out) = MONTH(CURRENT_DATE()) AND YEAR(gated_out) = YEAR(CURRENT_DATE()) AND a.account_officer_id = "'.$userId.'"'
+                )
+            );
+
+            $gtv = $myClientRateForTheMonth[0]->totalMonthlyClientRate + $totalIncentive[0]->total_incentive;
     
-           $mymonthlyProfit = $myClientRateForTheMonth[0]->totalMonthlyClientRate - $myTransporterRateForTheMonth[0]->totalMonthlyTransporterRate;
+           $mymonthlyProfit = $gtv - $myTransporterRateForTheMonth[0]->totalMonthlyTransporterRate;
 
             $myTotalRevenue = trip::WHERE('account_officer_id', $userId)
                 ->WHERE('trip_status', 1)
@@ -163,7 +171,7 @@ class performanceMetricController extends Controller
                 array(
                     
                     'buhCurrentMonthTarget' => $myMonthlyTargetValue->target,
-                    'gtvForCurrentMonth' => $myClientRateForTheMonth[0]->totalMonthlyClientRate,
+                    'gtvForCurrentMonth' => $gtv,
                     'trForCurrentMonth' => $myTransporterRateForTheMonth[0]->totalMonthlyTransporterRate,
                     'currentMonthRateDiff' => $mymonthlyProfit,
                     'overallGtv' => $myTotalRevenue,
@@ -354,8 +362,6 @@ class performanceMetricController extends Controller
                 'SELECT SUM(client_rate) AS revenueForTheMonth, SUM(transporter_rate) AS totalTrFortheMonth FROM tbl_kaya_trips WHERE account_officer_id = "'.$userId.'" AND MONTH(gated_out) = "'.$selectedMonth.'" AND YEAR(gated_out) = "'.$year.'" AND trip_status = \'1\' AND tracker >= 5 '
             )
         );
-    
-        $profitGenerated = $choosenDateRevenueAndCost[0]->revenueForTheMonth - $choosenDateRevenueAndCost[0]->totalTrFortheMonth;
             
         $currentYearAndMonth = $year.'-'.$selectedMonth;
 
@@ -427,14 +433,27 @@ class performanceMetricController extends Controller
             </div>
         ';
 
-        $revenueGenerated = number_format($choosenDateRevenueAndCost[0]->revenueForTheMonth, 2);
-        $transporterRate = number_format($choosenDateRevenueAndCost[0]->totalTrFortheMonth, 2);
+        $revenueGenerated = $choosenDateRevenueAndCost[0]->revenueForTheMonth;
+        $transporterRate = $choosenDateRevenueAndCost[0]->totalTrFortheMonth;
+
+        $tripsDoneWithIncentives = DB::SELECT(
+            DB::RAW(
+                'SELECT SUM(b.amount) AS total_incentive FROM tbl_kaya_trips a JOIN tbl_kaya_trip_incentives b ON a.id = b.trip_id WHERE MONTH(gated_out) = "'.$selectedMonth.'" AND YEAR(gated_out) = "'.$year.'"  AND a.account_officer_id = "'.$userId.'"'
+            )
+        );
+        $gtv_ = $revenueGenerated + $tripsDoneWithIncentives[0]->total_incentive;
+        $profitGenerated = $gtv_ - $transporterRate;
 
         $percentageProfit = number_format(($profitGenerated / $myMonthlyTargetValue->target) * 100, 2);
         $target = number_format($myMonthlyTargetValue->target, 2);
 
         $grossMargin = $choosenDateRevenueAndCost[0]->revenueForTheMonth - $choosenDateRevenueAndCost[0]->totalTrFortheMonth;
+        if($choosenDateRevenueAndCost[0]->revenueForTheMonth > 0) { 
         $percentageMarkUp = ($grossMargin / $choosenDateRevenueAndCost[0]->revenueForTheMonth) * 100;
+        }
+        else{
+            $percentageMarkUp = 0;
+        }
 
         if($percentageProfit < 0){ $ratings = 0; $stars = ''; $remark = 'Worrisome'; }
         else if($percentageProfit >= 0 && $percentageProfit <= 9) { $ratings = 0; $stars = ''; $remark = 'Too Bad'; }
@@ -527,8 +546,8 @@ class performanceMetricController extends Controller
             'selectedMonthTarget' => $myMonthlyTargetValue,
             'profitGenerated' => $profitGenerated,
             'revenueAndCost' => $choosenDateRevenueAndCost,
-            'revenueGenerated' => $revenueGenerated,
-            'transporterRate' => $transporterRate,
+            'revenueGenerated' => number_format($gtv_, 2),
+            'transporterRate' => number_format($transporterRate, 2),
             'percentageProfit' => $percentageProfit,
             'target' => $target,
             'ratingsChart' => $ratingsChart,

@@ -82,7 +82,6 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('trip/{orderId}/{clientName}', 'ordersController@eventTrip');
     Route::get('trip/{orderId}/{clientName}/{eventid}/edit', 'ordersController@editeventTrip');
     Route::patch('trip-cancel-order/{id}', 'ordersController@voidTrip');
-    Route::get('voided-trips', 'ordersController@showVoidedTrips');
     Route::get('on-journey-trips', 'ordersController@showOnlyOnJourneyTrip');
 
     Route::post('trip-event', 'ordersController@storeOrderEvent');
@@ -327,7 +326,8 @@ Route::group(['middleware' => 'auth'], function() {
     Route::post('assign-client-account-manager', 'camtController@assignClientAccountManager');
     Route::post('remove-assigned-account-manager', 'camtController@removeAssignedAccountManager');
 
-    
+    Route::get('orders-loading-sites', 'sortController@orderLoadingSites');
+
     Route::get('trips/client/all', 'sortController@clientAll');
     Route::get('trips/client/date-range-client-and-status', 'sortController@dateRangeClientAndStatus');
     Route::get('trips/client/date-range-and-client', 'sortController@dateRangeAndClient');
@@ -339,7 +339,8 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('trips/transporters/transporterAndDateRange', 'sortController@transporterAndDateRange');
     Route::get('trips/transporters/all', 'sortController@transporterAll');
     Route::get('trips/transporters/transporterAndTripStatus', 'sortController@transporterAndTripStatus');
-    
+    Route::get('trips/trips/voided', 'sortController@voidedTrips');
+    Route::get('trips/trips/trip-status', 'sortController@tripsTripStatus');
 });
 
 

@@ -21,25 +21,39 @@ use App\Transloader;
 
 class sortController extends Controller
 {
-    
+    public function orderLoadingSites(Request $request) {
+        $loadingSites = DB::SELECT(
+            DB::RAW(
+                'SELECT id, loading_site FROM tbl_kaya_loading_sites WHERE id IN(SELECT loading_site_id FROM tbl_kaya_client_loading_sites WHERE client_id = "'.$request->client_id.'")'
+            )
+        );
+        $answer = '    
+        <select id="clientLoadingSite" class="filterStyle">
+            <option value="">Loading Site</option>';
+            foreach($loadingSites as $loadingsite) {
+                $answer.='<option value="'.$loadingsite->id.'">'.$loadingsite->loading_site.'</option>';
+            }
+        $answer.='</select>';
+        return $answer;
+    }
 
     public function clientAll(Request $request) {
         $payloader = json_decode($request->payload);
-        $trips = $this->tripQuery('DATE(a.gated_out) BETWEEN "'.$payloader->client_date_from.'" AND "'.$payloader->client_date_to.'" AND a.client_id = "'.$payloader->client_id.'" AND a.loading_site_id = "'.$payloader->loading_site_id.'" AND tracker = "'.$payloader->trip_status.'"');
+        $trips = $this->tripQuery('DATE(a.gated_out) BETWEEN "'.$payloader->client_date_from.'" AND "'.$payloader->client_date_to.'" AND a.client_id = "'.$payloader->client_id.'" AND a.loading_site_id = "'.$payloader->loading_site_id.'" AND tracker = "'.$payloader->trip_status.'"', TRUE);
 
         return $this->responseLogger($trips);
     }
 
     public function dateRangeClientAndStatus(Request $request) {
         $payloader = json_decode($request->payload);
-        $trips = $this->tripQuery('DATE(a.gated_out) BETWEEN "'.$payloader->client_date_from.'" AND "'.$payloader->client_date_to.'" AND a.client_id = "'.$payloader->client_id.'" AND a.loading_site_id = "'.$payloader->loading_site_id.'"');
+        $trips = $this->tripQuery('DATE(a.gated_out) BETWEEN "'.$payloader->client_date_from.'" AND "'.$payloader->client_date_to.'" AND a.client_id = "'.$payloader->client_id.'" AND a.loading_site_id = "'.$payloader->loading_site_id.'"', TRUE);
         
         return $this->responseLogger($trips);
     }
 
     public function dateRangeAndClient(Request $request) {
         $payloader = json_decode($request->payload);
-        $trips = $this->tripQuery('DATE(a.gated_out) BETWEEN "'.$payloader->client_date_from.'" AND "'.$payloader->client_date_to.'" AND a.client_id = "'.$payloader->client_id.'"');
+        $trips = $this->tripQuery('DATE(a.gated_out) BETWEEN "'.$payloader->client_date_from.'" AND "'.$payloader->client_date_to.'" AND a.client_id = "'.$payloader->client_id.'"', TRUE);
 
         return $this->responseLogger($trips);
 
@@ -47,7 +61,7 @@ class sortController extends Controller
 
     public function clientLoadingSiteAndTripStatus(Request $request) {
         $payloader = json_decode($request->payload);
-        $trips = $this->tripQuery('a.client_id = "'.$payloader->client_id.'" AND a.loading_site_id = "'.$payloader->loading_site_id.'" AND tracker = "'.$payloader->trip_status.'"');
+        $trips = $this->tripQuery('a.client_id = "'.$payloader->client_id.'" AND a.loading_site_id = "'.$payloader->loading_site_id.'" AND tracker = "'.$payloader->trip_status.'"', TRUE);
 
         return $this->responseLogger($trips);
 
@@ -55,7 +69,7 @@ class sortController extends Controller
 
     public function clientAndStatus(Request $request) {
         $payloader = json_decode($request->payload);
-        $trips = $this->tripQuery('a.client_id = "'.$payloader->client_id.'" AND tracker = "'.$payloader->trip_status.'"');
+        $trips = $this->tripQuery('a.client_id = "'.$payloader->client_id.'" AND tracker = "'.$payloader->trip_status.'"', TRUE);
         
         return $this->responseLogger($trips);
 
@@ -63,39 +77,52 @@ class sortController extends Controller
 
     public function dateRangeClientStatus(Request $request) {
         $payloader = json_decode($request->payload);
-        $trips = $this->tripQuery('DATE(a.gated_out) BETWEEN "'.$payloader->client_date_from.'" AND "'.$payloader->client_date_to.'" AND a.client_id = "'.$payloader->client_id.'" AND tracker = "'.$payloader->trip_status.'"');
+        $trips = $this->tripQuery('DATE(a.gated_out) BETWEEN "'.$payloader->client_date_from.'" AND "'.$payloader->client_date_to.'" AND a.client_id = "'.$payloader->client_id.'" AND tracker = "'.$payloader->trip_status.'"', TRUE);
 
         return $this->responseLogger($trips);
     }
 
     public function transporterOnly(Request $request) {
         $payloader = json_decode($request->payload);
-        $trips = $this->tripQuery('a.transporter_id = "'.$payloader->transporter_id.'"');
+        $trips = $this->tripQuery('a.transporter_id = "'.$payloader->transporter_id.'"', TRUE);
         return $this->responseLogger($trips);
     }
 
     public function transporterAndDateRange(Request $request) {
         $payloader = json_decode($request->payload);
-        $trips = $this->tripQuery('a.transporter_id = "'.$payloader->transporter_id.'" AND DATE(a.gated_out) BETWEEN "'.$payloader->transporter_date_from.'" AND "'.$payloader->transporter_date_to.'" ');
+        $trips = $this->tripQuery('a.transporter_id = "'.$payloader->transporter_id.'" AND DATE(a.gated_out) BETWEEN "'.$payloader->transporter_date_from.'" AND "'.$payloader->transporter_date_to.'"', TRUE);
         return $this->responseLogger($trips);
     }
 
     public function transporterAll(Request $request) {
         $payloader = json_decode($request->payload);
-        $trips = $this->tripQuery('a.transporter_id = "'.$payloader->transporter_id.'" AND DATE(a.gated_out) BETWEEN "'.$payloader->transporter_date_from.'" AND "'.$payloader->transporter_date_to.'" AND tracker="'.$payloader->trip_status.'" ');
+        $trips = $this->tripQuery('a.transporter_id = "'.$payloader->transporter_id.'" AND DATE(a.gated_out) BETWEEN "'.$payloader->transporter_date_from.'" AND "'.$payloader->transporter_date_to.'" AND tracker="'.$payloader->trip_status.'"', TRUE);
         return $this->responseLogger($trips);
     }
 
     public function transporterAndTripStatus(Request $request) {
         $payloader = json_decode($request->payload);
-        $trips = $this->tripQuery('a.transporter_id = "'.$payloader->transporter_id.'" AND tracker="'.$payloader->trip_status.'" ');
+        $trips = $this->tripQuery('a.transporter_id = "'.$payloader->transporter_id.'" AND tracker="'.$payloader->trip_status.'"', TRUE);
         return $this->responseLogger($trips);
     }
 
-    function tripQuery($clause) {
+    public function voidedTrips(Request $request) {
+        $trips = $this->tripQuery('a.trip_id != "" ', FALSE);
+        return $this->responseLogger($trips);
+    }
+
+    public function tripsTripStatus(Request $request) {
+        $payloader = json_decode($request->payload);
+        $trips = $this->tripQuery('tracker = "'.$payloader->tracker.'"', TRUE);
+        return $this->responseLogger($trips);
+    }
+
+    
+
+    function tripQuery($clause, $tripStatus) {
         $query = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, c.truck_no, d.truck_type, d.tonnage, e.transporter_name, e.phone_no, f.driver_first_name, f.driver_last_name, f.driver_phone_number, f.motor_boy_first_name, f.motor_boy_last_name, f.motor_boy_phone_no FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_trucks c JOIN tbl_kaya_truck_types d  JOIN tbl_kaya_transporters e JOIN tbl_kaya_drivers f ON a.loading_site_id = b.id AND c.id = a.truck_id AND c.truck_type_id = d.id AND a.transporter_id = e.id AND f.id = a.driver_id WHERE '.$clause.' AND trip_status = TRUE ORDER BY a.trip_id DESC  '
+                'SELECT a.*, b.loading_site, c.truck_no, d.truck_type, d.tonnage, e.transporter_name, e.phone_no, f.driver_first_name, f.driver_last_name, f.driver_phone_number, f.motor_boy_first_name, f.motor_boy_last_name, f.motor_boy_phone_no FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_trucks c JOIN tbl_kaya_truck_types d  JOIN tbl_kaya_transporters e JOIN tbl_kaya_drivers f ON a.loading_site_id = b.id AND c.id = a.truck_id AND c.truck_type_id = d.id AND a.transporter_id = e.id AND f.id = a.driver_id WHERE '.$clause.' AND trip_status = "'.$tripStatus.'" ORDER BY a.trip_id DESC  '
             )
         );
         return $query;
@@ -106,7 +133,7 @@ class sortController extends Controller
         <table class="table table-bordered">
             <thead class="table-info" style="font-size:11px; background:#000; color:#eee;">
                 <tr class="font-weigth-semibold">
-                    <th>TRIP ID</th>
+                    <th class="headcol">TRIP ID</th>
                     <th>LOADING SITE</td>
                     <th>WAYBILL INFO</th>
                     <th class="text-center">TRUCK INFO</th>
@@ -139,7 +166,7 @@ class sortController extends Controller
                                           
                     $response.='
                     <tr class="'.$css.' hover" style="font-size:10px;">
-                        <td style="">
+                        <td>
                             <a href="trips/'.$trip->id.'/edit" class="list-icons-item text-primary-600" title="Update this trip">'.$trip->trip_id.'</a>
 
                             <a href="way-bill/'.$trip->trip_id.'/'.str_slug($trip->loading_site).'" class="list-icons-item text-warning-600" title="Waybill Status">
