@@ -29,6 +29,7 @@ use App\truckAvailability;
 use App\tripChanges;
 use App\IssueType;
 use Auth;
+use App\Transloader;
 
 use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -493,11 +494,22 @@ class ordersController extends Controller
         
         $pagination = new LengthAwarePaginator(($pagedData), count($collection), $perPage );
         $pagination = $pagination->withPath($path);
-        
+        $transloadedTrips = [];
+        $tripWaybills = [];
 
         foreach($pagination as $trip){
             $waybillListings[] = tripWaybill::SELECT('trip_id', 'sales_order_no', 'invoice_no', 'photo')->WHERE('trip_id', $trip->id)->GET();
+
+            $transloaderTrip = DB::SELECT(
+                DB::RAW(
+                    'SELECT a.trip_id, a.reason_for_transloading, a.created_at, b.truck_no, c.driver_first_name, c.driver_phone_number, d.truck_type, d.tonnage FROM tbl_kaya_trip_transloaders a JOIN tbl_kaya_trucks b JOIN tbl_kaya_drivers c JOIN tbl_kaya_truck_types d ON a.transloaded_truck_id = b.id AND a.transloaded_driver_id = c.id AND b.truck_type_id = d.id WHERE trip_id = "'.$trip->id.'" '
+                )
+            );
+            if($transloaderTrip) {
+                [$transloadedTrips[]] = $transloaderTrip;
+            }
         }
+
         if(count($waybillListings)){
             foreach($waybillListings as $waybills) {
                foreach($waybills as $waybillsArray) {
@@ -519,38 +531,27 @@ class ordersController extends Controller
                $tripEvents[] = $tripEvent;
            }
         }
-        
-        
-        $waybillstatuses = tripWaybillStatus::GET();
-        // $clientRates = DB::SELECT(
-        //     DB::RAW(
-        //         'SELECT a.client_id, a.amount_rate, b.* FROM `tbl_kaya_client_fare_rates` a LEFT JOIN `tbl_kaya_transporter_rates` b ON a.from_state_id = b.transporter_from_state_id AND a.to_state_id = b.transporter_to_state_id AND a.destination = b.transporter_destination'
-        //     )
-        // );
-        //$trippayments = tripPayment::GET();
         $products = product::SELECT('id', 'product')->ORDERBY('product')->GET();
         $states = DB::SELECT(
             DB::RAW(
                 'SELECT regional_state_id, state FROM tbl_regional_state WHERE regional_country_id = \'94\' ORDER BY state ASC'
             )
         );
-        //$invoiceCriteria = tripWaybillStatus::GET();
+
+        
 
         return view('orders.view-orders',
             compact(
                 'orders',
                 'tripWaybills',
                 'tripEvents',
-                'waybillstatuses',
-                // 'clientRates',
-                // 'trippayments',
                 'clients',
                 'transporters',
                 'loadingSites',
                 'products',
                 'states',
-                // 'invoiceCriteria',
-                'pagination'
+                'pagination',
+                'transloadedTrips'
             )
         );
     }
@@ -578,8 +579,6 @@ class ordersController extends Controller
             )
         );   
     }
-
-    //Copy From here to the production server!
 
     public function eventTrip($orderId, $clientName) {
         $client_name = str_replace('-', ' ', $clientName);
@@ -721,8 +720,6 @@ class ordersController extends Controller
             if($request->tracker == 6) { $onjourney_status = 1; $destination_status = 0; $offload_status = 0; }
             if($request->tracker == 7) { $onjourney_status = 1; $destination_status = 1; $offload_status = 0;}
             if($request->tracker == 8) { $onjourney_status = 1; $destination_status = 1; $offload_status = 1; }
-
-            //return $request->all();
 
             $recid = tripEvent::findOrFail($id);
             $recid->UPDATE([
@@ -897,10 +894,7 @@ class ordersController extends Controller
 
         $changes = tripChanges::CREATE(['trip_id' => $request->trip_id, 'user_id' => $request->user_id, 'changed_keys' => 12, 'changed_values' => 'Waybill Remark Updated']);
 
-
         return 'saved';
-
-
     }
 
     public function clientReport() {

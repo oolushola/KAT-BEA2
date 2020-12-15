@@ -318,8 +318,22 @@ class dashboardController extends Controller
                 if(count($arrayObject)) {
                     $count = 0;
                     foreach($arrayObject as $object) {
-                        $count +=1;
+                        $now = time(); // or your date as well
+                        $your_date = strtotime($object->$fieldLabel);
+                        $datediff = $now - $your_date;
+                        $noOfDays = round($datediff / (60 * 60 * 24));
+                        $noOfDays > 5 ? $className = 'notifier' : $className = 'bg-success pt-2';
+                        if($noOfDays <= 0) {
+                            $daysUsed = '< A Day';
+                        }
+                        elseif ($noOfDays == 1) {
+                            $daysUsed = 'A Day';
+                        }
+                        else{
+                            $daysUsed = $noOfDays.' Days';
+                        }
 
+                        $count +=1;
                         $comment = '<i class="icon-comment ml-4 text-danger operationsUpdate pointer" id="'.$object->trip_id.'"></i>';
                         $object->operations_remark ? $classes = 'ml-1 d-block bg-info font-size-xs p-1' : $classes = '';
                         $operationResult = '
@@ -357,10 +371,14 @@ class dashboardController extends Controller
                         </td>';
                         if($tracker <= 4) {
                             $data.='
-                            <td width="25%">
+                                <td width="25%">
                                 <p>'.$comment.'</p>
                                 '.$inputText.'
-                                <p>'.$operationResult.'</p>
+                                <p>'.$operationResult.'</p>';
+                            $data.= '
+                                <span class="defaultNotifier '.$className.'">
+                                    <a href="trip-overview/'.$object->trip_id.'">'.$daysUsed.'</a>
+                                </span>
                             </td>';
                         }
                         
@@ -407,12 +425,6 @@ class dashboardController extends Controller
                                     $data.= $operationResult;
                                 }
                             }
-                            $now = time(); // or your date as well
-                            $your_date = strtotime($object->gated_out);
-                            $datediff = $now - $your_date;
-                            $noOfDays = round($datediff / (60 * 60 * 24));
-
-                            $noOfDays > 5 ? $className = 'notifier' : $className = '';
 
                             $data.= '<p class=" defaultNotifier '.$className.'">
                                 <a href="trip-overview/'.$object->trip_id.'"> '.$noOfDays.' Days </a>
@@ -436,9 +448,7 @@ class dashboardController extends Controller
                                 </td>';
                                 }
                             }
-                            $data.='</td>';
-                            
-                           
+                            $data.='</td>';  
                         }
                         $data.='
                         </tr>';
@@ -581,6 +591,15 @@ class dashboardController extends Controller
         $query = DB::SELECT(
             DB::RAW(
                 'SELECT a.*, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND DATE('.$fieldValue.') = "'.$currentDate.'" ORDER BY a.trip_id DESC'
+            )
+        );
+        return $query;
+    }
+
+    function displayRecordOfTripsTwo($fieldValue, $currentDate) {
+        $query = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND a.client_id != \'1\' AND DATE('.$fieldValue.') = "'.$currentDate.'" ORDER BY a.trip_id DESC'
             )
         );
         return $query;

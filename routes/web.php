@@ -82,7 +82,6 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('trip/{orderId}/{clientName}', 'ordersController@eventTrip');
     Route::get('trip/{orderId}/{clientName}/{eventid}/edit', 'ordersController@editeventTrip');
     Route::patch('trip-cancel-order/{id}', 'ordersController@voidTrip');
-    Route::get('voided-trips', 'ordersController@showVoidedTrips');
     Route::get('on-journey-trips', 'ordersController@showOnlyOnJourneyTrip');
 
     Route::post('trip-event', 'ordersController@storeOrderEvent');
@@ -157,37 +156,6 @@ Route::group(['middleware' => 'auth'], function() {
  
     Route::resource('cargo-availability', 'cargoAvailabilityController');
     Route::resource('kaya-target', 'targetController');
-
-    Route::get('client-trip-sort', 'sortController@clienttrips');
-    Route::get('sort-loading-site-client', 'sortController@sortByloadingSiteandClient');
-    Route::get('sort-tracker', 'sortController@sortByTracker');
-    Route::get('sort-transporters', 'sortController@sortByTransporters');
-    Route::get('sort-waybill-status', 'sortController@sortByWaybillstatus');
-
-    // Sort and Filter By Year
-    Route::get('filter-by-year', 'yearElasticSortController@filterYearOnly');
-    Route::get('filter-year-month', 'yearElasticSortController@filterYearandMonth');
-    Route::get('filter-year-client', 'yearElasticSortController@filterYearandClient');
-    Route::get('filter-year-loading-site', 'yearElasticSortController@filterYearandLoadingsite');
-    Route::get('filter-year-transporter', 'yearElasticSortController@filterYearTransporter');
-    Route::get('filter-year-product', 'yearElasticSortController@filterYearProduct');
-    Route::get('filter-year-state', 'yearElasticSortController@filterYearState');
-
-    // Sort and filter by month
-    Route::get('filter-month-only', 'monthElasticSortController@monthonly');
-    Route::get('filter-month-client', 'monthElasticSortController@monthandclient');
-    Route::get('filter-month-loading-site', 'monthElasticSortController@monthandloadingsite');
-    Route::get('filter-month-transporters', 'monthElasticSortController@monthandtransporters');
-    Route::get('filter-month-destination', 'monthElasticSortController@monthanddestination');
-    Route::get('filter-month-products', 'monthElasticSortController@monthandproducts');
-    Route::get('filter-month-client-ls', 'monthElasticSortController@monthclientloadingsite');
-    Route::get('filter-month-destination-el', 'monthElasticSortController@monthdestinationexact');
-
-    // Sort and filter by week
-    Route::get('filter-by-weekonly', 'weekElasticSortController@filterweekonly');
-    Route::get('filter-week-by-product', 'weekElasticSortController@filterweekproduct');
-    Route::get('filter-week-by-loadingsite', 'weekElasticSortController@filterweekloadingsite');
-    Route::get('filter-week-all-criteria', 'weekElasticSortController@filterweeklyfullcriteria');
 
     Route::resource('incentives', 'incentivesController');
 
@@ -358,8 +326,21 @@ Route::group(['middleware' => 'auth'], function() {
     Route::post('assign-client-account-manager', 'camtController@assignClientAccountManager');
     Route::post('remove-assigned-account-manager', 'camtController@removeAssignedAccountManager');
 
-    
-    
+    Route::get('orders-loading-sites', 'sortController@orderLoadingSites');
+
+    Route::get('trips/client/all', 'sortController@clientAll');
+    Route::get('trips/client/date-range-client-and-status', 'sortController@dateRangeClientAndStatus');
+    Route::get('trips/client/date-range-and-client', 'sortController@dateRangeAndClient');
+    Route::get('trips/client/client-loading-site-and-trip-status', 'sortController@clientLoadingSiteAndTripStatus');
+    Route::get('trips/client/client-and-status', 'sortController@clientAndStatus');
+    Route::get('trips/client/dateRangeClientStatus', 'sortController@dateRangeClientStatus');
+
+    Route::get('trips/transporters/transporter', 'sortController@transporterOnly');
+    Route::get('trips/transporters/transporterAndDateRange', 'sortController@transporterAndDateRange');
+    Route::get('trips/transporters/all', 'sortController@transporterAll');
+    Route::get('trips/transporters/transporterAndTripStatus', 'sortController@transporterAndTripStatus');
+    Route::get('trips/trips/voided', 'sortController@voidedTrips');
+    Route::get('trips/trips/trip-status', 'sortController@tripsTripStatus');
 });
 
 
