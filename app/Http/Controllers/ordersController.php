@@ -247,12 +247,19 @@ class ordersController extends Controller
             $lastTripId = str_replace('KAID', '', $getLastTripId->trip_id);
             $counter = intval('0000') + intval($lastTripId) + 1;
             $kaya_id = 'KAID'.sprintf('%04d', $counter);
+            if($request->product_id == 3) {
+                $trip_category = 2;
+            }
+            else{
+                $trip_category = 1;
+            }
 
             $trip = trip::CREATE($request->all());
 
             $id = $trip->id;
             $recid = $trip::findOrFail($id);
             $recid->trip_id = $kaya_id;
+            $recid->trip_type = $trip_category;
 
             $transporterRecord = transporter::findOrFail($recid->transporter_id);
             $userIdentity = $transporterRecord->assign_user_id;
@@ -326,6 +333,13 @@ class ordersController extends Controller
             $counter = intval('0000') + intval($lastTripId) + 1;
             $kaya_id = sprintf('%04d', $counter);
 
+            if($request->product_id == 3) {
+                $trip_category = 2;
+            }
+            else{
+                $trip_category = 1;
+            }
+
             $transporterRecord = transporter::findOrFail($request->transporter_id);
             $userIdentity = $transporterRecord->assign_user_id;
             $tripId = 'KAID'.$kaya_id;
@@ -343,7 +357,8 @@ class ordersController extends Controller
                 'trip_id' => $tripId,
                 'account_officer' => $request->account_officer,
                 'tracker' => $request->tracker,
-                'trip_status' => TRUE
+                'trip_status' => TRUE,
+                'trip_type' => $trip_category
             ]);
             $addNewTrip->trip_id = 'KAID'.$kaya_id;
             $addNewTrip->account_officer_id = $userIdentity;
