@@ -94,7 +94,6 @@ class dashboardController extends Controller
             );
             return $this->finderResponse($waybills, $checker);
         }
-        
     }
 
 
@@ -219,6 +218,11 @@ class dashboardController extends Controller
         }
 
         $percentageTarget = number_format(($achieved / $target->target) * 100, 1);
+        $paymentNotification = DB::SELECT(
+            DB::RAW(
+                'SELECT COUNT(a.trip_id) AS trips FROM tbl_kaya_trips a JOIN tbl_kaya_payment_notifications b ON a.id = b.trip_id WHERE paid_status = FALSE'
+            )
+        );
 
         return array(
             'total_gate_out' => $totalGateOutCount,
@@ -233,7 +237,8 @@ class dashboardController extends Controller
             'target' => [$leftOver, $achieved],
             'percentage' => $percentageTarget,
             'achieved' => $achieved,
-            'monthlyTarget' => $target->target
+            'monthlyTarget' => $target->target,
+            'paymentNotification' => $paymentNotification[0]->trips
         );
     }
 
@@ -557,7 +562,7 @@ class dashboardController extends Controller
                         </td>
                         <td>
                             <span class="text-primary"><b>'.$specificRecord->truck_no.'</b></span>
-                            <p style="margin:0"><b>Truck Type</b>: '.$specificRecord->truck_type.' '.$specificRecord->tonnage / 1000 .' T</p>
+                            <p style="margin:0"><b>Truck Type</b>: '.$specificRecord->truck_type.' '.$specificRecord->tonnage / 1000 .'T</p>
                             <p style="margin:0"><b>Transporter</b>: '.$specificRecord->transporter_name.', '.$specificRecord->phone_no.'</p>
                         </td>
                         <td>';

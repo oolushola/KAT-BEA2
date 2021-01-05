@@ -71,7 +71,13 @@ class trackerController extends Controller
         );
 
         $lastMonthMargin = $lastMonthTrip[0]->totalClientRate - $lastMonthTrip[0]->transporterRate;
-        $avgMarginForLastMonth = number_format(($lastMonthMargin / $lastMonthTrip[0]->totalGateOut), 2);
+        if($lastMonthTrip[0]->totalGateOut != 0){
+            $avgMarginForLastMonth = number_format(($lastMonthMargin / $lastMonthTrip[0]->totalGateOut), 2);
+        }
+        else{
+            $avgMarginForLastMonth = 0;
+        }
+        
 
 
         

@@ -341,6 +341,10 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('trips/transporters/transporterAndTripStatus', 'sortController@transporterAndTripStatus');
     Route::get('trips/trips/voided', 'sortController@voidedTrips');
     Route::get('trips/trips/trip-status', 'sortController@tripsTripStatus');
+
+    Route::get('payment-notification-history', 'PaymentNotificationController@paymentNotifications');
+    Route::get('approve-uploaded-payment', 'PaymentNotificationController@approveUploadedPayment');
+    Route::get('decline-uploaded-payment', 'PaymentNotificationController@declineUploadedPayment');
 });
 
 

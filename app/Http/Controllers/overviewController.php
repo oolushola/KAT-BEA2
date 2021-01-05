@@ -25,6 +25,8 @@ use App\bulkPayment;
 use Mail;
 use App\offloadWaybillRemark;
 use App\PaymentHistory;
+use Auth;
+use App\PaymentNotification;
 
 class overviewController extends Controller
 {
@@ -259,10 +261,12 @@ class overviewController extends Controller
             $getTrip->save();
 
             //create a payment history log here.
-            $payment = PaymentHistory::CREATE(['trip_id' => $recid->trip_id]);
+            $payment = PaymentNotification::firstOrNew(['trip_id' => $recid->trip_id, 'payment_for' => 'Advance']);
             $payment->amount = $advance;
-            $payment->payment_mode = 'Advance';
+            $payment->uploaded_at = DATE('Y-m-d H:i:s');
+            $payment->uploaded_by = Auth::user()->id;
             $payment->save();
+
         }
 
         return 'approved';

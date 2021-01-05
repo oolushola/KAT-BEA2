@@ -13,6 +13,9 @@ use App\tripWaybill;
 use Mail;
 use App\transporter;
 use App\PaymentHistory;
+use Auth;
+use App\PaymentNotification;
+
 
 class paymentExceptionController extends Controller
 {
@@ -243,10 +246,10 @@ class paymentExceptionController extends Controller
             }
             $recid->save();
 
-            //create a payment history log here.
-            $payment = PaymentHistory::CREATE(['trip_id' => $recid->trip_id]);
+            $payment = PaymentNotification::firstOrNew(['trip_id' => $recid->trip_id, 'payment_for' => 'Balance']);
             $payment->amount = $balance;
-            $payment->payment_mode = 'Balance';
+            $payment->uploaded_at = DATE('Y-m-d H:i:s');
+            $payment->uploaded_by = Auth::user()->id;
             $payment->save();
         }
         return 'approved';

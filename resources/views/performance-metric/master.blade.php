@@ -454,6 +454,7 @@
                 numberOfTripsChart.data.datasets[1].data = res.monthlyTripRemainder
                 numberOfTripsChart.update()
 
+                transporterChart.data.labels = res.unitHeadInformation 
                 transporterChart.data.datasets[0].label = `Transporter Gained for ${res.selectedMonth}`
                 transporterChart.data.datasets[0].data = res.transportersGained
                 transporterChart.update()
