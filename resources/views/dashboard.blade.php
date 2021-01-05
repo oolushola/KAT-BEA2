@@ -980,6 +980,8 @@ input, select{
             loadingSiteCountChart.data.labels = res.loading_site
             loadingSiteCountChart.data.datasets[0].data = res.loading_site_daily_count
             loadingSiteCountChart.update()
+
+            $('#paymentLabel').text(res.paymentNotification)
         })
     }, 60000);
 
@@ -1027,6 +1029,36 @@ input, select{
         $.get('/today-gate-out-data', function(data) {
             $('#todayGateOutView').html(data)
         })
+    })
+
+    $(document).on('click', '.paidFor', function() {
+        $paymentId = $(this).attr('id')
+        $(this).html('<i class="icon-spinner2 spinner"></i> Processing...')
+        $e = $(this);
+        $.get('/approve-uploaded-payment', { paymentNotificationId: $paymentId }, function(data) {
+            if(data == 'approved') {
+                $e.html('Paid <i class="icon-checkmark2"></i>')
+                $e.removeClass('paidFor')
+                $('#declined'+$paymentId).addClass('d-none')
+            }
+        })
+    })
+
+    $(document).on('click', '.declineFor', function() {
+        $paymentId = $(this).attr('id')
+        $ask = confirm('Are you sure you want to decline this payment?');
+        if($ask) {
+            $(this).html('<i class="icon-spinner2 spinner"></i> Processing...')
+            $e = $(this);
+            $.get('/decline-uploaded-payment', { paymentNotificationId: $paymentId }, function(data) {
+                if(data == 'declined') {
+                    $('#box'+$paymentId).addClass('d-none')
+                }
+            })
+        }
+        else{
+            return false;
+        }
     })
 </script>
 @stop

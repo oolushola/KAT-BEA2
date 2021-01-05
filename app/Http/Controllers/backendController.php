@@ -99,13 +99,19 @@ class backendController extends Controller
         $clients = client::WHERE('client_status', '1')->GET()->COUNT();
         $prsSession = PrsSession::WHERE('user_id', Auth::user()->id)->WHERE('prs_starts', TRUE)->WHERE('prs_ends', FALSE)->GET()->LAST();
 
+        $paymentNotification = DB::SELECT(
+            DB::RAW(
+                'SELECT COUNT(a.trip_id) AS trips FROM tbl_kaya_trips a JOIN tbl_kaya_payment_notifications b ON a.id = b.trip_id WHERE paid_status = FALSE'
+            )
+        );
 
         Session::put([
             'payment_request' => $paymentRequested,
             'on_journey' => $onJourney,
             'client' => $clients,
             'offloaded_trips' => $offloadedTrips,
-            'prsSession' => $prsSession
+            'prsSession' => $prsSession,
+            'paymentNotification' => $paymentNotification[0]->trips
         ]);
 
         $currentGateOutRecord = $this->displayRecordOfTrips('gated_out', $currentDate);
@@ -150,6 +156,7 @@ class backendController extends Controller
             $specificDataRecord = [];
         }
         
+        $dateRangeWaybilllistings = [];
         if(count($specificDataRecord)){
             foreach($gateOutForDateRange as $key => $gateOutForDateRangeWaybills) {
                 foreach($gateOutForDateRangeWaybills as $gateOutForDateRangeWaybill) {
