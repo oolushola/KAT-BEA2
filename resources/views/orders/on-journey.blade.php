@@ -72,7 +72,7 @@ td:first-child, .headcol {
 
                             <a href="{{URL('way-bill/'.$trip->trip_id.'/'.str_slug($trip->loading_site))}}" class="list-icons-item text-warning-600" title="Waybill Status"><i class="icon-file-check text-warning-600"></i></a>
 
-                            <span data-toggle="modal" data-target=".eventLog" class="addEvent" id="{{ $trip->tracker }}" name="{{ $trip->loading_site }}"  title="{{ $trip->trip_id }}" value="{{ $trip->id }}">
+                            <span data-toggle="modal" data-target=".eventLog" class="addEvent" id="{{ $trip->tracker }}" name="{{ $trip->loading_site }}"  title="{{ $trip->trip_id }}" value="{{ $trip->id }}" data-prod="{{ $trip->product }}">
                                 <i class="icon-calendar52 text-success-600"></i>
                             </span>
                             <p class="m-0"> 

@@ -27,10 +27,12 @@ $(function() {
         $loadingSite = $(this).attr('name')
         $kaid = $(this).attr('title')
         $tripId = $(this).attr('value')
+        $product = $(this).attr('data-prod')
         $('.modal-title').html($kaid+' : '+$loadingSite).addClass('font-weight-semibold')
         $('#tripId').val($tripId);
         $('#orderId').val($kaid);
         $('#loadingSite').val($loadingSite);
+        $('#productCarried').val($product)
         $('#eventLogListings').html('<i class="spinner icon-spinner3"></i>')
         $.get('/event-log/', {tripId: $tripId, kaid: $kaid, loadingSite: $loadingSite, tracker: $tracker, }, function(data) {
             $('#eventLogListings').html(data)
@@ -63,6 +65,8 @@ $(function() {
             $('#offloadEndTime').attr('disabled', 'disabled')
             $('#offloadedLocation').attr('disabled', 'disabled')
             $('#offloadIssueType').attr('disabled', 'disabled')
+
+            $('#waybillAndEirPlaceholder').addClass('d-none')
         }
         if($(this).val() == 7) {
             $("#timeArrivedDestination").removeAttr('disabled', 'disabled')
@@ -71,6 +75,8 @@ $(function() {
             $('#offloadEndTime').attr('disabled', 'disabled')
             $('#offloadedLocation').attr('disabled', 'disabled')
             $('#offloadIssueType').attr('disabled', 'disabled')
+
+            $('#waybillAndEirPlaceholder').addClass('d-none')
         }
         if($(this).val() == 8) {
             $("#timeArrivedDestination").removeAttr('disabled', 'disabled')
@@ -81,6 +87,8 @@ $(function() {
             $('#offloadIssueType').removeAttr('disabled', 'disabled')
             $('#locationCheckOne :input').removeAttr("disabled");
             $('#locationCheckTwo :input').removeAttr("disabled");
+
+            $('#waybillAndEirPlaceholder').removeClass('d-none')
         }
     })
 
@@ -117,6 +125,8 @@ $(function() {
             $('#addTripEvent').addClass('d-none')
 
             $('#patchMethod').val('PATCH')
+
+            $('#frmTripEvent').attr('action', `/trip-event/${$id}`)
         });
 
     })
@@ -229,9 +239,22 @@ $(function() {
                     errorMessage('#offloadedLocation', '#loaderEvent', 'Offload location is required.', 'error')
                     return false;
                 }
+                $product = $('#productCarried').val()
+                if($product !== 'Container') {
+                    //request for at least one waybill or eir to be uploaded.
+                    $validFields = $('input[type="file"]').map(function() {
+                        if($(this).val() !== "") {
+                            return $(this)
+                        }
+                    }).get()
+                    if(!$validFields.length) {
+                        alert('At least one Signed Waybill or an EIR is required to be uploaded before offloading.')
+                        return false
+                    }
+                }
                 $ask = confirm('Are you sure about the offload issue type status?');
                 if($ask) {
-                    submit(url)
+                    $('#frmTripEvent').submit() 
                 }
                 else{
                     return false;
@@ -269,4 +292,37 @@ $(function() {
             $('#contentPlaceholder').html(data);
         })
     })
+
+
+    $('#addMoreWaybillAndEir').click(function() {
+        $moreImages = '<span class="mr-3">';
+        $moreImages += '<input type="file" name="received_waybill_and_eir[]" id="receivedWaybillAndEir" class="font-size-xs mb-1 d-inline">';
+        $moreImages += '<i class="icon-minus-circle2 text-danger removeWaybillAndEir" id=""></i>';
+        $moreImages += '</div>';
+        $('#waybillAndEirHolder').append($moreImages)
+    })
+
+    $(document).on('click', '.removeWaybillAndEir', function() {
+        $(this).parent('span').remove()
+    })
+
+
+    $("#frmTripEvent").ajaxForm(function(data){
+        $dataResult = data.split('`')
+        if(data == 'exists'){
+            errorMessage(
+                '#loaderEvent',
+                'This waybill already exists.',
+                'error'
+            )
+            return false;
+        }
+        else {
+            if($dataResult[0] == 'saved' || $dataResult[0] == 'updated') {
+                window.location = '';
+            }
+        }
+    });
+
+    
 })
