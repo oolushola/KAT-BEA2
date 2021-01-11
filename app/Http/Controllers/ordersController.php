@@ -31,7 +31,7 @@ use App\IssueType;
 use Auth;
 use App\Transloader;
 use App\offloadWaybillRemark;
-
+use App\OffloadWaybillStatus;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -660,9 +660,31 @@ class ordersController extends Controller
                         'time_arrived_destination' => $request->tad,
                         'trip_id' => $request->trip_id,
                         'gate_in_time_destination' => $request->gate_in_destination_timestamp,
-
                     ]);
                     $event->save();
+
+                    $signedWaybill = $request->file('received_waybill_and_eir');
+                    if($request->received_waybill_and_eir[0] != '') { 
+                        foreach($signedWaybill as $key => $collectedWaybill) {
+                            if(isset($collectedWaybill) && $collectedWaybill != '') {
+                                $name = 'signed-waybill-'.$request->trip_id.'.'.$collectedWaybill->getClientOriginalExtension();
+                                $destination_path = public_path('assets/img/signedwaybills/');
+                                $waybillPath = $destination_path."/".$name;
+                                $collectedWaybill->move($destination_path, $name);
+                                offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => 'Waybill for: '.$request->orderId ]);
+                            }
+                        }
+                        $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
+                        $offloadEir->has_eir = TRUE;
+                        $offloadEir->date_offloaded = date('Y-m-d H:i:s');
+                        $offloadEir->save();
+                    }
+                    else{
+                        $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
+                        $offloadEir->has_eir = FALSE;
+                        $offloadEir->date_offloaded = date('Y-m-d H:i:s');
+                        $offloadEir->save();
+                    }
                 }
                 else {
                     $tripEvent = tripEvent::CREATE([
@@ -699,6 +721,16 @@ class ordersController extends Controller
                                 offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => 'Waybill for: '.$request->orderId ]);
                             }
                         }
+                        $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
+                        $offloadEir->has_eir = TRUE;
+                        $offloadEir->date_offloaded = date('Y-m-d H:i:s');
+                        $offloadEir->save();
+                    }
+                    else{
+                        $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
+                        $offloadEir->has_eir = FALSE;
+                        $offloadEir->date_offloaded = date('Y-m-d H:i:s');
+                        $offloadEir->save();
                     }
                 }
             }
@@ -722,6 +754,7 @@ class ordersController extends Controller
                 ]);
                 $tripEvent->save();
             }
+
             $recid = trip::findOrFail($request->trip_id);
             $recid->tracker = $request->tracker;
             $recid->save();
@@ -729,6 +762,7 @@ class ordersController extends Controller
             $trip_id = $request->trip_id;
             $order_id = $request->orderId;
             $loading_site = $request->loading_site;
+            
             $result = 'saved`'.$this->eventLogRecord($trip_id, $order_id, $loading_site); 
             
             return $result;  
@@ -797,6 +831,16 @@ class ordersController extends Controller
                             offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => 'Waybill for: '.$request->orderId ]);
                         }
                     }
+                    $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
+                    $offloadEir->has_eir = TRUE;
+                    $offloadEir->date_offloaded = date('Y-m-d H:i:s');
+                    $offloadEir->save();
+                }
+                else{
+                    $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
+                    $offloadEir->has_eir = FALSE;
+                    $offloadEir->date_offloaded = date('Y-m-d H:i:s');
+                    $offloadEir->save();
                 }
             }
 
