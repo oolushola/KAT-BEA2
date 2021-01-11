@@ -244,13 +244,13 @@
     display: none
 }
 
-td:first-child, .headcol {
+/* td:first-child, .headcol {
     position: sticky;
     left: 0px;
     font-weight: bold;
     background-color: #fbfbfb;
     color:#333;
-}
+} */
 
 .finance-report__select {
     font-size:11px; padding: 5px; border: 1px solid #ccc; width:150px; outline: none;

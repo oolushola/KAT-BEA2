@@ -6,6 +6,7 @@ $(function() {
         $id = $(this).attr('id');
         $('#titlePlace').html(`OFFLOADING REMARKS FOR : ${$title}`);
         $('#tripId').val($id);
+        $('#productHolder').val($(this).attr('data-product'))
     });
 
     $('#updateTripEvent').click(function($e) {
@@ -43,6 +44,19 @@ $(function() {
             $('#messageHolder').html('<i class="icon-x"></i>The exact place where this truck offloaded is required.').addClass('error')
             $('#offloadedLocation').focus();
             return false;
+        }
+        $product = $('#productHolder').val();
+        if($product !== 'Container') {
+            //request for at least one waybill or eir to be uploaded.
+            $validFields = $('input[type="file"]').map(function() {
+                if($(this).val() !== "") {
+                    return $(this)
+                }
+            }).get()
+            if(!$validFields.length) {
+                $('#messageHolder').html('<i class="icon-x"></i>At least a proof of signed waybill is required to be uploaded before offloading.').addClass('error')
+                return false
+            }
         }
         
         $('#messageHolder').html('<i class="spinner icon-spinner2"></i>Please wait...').addClass('text-warning');

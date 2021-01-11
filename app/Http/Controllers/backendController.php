@@ -67,11 +67,26 @@ class backendController extends Controller
         $departedLoadingBay = trip::WHERE('tracker', 4)->WHERE('trip_status', '!=', 0)->GET()->COUNT();
         $onJourney = trip::WHERE('tracker', '>=', '5')->WHERE('tracker', '<=', 6)->WHERE('trip_status', '!=', 0)->GET()->COUNT();
         $atDestination = trip::WHERE('tracker', 7)->GET()->COUNT();
+        
         $offloadedTrips = DB::SELECT(
             DB::RAW(
-                'SELECT COUNT(*) as offloadedTrips FROM tbl_kaya_trips a JOIN tbl_kaya_trip_events b ON a.id = b.trip_id WHERE offloading_status = TRUE AND DATE(offload_start_time) = "'.$current_date.'" AND a.tracker = \'8\''
+                'SELECT COUNT(*) AS offloadedTrips FROM tbl_kaya_trips a JOIN tbl_kaya_offload_waybill_statuses b JOIN tbl_kaya_trip_events c ON a.id = b.trip_id AND a.id = c.trip_id AND c.offloading_status = TRUE WHERE tracker = 8 AND trip_status = TRUE AND `has_eir` = FALSE OR DATE(offload_end_time) = CURDATE() AND trip_type = 1'
             )
         );
+        
+        $returningTrips = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*,  loading_site, truck_no, tonnage, transporter_name, phone_no, product FROM tbl_kaya_trips a JOIN tbl_kaya_offload_waybill_statuses b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_trucks d JOIN tbl_kaya_transporters e JOIN tbl_kaya_products f JOIN tbl_kaya_truck_types g ON a.id = b.trip_id AND a.loading_site_id = c.id AND a.truck_id = d.id AND d.truck_type_id = g.id AND a.transporter_id = e.id AND a.product_id = f.id WHERE a.id IN (SELECT DISTINCT trip_id FROM tbl_kaya_offload_waybill_remarks) AND trip_type = 2 AND tracker = 8 AND trip_status = TRUE AND b.empty_returned = FALSE'
+            )
+        );
+        $returnTrips = count($returningTrips);
+
+        $emptiesReturned = DB::SELECT(
+            DB::RAW(
+                'SELECT a.*, empty_returned,  loading_site, truck_no, tonnage, transporter_name, phone_no, product, truck_type FROM tbl_kaya_trips a JOIN tbl_kaya_offload_waybill_statuses b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_trucks d JOIN tbl_kaya_transporters e JOIN tbl_kaya_products f JOIN tbl_kaya_truck_types g ON a.id = b.trip_id AND a.loading_site_id = c.id AND a.truck_id = d.id AND d.truck_type_id = g.id AND a.transporter_id = e.id AND a.product_id = f.id WHERE a.id IN (SELECT DISTINCT trip_id FROM tbl_kaya_offload_waybill_remarks) AND trip_type = 2 AND tracker = 8 AND trip_status = TRUE AND b.empty_returned = TRUE AND empty_returned_date = CURDATE() '
+            )
+        );
+        $emptyReturned = count($emptiesReturned);
         
         $numberofdailygatedout = trip::WHEREDATE('gated_out', date('Y-m-d'))->GET()->COUNT();
 
@@ -212,7 +227,7 @@ class backendController extends Controller
             )
         );
 
-        return view('dashboard', compact('getGatedOutByMonth', 'allTrips', 'monthlyTarget', 'onJourney', 'atDestination', 'offloadedTrips',  'numberofdailygatedout', 'countDailyTripByLoadingSite', 'loading_sites', 'noOfGatedOutTripForCurrentWeek', 'loadingBay', 'gateIn', 'allclients', 'departedLoadingBay', 'currentGateOutRecord', 'tripWaybills', 'gateInData', 'atloadingbayData', 'departedLoadingBayData', 'onJourneyData', 'atDestinationData', 'offloadedData', 'tripRecordsForTheMonth', 'totalGateOuts', 'noOfTripsPerDay', 'availableTrucks', 'tripEventListing', 'tripWaybillYetToReceive', 'specificDataRecord', 'monthWaybillRecord', 'yetToReceiveWaybillDetails', 'dateRangeWaybilllistings'));
+        return view('dashboard', compact('getGatedOutByMonth', 'allTrips', 'monthlyTarget', 'onJourney', 'atDestination', 'offloadedTrips',  'numberofdailygatedout', 'countDailyTripByLoadingSite', 'loading_sites', 'noOfGatedOutTripForCurrentWeek', 'loadingBay', 'gateIn', 'allclients', 'departedLoadingBay', 'currentGateOutRecord', 'tripWaybills', 'gateInData', 'atloadingbayData', 'departedLoadingBayData', 'onJourneyData', 'atDestinationData', 'offloadedData', 'tripRecordsForTheMonth', 'totalGateOuts', 'noOfTripsPerDay', 'availableTrucks', 'tripEventListing', 'tripWaybillYetToReceive', 'specificDataRecord', 'monthWaybillRecord', 'yetToReceiveWaybillDetails', 'dateRangeWaybilllistings', 'returnTrips', 'emptyReturned'));
     }
 
     function displayRecordOfTrips($fieldValue, $currentDate) {

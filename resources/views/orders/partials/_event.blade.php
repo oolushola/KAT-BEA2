@@ -8,9 +8,8 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-12">
-                        <form method="POST" id="frmTripEvent" name="frmTripEvent">
+                        <form method="POST" id="frmTripEvent" name="frmTripEvent" enctype="multipart/form-data" action="{{URL('trip-event')}}">
                             @csrf
-                             
                             <input type="hidden" name="_method" value="" class="d-none" id="patchMethod">
                             <div class="card">
                                 <div class="card-header header-elements-inline">
@@ -23,16 +22,14 @@
                                         </select>
                                         <select style="width:150px; border: 1px solid #ccc; padding:5px; font-size:11px; outline:none" name="lga" id="lga">
                                             <option value="">Local Government Area</option>
-                                            <option value="Unreachable">Unreachable</option>
                                             @foreach($lgas as $lga)
                                                 <option value="{{ $lga->lga_name }}">{{ $lga->lga_name }}</option>
                                             @endforeach
                                         </select> 
                                         <input type="radio" class="ml-3 visibility" value="morningVisibility" name="visibility" />
-                                            <span class="font-size-sm ml-1 font-weight-semibold">Morning Visibility</span>
+                                        <span class="font-size-sm ml-1 font-weight-semibold">Morning Visibility</span>
                                         <input type="radio" class="ml-3 visibility" value="afternoonVisibility" name="visibility" />
-                                            <span class="font-size-sm ml-1 font-weight-semibold">Afternoon Visibility</span>
-
+                                        <span class="font-size-sm ml-1 font-weight-semibold">Afternoon Visibility</span>
                                         <input type="hidden" id="visibility" value="">
                                     </h5>
                                 </div>
@@ -44,6 +41,7 @@
                                     <input type="hidden" name="id" id="id" value="" >
                                     <input type="hidden" name="user_id" id="user_id" value="{{ Auth::user()->id }}">
                                     <input type="hidden" name="current_date" value="{{date('Y-m-d')}}" />
+                                    <input type="hidden" id="productCarried" value="" />
 
                                     <div id="journeyContainer">
                                         <div class="row">
@@ -126,10 +124,18 @@
                                             </div>
                                         </div>
                                     </div>
+                                    
+                                    <div id="waybillAndEirPlaceholder" class="d-none">
+                                        <p class="font-weight-bold">Upload Waybills / EIR <span class="d-block font-weight-semibold mt-2" id="addMoreWaybillAndEir">Add More</span></p>
+                                        <div class="d-block" id="waybillAndEirHolder">
+                                            <input type="file" name="received_waybill_and_eir[]" id="receivedWaybillAndEir" class="font-size-xs mb-1 d-inline">
+                                        </div>
+                                    </div>
+                                    
                                     <div class="text-right">
                                         <span id="loaderEvent"></span>
-                                            <button type="submit" class="btn btn-primary d-none" id="updateTripEvent" @if(Auth::user()->role_id != 1 || Auth::user()->role_id != 4)disabled @endif>Update Event
-                                            <i class="icon-paperplane ml-2"></i>
+                                        <button type="submit" class="btn btn-primary d-none" id="updateTripEvent">Update Event
+                                        <i class="icon-paperplane ml-2"></i></button>
                                         
                                         <button type="submit" class="btn btn-primary" id="addTripEvent">Add Event
                                             <i class="icon-paperplane ml-2"></i>

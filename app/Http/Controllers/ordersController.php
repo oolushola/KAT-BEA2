@@ -30,7 +30,8 @@ use App\tripChanges;
 use App\IssueType;
 use Auth;
 use App\Transloader;
-
+use App\offloadWaybillRemark;
+use App\OffloadWaybillStatus;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -247,12 +248,19 @@ class ordersController extends Controller
             $lastTripId = str_replace('KAID', '', $getLastTripId->trip_id);
             $counter = intval('0000') + intval($lastTripId) + 1;
             $kaya_id = 'KAID'.sprintf('%04d', $counter);
+            if($request->product_id == 3) {
+                $trip_category = 2;
+            }
+            else{
+                $trip_category = 1;
+            }
 
             $trip = trip::CREATE($request->all());
 
             $id = $trip->id;
             $recid = $trip::findOrFail($id);
             $recid->trip_id = $kaya_id;
+            $recid->trip_type = $trip_category;
 
             $transporterRecord = transporter::findOrFail($recid->transporter_id);
             $userIdentity = $transporterRecord->assign_user_id;
@@ -326,6 +334,13 @@ class ordersController extends Controller
             $counter = intval('0000') + intval($lastTripId) + 1;
             $kaya_id = sprintf('%04d', $counter);
 
+            if($request->product_id == 3) {
+                $trip_category = 2;
+            }
+            else{
+                $trip_category = 1;
+            }
+
             $transporterRecord = transporter::findOrFail($request->transporter_id);
             $userIdentity = $transporterRecord->assign_user_id;
             $tripId = 'KAID'.$kaya_id;
@@ -343,7 +358,8 @@ class ordersController extends Controller
                 'trip_id' => $tripId,
                 'account_officer' => $request->account_officer,
                 'tracker' => $request->tracker,
-                'trip_status' => TRUE
+                'trip_status' => TRUE,
+                'trip_type' => $trip_category
             ]);
             $addNewTrip->trip_id = 'KAID'.$kaya_id;
             $addNewTrip->account_officer_id = $userIdentity;
@@ -644,9 +660,31 @@ class ordersController extends Controller
                         'time_arrived_destination' => $request->tad,
                         'trip_id' => $request->trip_id,
                         'gate_in_time_destination' => $request->gate_in_destination_timestamp,
-
                     ]);
                     $event->save();
+
+                    $signedWaybill = $request->file('received_waybill_and_eir');
+                    if($request->received_waybill_and_eir[0] != '') { 
+                        foreach($signedWaybill as $key => $collectedWaybill) {
+                            if(isset($collectedWaybill) && $collectedWaybill != '') {
+                                $name = 'signed-waybill-'.$request->trip_id.'.'.$collectedWaybill->getClientOriginalExtension();
+                                $destination_path = public_path('assets/img/signedwaybills/');
+                                $waybillPath = $destination_path."/".$name;
+                                $collectedWaybill->move($destination_path, $name);
+                                offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => 'Waybill for: '.$request->orderId ]);
+                            }
+                        }
+                        $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
+                        $offloadEir->has_eir = TRUE;
+                        $offloadEir->date_offloaded = date('Y-m-d H:i:s');
+                        $offloadEir->save();
+                    }
+                    else{
+                        $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
+                        $offloadEir->has_eir = FALSE;
+                        $offloadEir->date_offloaded = date('Y-m-d H:i:s');
+                        $offloadEir->save();
+                    }
                 }
                 else {
                     $tripEvent = tripEvent::CREATE([
@@ -669,9 +707,31 @@ class ordersController extends Controller
                         'offloaded_location' => $request->offloaded_location,
                         'time_arrived_destination' => $request->tad,
                         'gate_in_time_destination' => $request->gate_in_destination_timestamp,
-
                     ]);
                     $tripEvent->save();
+
+                    $signedWaybill = $request->file('received_waybill_and_eir');
+                    if($request->received_waybill_and_eir[0] != '') { 
+                        foreach($signedWaybill as $key => $collectedWaybill) {
+                            if(isset($collectedWaybill) && $collectedWaybill != '') {
+                                $name = 'signed-waybill-'.$request->trip_id.'.'.$collectedWaybill->getClientOriginalExtension();
+                                $destination_path = public_path('assets/img/signedwaybills/');
+                                $waybillPath = $destination_path."/".$name;
+                                $collectedWaybill->move($destination_path, $name);
+                                offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => 'Waybill for: '.$request->orderId ]);
+                            }
+                        }
+                        $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
+                        $offloadEir->has_eir = TRUE;
+                        $offloadEir->date_offloaded = date('Y-m-d H:i:s');
+                        $offloadEir->save();
+                    }
+                    else{
+                        $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
+                        $offloadEir->has_eir = FALSE;
+                        $offloadEir->date_offloaded = date('Y-m-d H:i:s');
+                        $offloadEir->save();
+                    }
                 }
             }
 
@@ -694,6 +754,7 @@ class ordersController extends Controller
                 ]);
                 $tripEvent->save();
             }
+
             $recid = trip::findOrFail($request->trip_id);
             $recid->tracker = $request->tracker;
             $recid->save();
@@ -701,6 +762,7 @@ class ordersController extends Controller
             $trip_id = $request->trip_id;
             $order_id = $request->orderId;
             $loading_site = $request->loading_site;
+            
             $result = 'saved`'.$this->eventLogRecord($trip_id, $order_id, $loading_site); 
             
             return $result;  
@@ -745,7 +807,7 @@ class ordersController extends Controller
                 'offload_status' => $offload_status,
                 'offloaded_location' => $request->offloaded_location
             ]);
-            // $recid->UPDATE($request->all());
+            
             $updateTracker = trip::findOrFail($request->trip_id);
             $updateTracker->tracker = $request->tracker;
             $updateTracker->save();
@@ -755,6 +817,33 @@ class ordersController extends Controller
             $trip_id = $request->trip_id;
             $order_id = $request->orderId;
             $loading_site = $request->loading_site;
+
+
+            if($request->tracker == 8) {
+                $signedWaybill = $request->file('received_waybill_and_eir');
+                if($request->received_waybill_and_eir[0] != '') { 
+                    foreach($signedWaybill as $key => $collectedWaybill) {
+                        if(isset($collectedWaybill) && $collectedWaybill != '') {
+                            $name = 'signed-waybill-'.$request->trip_id.'.'.$collectedWaybill->getClientOriginalExtension();
+                            $destination_path = public_path('assets/img/signedwaybills/');
+                            $waybillPath = $destination_path."/".$name;
+                            $collectedWaybill->move($destination_path, $name);
+                            offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => 'Waybill for: '.$request->orderId ]);
+                        }
+                    }
+                    $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
+                    $offloadEir->has_eir = TRUE;
+                    $offloadEir->date_offloaded = date('Y-m-d H:i:s');
+                    $offloadEir->save();
+                }
+                else{
+                    $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
+                    $offloadEir->has_eir = FALSE;
+                    $offloadEir->date_offloaded = date('Y-m-d H:i:s');
+                    $offloadEir->save();
+                }
+            }
+
             $result = 'updated`'.$this->eventLogRecord($trip_id, $order_id, $loading_site);
             return $result;
         }
@@ -1064,7 +1153,6 @@ class ordersController extends Controller
     }
     
     function eventLogRecord($tripId, $kaid, $loadingSite) {
-
         $response = '<div class="card-header header-elements-inline">
             <h5 class="card-title">Events Log of  '.$kaid.' at '.strtoupper($loadingSite).'</h5>
         </div>';

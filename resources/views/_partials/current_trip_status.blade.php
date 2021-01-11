@@ -16,9 +16,14 @@
                     <li class="tripStatusMenu" id="tsOnJourney">On Journey</li>
                     <li class="tripStatusMenu" id="tsAtDestination">At Destination</li>
                     <li class="tripStatusMenu" id="tsOffloaded">Offloaded</li>
+                    <li class="tripStatusMenu" id="tsReturnTrips">Return Trips</li>
+                    <li class="tripStatusMenu" id="tsEmptyReturned">Empty Returned</li>
                 </ul>
                 <div style="padding:10px;"><input type="text" class="form-control" id="searchDataset" placeholder="SEARCH"></div>
-                <div class="table-responsive container" id="tripStatusResponse"></div>
+                <form method="POST" action="/upload-eirs" id="frmUploadMoreEir" enctype="multipart/form-data">
+                    @csrf
+                    <div class="table-responsive container" id="tripStatusResponse"></div>
+                </form>
             </div>
         </div>
     </div>  

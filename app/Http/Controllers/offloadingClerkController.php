@@ -27,6 +27,7 @@ use App\transporterRate;
 use App\offloadWaybillRemark;
 use Mail;
 use Auth;
+use App\OffloadWaybillStatus;
 
 class offloadingClerkController extends Controller
 {
@@ -50,6 +51,7 @@ class offloadingClerkController extends Controller
                 'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage, h.first_name, h.last_name FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g JOIN users h ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id AND a.user_id = h.id WHERE a.trip_status = \'1\' AND a.tracker BETWEEN \'5\' AND \'7\' ORDER BY a.trip_id DESC '
             )
         );
+        
 
         if($user->role_id == 7) {
             $onJourneyTrips = $onJourneyTripsOffloadingClerks[0];
@@ -59,9 +61,13 @@ class offloadingClerkController extends Controller
         }
 
         foreach($onJourneyTrips as $myTrips) {
-            [$tripWaybills[]] = tripWaybill::WHERE('trip_id', $myTrips->id)->GET();
-        }        
-
+            $checkTripWaybill = tripWaybill::WHERE('trip_id', $myTrips->id)->exists();
+            if($checkTripWaybill) {
+                [$tripWaybills[]] = tripWaybill::WHERE('trip_id', $myTrips->id)->GET();
+            }
+        }
+           
+             
         $products = product::SELECT('id', 'product')->ORDERBY('product')->GET();
         $states = DB::SELECT(
             DB::RAW(
@@ -307,16 +313,29 @@ class offloadingClerkController extends Controller
         $recid->save();
 
         $signedWaybill = $request->file('recieved_waybill');
-            foreach($signedWaybill as $key => $collectedWaybill) {
-                if(isset($collectedWaybill) && $collectedWaybill !='') {
-                    $name = 'signed-waybill-'.$request->trip_id.'.'.$collectedWaybill->getClientOriginalExtension();
-                    $destination_path = public_path('assets/img/signedwaybills/');
-                    $waybillPath = $destination_path."/".$name;
-                    $collectedWaybill->move($destination_path, $name);
-                    offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => $request->offloadRemark]);
+            if($request->recieved_waybill[0] != '') {
+                foreach($signedWaybill as $key => $collectedWaybill) {
+                    if(isset($collectedWaybill) && $collectedWaybill !='') {
+                        $name = 'signed-waybill-'.$request->trip_id.'.'.$collectedWaybill->getClientOriginalExtension();
+                        $destination_path = public_path('assets/img/signedwaybills/');
+                        $waybillPath = $destination_path."/".$name;
+                        $collectedWaybill->move($destination_path, $name);
+                        offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => $request->offloadRemark]);
+                    }
                 }
-
+                $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
+                $offloadEir->has_eir = TRUE;
+                $offloadEir->date_offloaded = date('Y-m-d H:i:s');
+                $offloadEir->save();
             }
+            else
+            {
+                $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
+                $offloadEir->has_eir = FALSE;
+                $offloadEir->date_offloaded = date('Y-m-d H:i:s');
+                $offloadEir->save();
+            }
+        
         return 'updated';
     }
 

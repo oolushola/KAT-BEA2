@@ -224,7 +224,7 @@ input, select{
                 </canvas>
                 <?php
                     $offloadedTrips = $offloadedTrips[0]->offloadedTrips;
-                    $stagesOfOperation = [$gateIn, $loadingBay, $departedLoadingBay, $onJourney, $atDestination, $offloadedTrips];
+                    $stagesOfOperation = [$gateIn, $loadingBay, $departedLoadingBay, $onJourney, $atDestination, $offloadedTrips, $returnTrips, $emptyReturned];
                 ?>
             </div>
         </div>
@@ -442,7 +442,15 @@ input, select{
     var tripStatusChart = new Chart(tripStatusCtx, {
         type: 'bar',
         data: {
-            labels: ['Gate In', 'At Loading Bay', 'Departed Loading Bay', 'On Journey', 'At Destination', 'Offloaded'],
+            labels: [
+                'Gate In', 
+                'At Loading Bay', 
+                'Departed Loading Bay', 
+                'On Journey', 'At Destination', 
+                'Offloaded', 
+                'Return Trips',
+                'Empty Returned'
+            ],
             datasets: [{
                 label: 'Trip Status',
                 data: $stagesOfOperation,
@@ -995,30 +1003,6 @@ input, select{
         })
     })
 
-    $(document).on('click', '.operationsUpdate', function() {
-        $id = $(this).attr('id')
-        $('#operations'+$id).removeClass('d-none')
-        $('#defaultOPR'+$id).addClass('d-none').removeClass('d-block')
-        $(document).on('keyup', '#operations'+$id, function(e) {
-            $remark = $(this).val()
-            if(e.keyCode === 13) {
-                $('#oploader'+$id).html('<i class="icon-spinner spinner"></i>').addClass('font-size-xs')
-                $.get('/update-operations-remark', { trip_id: $id, remark: $remark }, function(data) {
-                    if(data === 'updated') {
-                        $('#operations'+$id).addClass('d-none')
-                        var date = new Date();
-                        $currentDate = date.getDate()+'-'+date.getHours()+'-'+date.getFullYear()+' '+date.getHours()+':'+date.getMinutes()+':'+date.getSeconds()
-                        $('#defaultOPR'+$id).removeClass('d-none').addClass('ml-1 d-block bg-info font-size-xs p-1').html($remark+'<br><b>'+$currentDate+'</b>')
-                        $('#oploader'+$id).html('')
-                    }
-                    else{
-                        return false
-                    }
-                })
-            }
-        })
-    })
-
     $('#truckAvailabilityCount').click(function() {
         $.get('/truck-availability-data', function(data) {
             $('#truckAvailabilityResponse').html(data)
@@ -1060,6 +1044,108 @@ input, select{
             return false;
         }
     })
+
+
+    $(document).on('click', '#uploadEirRequest', function() {
+        $('#eirUploadRow').removeClass('d-none')
+        $('#eirTripId').val($(this).attr('data-value'));
+        $('#eirStatus').val('EIR')
+        $('#uploadEirs').text('UPLOAD EIR FOR: '+$(this).attr('data-id'))
+    })
+
+    $(document).on('click', '#addMoreEir', function() {
+        $moreImages = '<span class="mr-3">';
+        $moreImages += '<input type="file" name="eir[]" class="font-size-xs mb-1 d-inline">';
+        $moreImages += '<i class="icon-minus-circle2 text-danger removeEir"></i>';
+        $moreImages += '</span>';
+        $('#moreEirHolder').append($moreImages)
+    })
+
+    $(document).on('click', '.removeEir', function() {
+        $(this).parent('span').remove()
+    })
+
+    $(document).on('click', '#uploadEirs', function($e) {
+        $e.preventDefault();
+        //request for at least one waybill or eir to be uploaded.
+        $validFields = $('input[type="file"]').map(function() {
+        if($(this).val() !== "") {
+            return $(this)
+        }
+        }).get()
+        if(!$validFields.length) {
+            return false
+        }
+        $('#eirLoaderSpinner').html('<i class="spinner icon-spinner2 ml-2"></i>Please wait...')
+        $('#frmUploadMoreEir').submit();
+    })
+
+    $('#frmUploadMoreEir').ajaxForm(function(data) {
+        if(data == "eirUploaded" || data == "podUploaded") {
+            $('#eirLoaderSpinner').html('<i class="icon-checkmark2">Eir has been successfully Uploaded');
+            window.location = "";
+        }
+    })
+
+    $(document).on('click', '#uploadProofOfDelivery', function() {
+        $('#eirPodRow').removeClass('d-none')
+        $('#podTripId').val($(this).attr('data-value'));
+        $('#eirStatus').val('POD')
+        $('#uploadPod').text('UPLOAD EIR FOR: '+$(this).attr('data-id'))
+    })
+
+    $(document).on('click', '#addMorePod', function() {
+        $moreImages = '<span class="mr-3">';
+        $moreImages += '<input type="file" name="pod[]" class="font-size-xs mb-1 d-inline">';
+        $moreImages += '<i class="icon-minus-circle2 text-danger removePod"></i>';
+        $moreImages += '</span>';
+        $('#morePodHolder').append($moreImages)
+    })
+
+    $(document).on('click', '.removePod', function() {
+        $(this).parent('span').remove()
+    })
+
+    $(document).on('click', '#uploadPod', function($e) {
+        //request for at least one waybill or eir to be uploaded.
+        $validFields = $('input[type="file"]').map(function() {
+        if($(this).val() !== "") {
+            return $(this)
+        }
+        }).get()
+        if(!$validFields.length) {
+            return false
+        }
+        $('#PodLoader').html('<i class="spinner icon-spinner2 ml-2"></i>Please wait...')
+        $('#frmUploadMoreEir').submit();
+    })
+
+
+    $(document).on('click', '.operationsUpdate', function($e) {
+        $e.preventDefault();
+        $id = $(this).attr('id')
+        $('#operations'+$id).removeClass('d-none')
+        $('#defaultOPR'+$id).addClass('d-none').removeClass('d-block')
+        $(document).on('keypress', '#operations'+$id, function(e) {
+            $remark = $(this).val()
+            if(e.keyCode === 13) {
+                $('#oploader'+$id).html('<i class="icon-spinner spinner"></i>').addClass('font-size-xs')
+                $.get('/update-operations-remark', { trip_id: $id, remark: $remark }, function(data) {
+                    if(data === 'updated') {
+                        $('#operations'+$id).addClass('d-none')
+                        var date = new Date();
+                        $currentDate = date.getDate()+'-'+date.getHours()+'-'+date.getFullYear()+' '+date.getHours()+':'+date.getMinutes()+':'+date.getSeconds()
+                        $('#defaultOPR'+$id).removeClass('d-none').addClass('ml-1 d-block bg-info font-size-xs p-1').html($remark+'<br><b>'+$currentDate+'</b>')
+                        $('#oploader'+$id).html('')
+                    }
+                    else{
+                        return false
+                    }
+                })
+            }
+        })
+    })
+
 </script>
 @stop
 @endif
