@@ -70,7 +70,7 @@ class backendController extends Controller
         
         $offloadedTrips = DB::SELECT(
             DB::RAW(
-                'SELECT COUNT(*) AS offloadedTrips FROM tbl_kaya_trips a JOIN tbl_kaya_offload_waybill_statuses b ON a.id = b.trip_id WHERE tracker = 8 AND trip_status = TRUE AND `has_eir` = FALSE OR DATE(date_offloaded) = CURDATE() AND trip_type = 1'
+                'SELECT COUNT(*) AS offloadedTrips FROM tbl_kaya_trips a JOIN tbl_kaya_offload_waybill_statuses b JOIN tbl_kaya_trip_events c ON a.id = b.trip_id AND a.id = c.trip_id AND c.offloading_status = TRUE WHERE tracker = 8 AND trip_status = TRUE AND `has_eir` = FALSE OR DATE(offload_end_time) = CURDATE() AND trip_type = 1'
             )
         );
         

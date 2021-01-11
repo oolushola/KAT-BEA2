@@ -280,11 +280,12 @@ input::placeholder{
                                                     <i id="uploadWait{{$balanceRequest->trip_id}}"></i>
                                                 </span>
     
-                                                <input type="checkbox" class="uploadWaybillProof" value="{{$balanceRequest->trip_id}}">Upload proof of waybill &nbsp; &nbsp;
+                                                <!-- <input type="checkbox" class="uploadWaybillProof" value="{{$balanceRequest->trip_id}}">Upload proof of waybill &nbsp; &nbsp; -->
                                                 
                                                 <input type="hidden" name="trip_id" value="{{$balanceRequest->tripid}}">
                                                 <input type="hidden" name="name" value="{{Auth::user()->first_name}} {{Auth::user()->last_name}}">
-                                                <div id="{{$balanceRequest->trip_id}}" class="hidden moreImagesPanel">
+
+                                                <!-- <div id="{{$balanceRequest->trip_id}}" class="hidden moreImagesPanel">
                                                     Show proof of waybill <span class="addMoreProofofWaybill  font-size-sm font-weight-semibold " style="float:right; text-decoration:underline; cursor:pointer">Add more images</span>
                                                     <div>
                                                         <span class="d-block"><input type="file" name="file[]" style="font-size:10px;"></span>
@@ -293,7 +294,7 @@ input::placeholder{
                                                         <textarea name="remark" class="remark"></textarea>
                                                     </div>
                                                     <button class="btn btn-primary uploadWaybillRemark" value="{{$balanceRequest->trip_id}}"  >Save</button>
-                                                </div>
+                                                </div> -->
     
                                                 @if($balanceRequest->balance_request == TRUE)
                                                     <button class="btn btn-warning font-weight-sm font-weight-bold" disabled><i class="icon-checkmark2"></i> Balance <i class="hidden">&#x20a6;{{number_format($balanceRequest->balance, 2)}}</i>Requested</button>

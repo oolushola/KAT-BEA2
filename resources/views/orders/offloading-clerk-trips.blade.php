@@ -122,7 +122,7 @@ input::placeholder{
                             <tr>
                                 <td>
                                     @if(Auth::user()->role_id == 1 || Auth::user()->role_id == 7)
-                                    <button id="{{$offloadingClerkTrips->id}}" title="{{$offloadingClerkTrips->trip_id}}" class="btn btn-primary remarkOnTrips font-weight-bold font-size-sm" data-toggle="modal" href="#remarkOfOffloadedTrip">REMARK</button>
+                                    <button id="{{$offloadingClerkTrips->id}}" title="{{$offloadingClerkTrips->trip_id}}" class="btn btn-primary remarkOnTrips font-weight-bold font-size-sm" data-toggle="modal" href="#remarkOfOffloadedTrip" data-product="{{ $offloadingClerkTrips->product }}">REMARK</button>
                                     @endif
                                 </td>
                                 <td id="forNoUser">
@@ -204,7 +204,7 @@ input::placeholder{
                         </div>
                     </div>
 
-                   
+                   <input type="hidden" id="productHolder" />
                     <div class="form-group">
                         <label class="font-weight-semibold">Upload proof of signed waybill collected</label>
                         <span class="ml-2 font-size-xs font-weight-semibold pointer" id="addMoreOffloadImages">Add More Images</span>

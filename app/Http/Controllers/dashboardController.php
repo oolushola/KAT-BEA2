@@ -177,7 +177,7 @@ class dashboardController extends Controller
         $atDestination = trip::WHERE('tracker', 7)->GET()->COUNT();
         $offloadedTrips = DB::SELECT(
             DB::RAW(
-                'SELECT COUNT(*) AS offloadedTrips FROM tbl_kaya_trips a JOIN tbl_kaya_offload_waybill_statuses b ON a.id = b.trip_id WHERE tracker = 8 AND trip_status = TRUE AND `has_eir` = FALSE OR DATE(date_offloaded) = CURDATE() AND trip_type = 1'
+                'SELECT COUNT(*) AS offloadedTrips FROM tbl_kaya_trips a JOIN tbl_kaya_offload_waybill_statuses b JOIN tbl_kaya_trip_events c ON a.id = b.trip_id AND a.id = c.trip_id AND c.offloading_status = TRUE WHERE tracker = 8 AND trip_status = TRUE AND `has_eir` = FALSE OR DATE(offload_end_time) = CURDATE() AND trip_type = 1'
             )
         ); 
         $numberofdailygatedout = trip::WHEREDATE('gated_out', date('Y-m-d'))->GET()->COUNT();
@@ -334,7 +334,7 @@ class dashboardController extends Controller
     function offloadedRecords() {
         $query = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, c.offloading_status, loading_site, truck_no, tonnage, truck_type, transporter_name, phone_no, product, offload_start_time, offload_end_time, has_eir FROM tbl_kaya_trips a JOIN tbl_kaya_offload_waybill_statuses b JOIN tbl_kaya_trip_events c JOIN `tbl_kaya_loading_sites` d JOIN tbl_kaya_trucks e JOIN tbl_kaya_transporters f JOIN tbl_kaya_products g JOIN tbl_kaya_truck_types h ON  a.id = b.trip_id AND a.id = c.trip_id AND a.loading_site_id = d.id AND a.truck_id = e.id AND e.truck_type_id = h.id AND f.id = a.transporter_id AND a.product_id = g.id AND c.offloading_status = TRUE WHERE tracker = 8 AND trip_status = TRUE AND `has_eir` = FALSE OR DATE(date_offloaded) = CURDATE() AND trip_type = 1'
+                'SELECT a.*, c.offloading_status, loading_site, truck_no, tonnage, truck_type, transporter_name, phone_no, product, offload_start_time, offload_end_time, has_eir FROM tbl_kaya_trips a JOIN tbl_kaya_offload_waybill_statuses b JOIN tbl_kaya_trip_events c JOIN `tbl_kaya_loading_sites` d JOIN tbl_kaya_trucks e JOIN tbl_kaya_transporters f JOIN tbl_kaya_products g JOIN tbl_kaya_truck_types h ON  a.id = b.trip_id AND a.id = c.trip_id AND a.loading_site_id = d.id AND a.truck_id = e.id AND e.truck_type_id = h.id AND f.id = a.transporter_id AND a.product_id = g.id AND c.offloading_status = TRUE WHERE tracker = 8 AND trip_status = TRUE AND `has_eir` = FALSE OR DATE(offload_end_time) = CURDATE() AND trip_type = 1'
             )
         );
         return $query;
