@@ -263,7 +263,7 @@ class invoiceController extends Controller
     public function allInvoicedTrip() {
         $completedInvoice = DB::SELECT(
             DB::RAW(
-                'SELECT DISTINCT a.invoice_no, a.paid_status, a.date_paid, a.acknowledged, a.acknowledged_date, b.client_id, c.company_name, a.completed_invoice_no, a.amount_paid_dfferent FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c on a.trip_id = b.id AND b.client_id = c.id ORDER BY invoice_no DESC'
+                'SELECT DISTINCT a.invoice_no, a.paid_status, a.date_paid, a.acknowledged, a.acknowledged_date, b.client_id, c.company_name, a.completed_invoice_no, a.amount_paid_dfferent, invoice_status FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_kaya_trip_waybill_statuses d ON a.trip_id = b.id AND b.client_id = c.id AND d.trip_id = b.id ORDER BY invoice_no DESC'
             )
         );
         $invoiceBillers = invoiceClientRename::GET();
@@ -722,7 +722,7 @@ class invoiceController extends Controller
 
         $clientInfo = DB::SELECT(
             DB::RAW(
-                'SELECT b.id, b.trip_id, b.gated_out, a.vat_used, a.withholding_tax_used, b.client_rate, b.amount_paid, c.address, c.company_name, c.phone_no, c.email, d.truck_no FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_kaya_trucks d ON a.trip_id = b.id AND b.client_id = c.id AND b.truck_id = d.id WHERE a.invoice_no = "'.$invoiceNo.'"'
+                'SELECT b.id, b.trip_id, b.gated_out, a.vat_used, a.withholding_tax_used, b.client_rate, b.amount_paid, c.address, c.company_name, c.phone_no, c.email, d.truck_no, invoice_status FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_kaya_trucks d JOIN tbl_kaya_trip_waybill_statuses e ON a.trip_id = b.id AND b.client_id = c.id AND b.truck_id = d.id AND e.trip_id = b.id WHERE a.invoice_no = "'.$invoiceNo.'"'
             )
         );
         $companyProfile = companyProfile::GET()->FIRST();
@@ -777,6 +777,20 @@ class invoiceController extends Controller
                                 <input type="date" style="width:120px; font-size:10px" class="d-none" id="paidDateChecker" name="'.$invoiceNo.'"  />
                                 <span id="paidPlaceholder"></span>
                             </h6>
+                        </li>';
+                        if($clientInfo[0]->invoice_status == TRUE) {
+                            $classes = 'btn btn-danger font-size-xs font-weight-semibold';
+                            $label = '<i class="icon-lock4"></i>';
+                            $title = 'CHANGE TO UNINVOICE';
+                        }
+                        else{
+                            $classes = 'btn btn-primary font-size-xs font-weight-semibold';
+                            $label = '<i class="icon-unlocked"></i>';
+                            $title = 'CHANGE TO INVOICED';
+                        }
+                        $invoicePreview.='<li>
+                        <button data-id="'.$invoiceNo.'" id="changeInvoiceStatus" class="'.$classes.'">'.$title.' '.$label.'</button>
+                        <span id="statusPreviewHolder" class="ml-2"></span>
                         </li>                        
                     </ul>
 
@@ -1050,5 +1064,17 @@ class invoiceController extends Controller
             }
             return 'received';
         }
+    }
+
+    public function changeInvoiceStatus(Request $request) {
+        $invoice_no = $request->invoice_no;
+        $trips = completeInvoice::SELECT('trip_id')->WHERE('invoice_no', $invoice_no)->GET();
+        foreach($trips as $key=> $tripId) {
+            $tripInvoiceStatus = tripWaybillStatus::WHERE('trip_id', $tripId->trip_id)->GET()->FIRST();
+            $tripInvoiceStatus->invoice_status = !$tripInvoiceStatus->invoice_status;
+            $tripInvoiceStatus->save();
+        }
+        
+        return 'statusChanged';
     }
 }

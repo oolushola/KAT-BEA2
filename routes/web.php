@@ -346,6 +346,8 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('approve-uploaded-payment', 'PaymentNotificationController@approveUploadedPayment');
     Route::get('decline-uploaded-payment', 'PaymentNotificationController@declineUploadedPayment');
     Route::post('/upload-eirs', 'dashboardController@UploadEirs');
+
+    Route::get('change-invoice-status', 'invoiceController@changeInvoiceStatus');
 });
 
 

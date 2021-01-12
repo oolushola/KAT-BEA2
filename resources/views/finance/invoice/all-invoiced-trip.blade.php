@@ -128,8 +128,12 @@ td{
                                         {{$count}} <input type="hidden" name="paid_invoices[]" value="{!! $completeInvoice->invoice_no !!}">
                                     </td>
                                     <td>
+                                        @if($completeInvoice->invoice_status)
                                         <a href="{{URL('invoice-trip/'.$completeInvoice->completed_invoice_no)}}" target="_blank">
                                         {{strtoupper($completeInvoice->company_name)}}</a>
+                                        @else
+                                        <span class="text-danger-400">{{strtoupper($completeInvoice->company_name)}} <i class="icon-lock4"></i></span>
+                                        @endif
                                     </td>
                                     <td>
                                         @foreach($invoiceBillers as $specificBiller)
@@ -232,6 +236,22 @@ td{
                     $element.html('<i class="icon-checkmark3"></i>Completed')
                     window.location.href="/all-invoiced-trips"
                 }
+            }
+        })
+    })
+
+    $(document).on('click', '#changeInvoiceStatus', function(e) {
+        e.preventDefault();
+        $invoiceNo = $(this).attr('data-id')
+        $(this).attr('disabled', 'disabled')
+        $('#statusPreviewHolder').html('<i class="icon-spinner2 spinner"></i> Wait, changing invoice status...')
+        $.get('/change-invoice-status', { invoice_no: $invoiceNo }, function(data) {
+            if(data == 'statusChanged') {
+                $('#statusPreviewHolder').html(`<i class="icon-checkmark2"></i>Invoice No: ${$invoiceNo} changed successfully.`);
+                window.location = '';
+            }
+            else{
+                alert('Something went wrong! Please, escalate.')
             }
         })
     })
