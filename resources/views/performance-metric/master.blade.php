@@ -101,22 +101,27 @@
                 <canvas id="numbersForTheMonth" height="150" data-toggle="modal" href="#specificBuh"></canvas>
             </div>
             <div class="col-md-6">
-                <canvas id="newTransporterGained" height="150"></canvas>
+                <canvas id="newTransporterGained" height="150" data-toggle="modal" href="#transporterGained"></canvas>
             </div>
         </div>
     </div>
 
     <!-- <div class="card"> -->
-        <div class="row">
-            <div class="col-md-12">
-                <canvas id="expectedTripsFromClient" height="100"></canvas>
+    <div class="row">
+            <div class="col-md-6">
+                <canvas id="bonusAndEarnings" height="200"></canvas>
+            </div>
+            <div class="col-md-6">
+                <canvas id="expectedTripsFromClient" height="225"></canvas>
             </div>
         </div>
     <!-- </div> -->
+
     
 </div>
 
 @include('performance-metric.partials._specificNumberPerformance')
+@include('performance-metric.partials._transporter_gained')
 
 @stop
 
@@ -386,6 +391,19 @@
                     }
                 }]
             },
+            onClick:function(c, i) {
+                e = i[0];
+                var xValue = this.data.labels[e._index];
+                var yValue = this.data.datasets[0].data[e._index];
+                $('#transporterGainedBuh').html('<i class="icon-spinner3 spinner"></i>Please wait...')
+                $.get('/buh-transporter-gained', { user: xValue, year: $('#currentYear').val(), month: $('#currentMonth').val() }, function(res) {
+                    $period = $('#currentMonth').val()+', '+$('#currentYear').val()
+                    $('#transporterGainedBuh').html(xValue+' onboarded '+yValue+' transporters for, '+$period)
+                    
+                    $('#transporterGainedList').html(res)
+                    $('#modalBody').removeClass('d-none')
+                })
+            }
         },
     });
 
@@ -429,7 +447,51 @@
                 }
         },
     });
-    
+
+    $(document).on('keyup', '#searchPreviousTripsOfSelectedDate', function() {
+        $value = $(this).val().toLowerCase()
+        $(`#selectedDateDataRecord tr`).filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf($value) > -1)
+        });
+    })
+
+    var totalBonus = <?php echo json_encode($totalBonus); ?>;
+    var ctx = document.getElementById('bonusAndEarnings');
+    var bonusBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: unitHeadInformations,
+            datasets: [
+                {
+                    label: 'Bonus',
+                    data: totalBonus,
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            legend: {
+                position: 'top',
+                display: true
+            },
+            
+            title: {
+                display: true,
+                text: 'Extra Earnings (₦) - For The Year In View.',
+                position: 'top'
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            },
+        },
+    });
+
     $('#currentMonth').change(function() {
         $year = $('#currentYear').val();
         $month = $('#currentMonth').val();
@@ -465,17 +527,45 @@
                 clientExpectedTripsChart.update()
                 clientExpectedTripsChart.options.title.text = `Client trip count for ${res.selectedMonth}`
 
+                bonusBarChart.data.labels = res.unitHeadInformation 
+                bonusBarChart.data.datasets[0].data = res.totalBonus
+                bonusBarChart.update()
+
                 $('#loader').html('')
             }
         })
     })
 
-    $(document).on('keyup', '#searchPreviousTripsOfSelectedDate', function() {
-        $value = $(this).val().toLowerCase()
-        $(`#selectedDateDataRecord tr`).filter(function() {
-            $(this).toggle($(this).text().toLowerCase().indexOf($value) > -1)
-        });
-    })
+    // var ctx = document.getElementById('tester');
+    // var marginExpensesProfitAndLossData = {
+    //     labels: ['Success', 'Timi', 'Shola', 'Gbenga', 'Kemi'],
+    //     datasets: [
+    //         {
+    //             label: 'APMT',
+    //             data: [[5, 10], [2, 8]],
+    //             backgroundColor: '#150e06',
+    //             borderWidth: 1
+    //         }
+    //     ]
+    // }
+    // var marginExpenseProfitAndLossChart = new Chart(ctx, {
+    //         type: 'bar',
+    //         data: marginExpensesProfitAndLossData,
+    //         options: {
+    //             responsive: true,
+    //             legend: {
+    //                 position: 'top',
+    //                 display: true
+    //             },
+                
+    //             title: {
+    //                 display: true,
+    //                 text: 'Margin by Month (₦) - Gate Outs',
+    //                 position: 'bottom'
+    //             }
+    //         },
+            
+    //     });
 
 </script>
 

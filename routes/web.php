@@ -348,6 +348,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::post('/upload-eirs', 'dashboardController@UploadEirs');
 
     Route::get('change-invoice-status', 'invoiceController@changeInvoiceStatus');
+    Route::get('buh-transporter-gained', 'performanceMetricController@transporterGained');
 });
 
 
