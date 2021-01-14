@@ -964,7 +964,7 @@ class invoiceController extends Controller
     public function yetToReceiveWaybill(Request $request) {
         $trips = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, a.gated_out, a.trip_id, a.exact_location_id, b.truck_no, c.waybill_status, d.company_name FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_trip_waybill_statuses c JOIN tbl_kaya_clients d ON a.truck_id = b.id AND a.client_id = d.id WHERE trip_status = 1 AND tracker BETWEEN 5 AND 8 AND a.id = c.trip_id AND c.waybill_status = FALSE'
+                'SELECT a.id, a.gated_out, a.trip_id, a.exact_location_id, a.tracker, b.truck_no, c.waybill_status, d.company_name FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_trip_waybill_statuses c JOIN tbl_kaya_clients d ON a.truck_id = b.id AND a.client_id = d.id WHERE trip_status = 1 AND tracker BETWEEN 5 AND 8 AND a.id = c.trip_id AND c.waybill_status = FALSE'
             )
         );
         foreach($trips as $specificTrip) {
@@ -976,12 +976,12 @@ class invoiceController extends Controller
                 $waybillCollections[] = $waybill; 
             }
         }
-
         $response = '<table class="table table-condensed">
             <thead class="table-success font-size-sm text-primary">
                 <tr>
                     <td colspan="8">
                         <input type="text" placeholder="SEARCH" style="font-size:11px; border: 1px solid #ccc; outline:none; padding:5px; width:200px" id="searchTrips" />
+                        <span class="pointer ml-2" id="exportUnreceivedWaybill"><i class="icon-download4 mr-1"></i>Export</span>
                     </td>
                     <td>
                         <button type="submit" class="btn btn-success font-size-xs font-weight-bold" id="receiveSelectedWaybill">RECEIVE SELECTED</button>
@@ -1010,9 +1010,17 @@ class invoiceController extends Controller
                     else {
                         $css = '';
                     }
+                    if($trip->tracker == 5 || $trip->tracker == 6) { $status = 'On Journey'; $className = 'icon-spinner2 spinner'; }
+                    if($trip->tracker == 7) { $status = 'At Destination'; $className = 'icon-truck'; }
+                    if($trip->tracker == 8) { $status = 'Offloaded'; $className = 'icon-checkmark2'; }
+
                     $response.='<tr class="'.$css.' text-center">
                         <td>'.$count++.'</td>
-                        <td>'.$trip->trip_id.'</td>
+                        <td>
+                            '.$trip->trip_id.'
+                            <i class="font-size-xs ml-1 '.$className.'" title="'.$status.'"></i>
+                            <span class="d-none">'.$status.'</span>
+                        </td>
                         <td>'.$trip->company_name.'</td>
                         <td>'.date('d-m-Y', strtotime($trip->gated_out)).'</td>
                         <td>'.$trip->truck_no.'</td>

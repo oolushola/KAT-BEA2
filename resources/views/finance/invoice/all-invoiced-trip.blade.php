@@ -197,6 +197,7 @@ td{
 @stop
 
 @section('script')
+<script type="text/javascript" src="{{URL::asset('/js/validator/excelme.js')}}"></script>
 <script type="text/javascript" src="{{URL::asset('/js/validator/invoice.js')}}"></script>
 <script type="text/javascript">
     $('#logOfReceiveWaybill').click(function() {
@@ -255,5 +256,16 @@ td{
             }
         })
     })
+
+    $(document).on('click', '#exportUnreceivedWaybill', function() {
+        $('#hideThisOnExport').addClass('d-none')
+        var name = Math.random().toString().substring(7)
+        $("#tripsToBeReceivedDB").table2excel({
+            filename:`Unreceived-Waybill-${name}.xls`
+        });
+        $('#hideThisOnExport').removeClass('d-none')
+    })
+
+   
 </script>
 @stop
