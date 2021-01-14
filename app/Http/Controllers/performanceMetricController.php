@@ -11,7 +11,7 @@ use App\truckAvailability;
 use App\transporter;
 use App\client;
 use App\AccountManagerTarget;
-
+use App\transporterDocuments;
 
 class performanceMetricController extends Controller
 {
@@ -23,6 +23,7 @@ class performanceMetricController extends Controller
         foreach($unitHeadTargets as $key=> $unitHead) {
             $unitHeadRecord = User::findOrFail($unitHead->user_id);
             $unitHeadInformation[] = $unitHeadRecord->first_name.' '.substr($unitHeadRecord->last_name, 0, 1).'.';
+            $unitHeadIds[] = $unitHeadRecord->id;
             $unitHeadSpecificTargets[] = $unitHead->target / 1000000;
 
             $myTotalRevenue = trip::WHERE('account_officer_id', $unitHead->user_id)
@@ -89,7 +90,25 @@ class performanceMetricController extends Controller
             }
         }
 
-        $currentMonthOverview = array('unitHeadInformation' =>  $unitHeadInformation, 'unitHeadSpecificTargets' => $unitHeadSpecificTargets, 'myGrossMargin' => $myGrossMargin, 'myOutstanding' => $myOutstanding, 'unitHeadCurrentMarkUp' => $unitHeadCurrentMarkUp, 'trip_count' => $tripCount, 'remainingTrip' => $monthlyTripRemainder, 'transporter_gained' => $transportersGained, 'clientNames' => $clientNames, 'tripDoneWithClient' => $clientTripCount, 'pendingTrips' => $uncompletedTrips);
+        // Bonus & Earnings Generator!
+        foreach($unitHeadIds as $key => $assignedUserId) {
+            [$trips[]] = DB::SELECT(
+                DB::RAW(
+                    'SELECT COUNT(*) as noOfTrips, SUM(client_rate) as totalClientRate, SUM(transporter_rate) as totalTransporterRate, SUM(client_rate - transporter_rate) as profitGenerated  FROM tbl_kaya_trips a JOIN tbl_kaya_client_account_manager b ON a.client_id = b.client_id LEFT JOIN tbl_kaya_trip_incentives c ON a.id = c.trip_id WHERE trip_status = TRUE AND YEAR(gated_out) = '.date('Y').' AND account_officer_id = '.$assignedUserId.''
+                )
+            );
+            [$clientAssigned[]] = DB::SELECT(
+                DB::RAW(
+                    'SELECT COUNT(client_id) AS assignedClientId FROM tbl_kaya_client_account_manager WHERE user_id = '.$assignedUserId.''
+                )
+            );
+            $x_profitGenerated[] = 0.1 * $trips[$key]->profitGenerated;
+            $averageWeight[] = 100 / $clientAssigned[$key]->assignedClientId;
+            $weightAverageBonus[] = round(($averageWeight[$key] / 100) * $x_profitGenerated[$key] / 1000, 2);
+        }
+
+
+        $currentMonthOverview = array('unitHeadInformation' =>  $unitHeadInformation, 'unitHeadSpecificTargets' => $unitHeadSpecificTargets, 'myGrossMargin' => $myGrossMargin, 'myOutstanding' => $myOutstanding, 'unitHeadCurrentMarkUp' => $unitHeadCurrentMarkUp, 'trip_count' => $tripCount, 'remainingTrip' => $monthlyTripRemainder, 'transporter_gained' => $transportersGained, 'clientNames' => $clientNames, 'tripDoneWithClient' => $clientTripCount, 'pendingTrips' => $uncompletedTrips, 'totalBonus' => $weightAverageBonus);
         
         return view('performance-metric.master', $currentMonthOverview);
     }
@@ -262,6 +281,7 @@ class performanceMetricController extends Controller
                 $unitHeadRecord = User::findOrFail($unitHead->user_id);
                 $unitHeadInformation[] = $unitHeadRecord->first_name.' '.substr($unitHeadRecord->last_name, 0, 1).'.';
                 $unitHeadSpecificTargets[] = $unitHead->target / 1000000;
+                $unitHeadIds[] = $unitHeadRecord->id;
 
                 $myTotalRevenue = trip::WHERE('account_officer_id', $unitHead->user_id)
                     ->WHERE('trip_status', 1)
@@ -326,6 +346,27 @@ class performanceMetricController extends Controller
                     $uncompletedTrips[$key] = $uncompletedTrips[$key];
                 }
             }
+            // Bonus & Earnings Generator!
+            foreach($unitHeadIds as $key => $assignedUserId) {
+                [$trips[]] = DB::SELECT(
+                    DB::RAW(
+                        'SELECT COUNT(*) as noOfTrips, SUM(client_rate) as totalClientRate, SUM(transporter_rate) as totalTransporterRate, SUM(client_rate - transporter_rate) as profitGenerated  FROM tbl_kaya_trips a JOIN tbl_kaya_client_account_manager b ON a.client_id = b.client_id LEFT JOIN tbl_kaya_trip_incentives c ON a.id = c.trip_id WHERE trip_status = TRUE AND YEAR(gated_out) = '.$currentYear.' AND account_officer_id = '.$assignedUserId.''
+                    )
+                );
+                [$clientAssigned[]] = DB::SELECT(
+                    DB::RAW(
+                        'SELECT COUNT(client_id) AS assignedClientId FROM tbl_kaya_client_account_manager WHERE user_id = '.$assignedUserId.''
+                    )
+                );
+                $x_profitGenerated[] = 0.1 * $trips[$key]->profitGenerated;
+                if($clientAssigned[$key]->assignedClientId <= 0) {
+                    $averageWeight[] = 0;
+                }
+                else{
+                    $averageWeight[] = 100 / $clientAssigned[$key]->assignedClientId;
+                }
+                $weightAverageBonus[] = round(($averageWeight[$key] / 100) * $x_profitGenerated[$key] / 1000, 2);
+            }
     
             $currentMonthOverview = array(
                 'unitHeadInformation' =>  $unitHeadInformation, 
@@ -339,7 +380,8 @@ class performanceMetricController extends Controller
                 'transportersGained' => $transportersGained,
                 'nameOfClient' => $clientNames,
                 'tripRemainder' => $uncompletedTrips,
-                'tripDoneForClient' => $clientTripCount
+                'tripDoneForClient' => $clientTripCount,
+                'totalBonus' => $weightAverageBonus
 
 ,            );
             return $currentMonthOverview;
@@ -557,6 +599,54 @@ class performanceMetricController extends Controller
         return $performanceReview;
     }
 
+    public function transporterGained(Request $request) {
+        $user = explode(' ', $request->user);
+        $firstName = $user[0];
+        $year = $request->year;
+        $month = $request->month;
+        $userRecord = User::WHERE('first_name', $firstName)->GET()->FIRST();
+        $selectedMonth = $this->monthGetter($month);
+        $userId = $userRecord->id;
+
+        $transporters = transporter::WHERE('assign_user_id', $userId)->WHEREMONTH('registration_completed', $selectedMonth)->WHEREYEAR('registration_completed', $year)->GET();
+        
+        if(count($transporters) > 0) {
+            $counter = 0;
+            $response = '';
+            foreach($transporters as $key=> $transporter) {
+                $response.= '<div class="col-md-6 col-sm-12 mb-2">
+                    <div style="max-height:350px; overflow:auto;">';
+                        $response.='<div class="dashboardbox">
+                            <h4 class="text-primary m-0 p-0">'.$transporter->transporter_name.'</h4>
+                            <p class="p-0 m-0">'.$transporter->phone_no.'</p>
+                            <p style="p-0 m-0">'.$transporter->address.'</p>
+                            <p style="text-decoration:underline" class="text-primary">Documents</p>';
+                            $documents = transporterDocuments::WHERE('transporter_id', $transporter->id)->GET();
+                            if(count($documents)) {
+                                foreach($documents as $document) {
+                                    $response.='
+                                        <a href="/assets/img/transporters/documents/'.$document->document.'" target="_blank" title="'.$document->description.'">
+                                            <i class="icon-file-check2"></i>
+                                        </a>
+                                    ';
+                                }
+                            }
+                            else{
+                                $response.='<span class="text-danger font-weight-semibold">No document was uploaded.</span>';
+                            }
+                        $response.='</div>';
+                    $response.='
+                    </div>
+                </div>';
+            }
+            return $response;
+        }
+        else{
+            echo 'Something went wrong';
+        }
+        
+    }
+
     function monthGetter($month) {
         if($month == 'January') { $selectedMonth = '01'; }
         if($month == 'February') { $selectedMonth = '02'; }
@@ -590,4 +680,6 @@ class performanceMetricController extends Controller
 
         return $shortMonth;
     }
+
+    
 }
