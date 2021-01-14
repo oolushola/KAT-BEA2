@@ -33,11 +33,20 @@ class FinancialReportController extends Controller
     public function unpaidInvoices(Request $request) {
         $type = strtoupper($request->v);
         $client_id = $request->payload;
-        $trips = DB::SELECT(
-            DB::RAW(
-                'SELECT a.id, a.trip_id, truck_no, loading_site, exact_location_id, client_rate, amount_paid, transporter_rate, invoice_no, d.created_at, d.date_paid, company_name FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_complete_invoices d JOIN tbl_kaya_clients e ON a.truck_id = b.id AND a.loading_site_id = c.id AND a.id = d.trip_id AND e.id = a.client_id WHERE date_paid IS NULL AND tracker >= 5 AND trip_status = TRUE AND client_id = "'.$client_id.'" ORDER BY invoice_no ASC' 
-            )
-        );
+        if($client_id == 'all') {
+            $trips = DB::SELECT(
+                DB::RAW(
+                    'SELECT a.id, a.trip_id, truck_no, loading_site, exact_location_id, client_rate, amount_paid, transporter_rate, invoice_no, d.created_at, d.date_paid, company_name FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_complete_invoices d JOIN tbl_kaya_clients e ON a.truck_id = b.id AND a.loading_site_id = c.id AND a.id = d.trip_id AND e.id = a.client_id WHERE date_paid IS NULL AND tracker >= 5 AND trip_status = TRUE ORDER BY invoice_no ASC' 
+                )
+            ); 
+        }
+        else {
+            $trips = DB::SELECT(
+                DB::RAW(
+                    'SELECT a.id, a.trip_id, truck_no, loading_site, exact_location_id, client_rate, amount_paid, transporter_rate, invoice_no, d.created_at, d.date_paid, company_name FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_complete_invoices d JOIN tbl_kaya_clients e ON a.truck_id = b.id AND a.loading_site_id = c.id AND a.id = d.trip_id AND e.id = a.client_id WHERE date_paid IS NULL AND tracker >= 5 AND trip_status = TRUE AND client_id = "'.$client_id.'" ORDER BY invoice_no ASC' 
+                )
+            );
+        }
         return $this->secondResponseLogger($trips, $type);
     }
 

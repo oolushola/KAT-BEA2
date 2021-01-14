@@ -152,6 +152,7 @@
         Filter by client
         <select class="finance-report__select" id="client">
             <option value="0">Choose Client</option>
+            <option value="all">ALL</option>
             @foreach($clients as $client)
             <option value="{{ $client->id }}">{{ $client->company_name }}</option>
             @endforeach
