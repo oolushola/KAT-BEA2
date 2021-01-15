@@ -898,10 +898,14 @@ class ordersController extends Controller
                 $recid->save();
             }
         }
-        $waybillstatus = tripWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
-        $waybillstatus->waybill_status = FALSE;
-        $waybillstatus->comment = 'With Driver';
-        $waybillstatus->save();
+        
+        $checkIfItHasBeenInvoiced = tripWaybillStatus::WHERE('trip_id', $request->trip_id)->WHERE('invoice_status', TRUE)->GET();
+        if(count($checkIfItHasBeenInvoiced) <= 0) {
+            $waybillstatus = tripWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
+            $waybillstatus->waybill_status = FALSE;
+            $waybillstatus->comment = 'With Driver';
+            $waybillstatus->save();
+        }
 
         $changes = tripChanges::CREATE(['trip_id' => $request->trip_id, 'user_id' => $request->user_id, 'changed_keys' => 9, 'changed_values' => 'Waybill Details Entered']);
 
