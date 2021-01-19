@@ -71,7 +71,13 @@
 					
 					<div class="dropdown-menu dropdown-menu-right dropdown-content wmin-md-350">
 						<div class="dropdown-content-header">
-							<span class="font-weight-semibold">Payment Notifications</span>
+							<span class="font-weight-semibold">
+								Payment Notifications
+								@if(Session::get('paymentNotification') > 1)
+								<span class="text-right pointer badge badge-primary" id="payallUploaded">Pay All</span>
+								@endif
+								<span id="payallLoader" class="font-size-xs"></span>
+							</span>
 							<!-- <a href="#" class="text-default"><i class="icon-compose"></i></a> -->
 						</div>
 

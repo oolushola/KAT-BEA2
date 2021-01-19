@@ -28,134 +28,65 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use App\invoiceClientRename;
+use App\vatRate;
 
 class financialController extends Controller
 {
+    function revenueCalculator($yearInView, $monthInview, $alias) {
+        $revenueGenerator =  DB::SELECT(
+            DB::RAW('SELECT SUM(client_rate) AS "'.$alias.'" FROM tbl_kaya_trips WHERE MONTH(gated_out) = "'.$monthInview.'" AND YEAR(gated_out) = "'.$yearInView.'"')
+        );
+        return $revenueGenerator;
+    }
+
     public function financialsOverview(){
-        $allTrips = trip::SELECT('id', 'trip_id')->ORDERBY('trip_id', 'DESC')->WHERE('tracker', '>=', 5)->GET();
-        $current_month = date('F');
-        $current_year = date('Y');
-        $tripCounts = trip::WHERE('gated_out', '!=', '')->WHERE('trip_status', '!=', 0)->GET()->COUNT();
-        $availableCargo = DB::SELECT(
+        $invoicedAndUnpaid = DB::SELECT(
             DB::RAW(
-                'SELECT SUM(available_order) AS total_order FROM `tbl_kaya_cargo_availabilities`'
+                'SELECT a.id, client_rate, amount_paid, vat_used, withholding_tax_used, invoice_no, amount as incentive FROM tbl_kaya_trips a JOIN tbl_kaya_complete_invoices b ON a.id = b.trip_id LEFT JOIN tbl_kaya_trip_incentives c ON a.id = c.trip_id WHERE paid_status = FALSE '
             )
         );
-        
-        $monthlyTarget = target::WHERE('current_month', $current_month)
-            ->WHERE('current_year', $current_year)->LIMIT(1)
-            ->GET();
-        $getGatedOutByMonth = trip::WHERE('month', $current_month)
-            ->WHERE('year', $current_year)
-            ->WHERE('tracker', '>=', 5
-            )->GET()
-            ->COUNT();
-        $currentTrip = DB::SELECT(
-            DB::RAW(
-                'SELECT a.id, a.trip_id, a.exact_location_id, a.tracker, b.truck_no, a.transporter_rate, d.product, e.* FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_products d join `tbl_kaya_trip_payments` e ON a.`truck_id` = b.id  AND a.`product_id` = d.`id` AND a.id = e.trip_id ORDER BY a.trip_id DESC LIMIT 1'
-            )
-        );
-        if(sizeof($currentTrip)>0){
-            $trip_id = $currentTrip[0]->trip_id;
+        $amountPayable = 0;
+        foreach($invoicedAndUnpaid as $unpaidTrip) {
+            $unpaidTrip->incentive == NULL ? $incentive = 0 : $incentive = $unpaidTrip->incentive;
+            $unpaidTrip->amount_paid != NULL ? $clientRate = $unpaidTrip->amount_paid + $incentive : $clientRate = $unpaidTrip->client_rate + $incentive;
+            $unpaidTrip->vat_used == NULL ? $vat = 5 : $vat = $unpaidTrip->vat_used;
+            $unpaidTrip->withholding_tax_used ? $wtx_ = 5 : $wtx_ = $unpaidTrip->withholding_tax_used;
+            $totalDue = $clientRate  + ($clientRate * $vat / 100);
+            $wtx = $clientRate * ($wtx_ / 100);
+            $amountPayable+= $totalDue - $wtx;
         }
-        else{
-            $trip_id = '';
-        }
-        $tripWaybills = tripWaybill::SELECT('sales_order_no', 'invoice_no', 'invoice_status')
-        ->WHERE('trip_id', $trip_id)
-        ->GET();
-        
-        $topThreeProducts = $this->topThree(
-            'product_id', 
-            'product', 
-            'products', 
-            'tbl_kaya_products'
-        );
-        $threeDestination = DB::SELECT(
-                DB::RAW(
-                    'SELECT exact_location_id, COUNT(exact_location_id) as locations FROM tbl_kaya_trips WHERE tracker >= 5 GROUP BY exact_location_id ORDER BY locations DESC LIMIT 3'
-                )
-            );
-        $threeLoadingSites = $this->topThree(
-            'loading_site_id', 
-            'loading_site', 
-            'sites', 
-            'tbl_kaya_loading_sites'
-        );
-        
-        $expectedRevenue = $this->companyRateAndExpectedRevenue('client_rate', 'expectedrevenue');
-        $expectedCompanyRate = $this->companyRateAndExpectedRevenue('transporter_rate', 'company_rate');
-
-        $actualPaymentsToTransporters = DB::SELECT(
+        $invoicedNotPaid = round($amountPayable / 1000000, 2);
+        $notInvoiced = DB::SELECT(
             DB::RAW(
-                'SELECT SUM(b.advance) AS advancePayment, SUM(b.balance) AS balancePayment FROM tbl_kaya_trips a JOIN tbl_kaya_trip_payments b ON a.id = b.trip_id WHERE a.tracker >= 5 AND b.advance_paid = TRUE'
+                'SELECT SUM(client_rate) as total_uninvoiced_trips FROM tbl_kaya_trips a LEFT JOIN tbl_kaya_trip_waybill_statuses b ON a.id = b.trip_id JOIN `tbl_kaya_vat_rates` c WHERE `date_invoiced` IS NULL AND trip_status = TRUE ORDER BY a.trip_id  ASC'
             )
         );
+        $taxInfo = vatRate::GET()->FIRST();
+        $totalUninvoiced_ = $notInvoiced[0]->total_uninvoiced_trips;
+        $subtotalUninvoicedwithVat = $totalUninvoiced_ + ($totalUninvoiced_ * ($taxInfo->vat_rate / 100));
+        $totalUninvoicedwithwtx = $totalUninvoiced_ *($taxInfo->withholding_tax / 100);
+        $totalUnvoicedTrips_ = $subtotalUninvoicedwithVat - $totalUninvoicedwithwtx;
+        $notInvoiced = round($totalUnvoicedTrips_ / 1000000, 2);
 
-        $offloadedButNotInvoiced = DB::SELECT(
-            DB::RAW(
-                'SELECT count(invoice_status) as completed_not_invoiced FROM tbl_kaya_trips a JOIN tbl_kaya_trip_waybill_statuses b ON a.`id` = b.trip_id WHERE tracker  = 8 AND invoice_status = false'
-            )
-        );
-        $invoicedTrips;
-        $onJourney = trip::WHERE('tracker', '>=', 5)->WHERE('tracker', '<=', 6)->GET()->COUNT();
-        $atDestination = trip::WHERE('tracker', 7)->GET()->COUNT();
-        $offloadedTrips = trip::WHERE('tracker', 8)->GET()->COUNT();
-        $totalTons = DB::SELECT(
-            DB::RAW(
-                'SELECT SUM(c.tonnage) AS tons_in_total FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_truck_types c ON a.truck_id = b.id AND b.truck_type_id = c.id'
-            )
-        );
+        $counter = -1;
+        $lastYear = date('Y') - 1;
+        $divisor = 1000000;
+        for ($m=1; $m<=12; $m++) {
+            $counter+=1;
+            $monthName = date('F', mktime(0,0,0,$m, 1, date('Y')));
+            $monthsOfTheYear[] = $monthName;
 
-        $paymentRequest = tripPayment::WHERE('advance_paid', FALSE)->ORWHERE('balance_paid', FALSE)->GET()->COUNT();
-        $clients = client::WHERE('client_status', '1')->GET()->COUNT();
-    
-        $totalInvoiced = DB::SELECT(
-            DB::RAW(
-                'SELECT SUM(b.client_rate) as totalInvoicedAmount FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b ON a.trip_id = b.id'
-            )
-        );
-
-        $numberofinvoiced = DB::SELECT(
-            DB::RAW(
-                'SELECT count(a.trip_id) as totalInvoiced FROM tbl_kaya_trips a JOIN tbl_kaya_complete_invoices b ON a.id = b.trip_id'
-            )
-        );
-        $numberofdailygatedout = trip::WHEREDATE('gated_out', date('Y-m-d'))->GET()->COUNT();
-        $gatedOutForTheMonth = trip::WHERE('month', $current_month)->WHERE('year', $current_year)->WHERE('tracker', '>=', 5)->GET()->COUNT();
-
-        $totalamountofinvoicedbutnotpaid = DB::SELECT(
-            DB::RAW(
-                'SELECT SUM(b.client_rate) as invoicedNotPaid FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b ON a.trip_id = b.id WHERE a.paid_status = FALSE '
-            )
-        );
-
-        $notinvoiced = DB::SELECT(
-            DB::RAW(
-                'SELECT SUM(client_rate) as notInvoiced FROM tbl_kaya_trips  WHERE tracker >=5 AND tracker < 8'
-            )
-        );
-
-        $valueofcompletedbutnotinvoiced = DB::SELECT(
-            DB::RAW(
-                'SELECT SUM(client_rate) as completed_value_not_invoiced FROM tbl_kaya_trips a JOIN tbl_kaya_trip_waybill_statuses b  ON a.id = b.trip_id WHERE tracker = 8 AND invoice_status = false'
-            )
-        );
-
-        $totalAdvance = $this->specificPayment('advance', 'totalAdvancePaid', 'advance_paid');
-        $totalBalance = $this->specificPayment('balance', 'totalBalancePaid', 'balance_paid');
-
-        $actualPayments = $totalBalance[0]->totalBalancePaid + $totalAdvance[0]->totalAdvancePaid;
-
-
-        $allLoadingSites = loadingSite::SELECT('id', 'loading_site')->ORDERBY('loading_site', 'ASC')->GET();
-
-        foreach($allLoadingSites as $loadingSite){
-            $countDailyTripByLoadingSite[] = trip::WHERE('loading_site_id', $loadingSite->id)->WHEREDATE('gated_out', date('Y-m-d'))->WHERE('tracker', '>=', 5)->GET()->COUNT();
-            $loading_sites[] = $loadingSite->loading_site;
+            [$currentYearRevenue_[]] = $this->revenueCalculator(date('Y'), $m, 'currentYearRevenue');
+            if($currentYearRevenue_[$counter]->currentYearRevenue > 0) {
+                $currentYearRevenue[] = round(($currentYearRevenue_[$counter]->currentYearRevenue) / $divisor, 2);
+            }
+            
+            [$lastYearRevenue_[]] = $this->revenueCalculator($lastYear, $m, 'lastYearRevenue');
+            $lastYearRevenue[] = round(($lastYearRevenue_[$counter]->lastYearRevenue) / $divisor, 2);
         }
 
-        return view('finance.financials.overview', compact('allTrips', 'totalAdvance', 'totalBalance', 'actualPayments', 'valueofcompletedbutnotinvoiced', 'notinvoiced', 'totalamountofinvoicedbutnotpaid', 'gatedOutForTheMonth', 'numberofdailygatedout', 'numberofinvoiced', 'totalInvoiced', 'totalTons', 'offloadedTrips', 'atDestination', 'onJourney', 'offloadedButNotInvoiced', 'actualPaymentsToTransporters', 'expectedCompanyRate', 'expectedRevenue', 'threeLoadingSites', 'threeDestination', 'topThree251', 'tripWaybills', 'currentTrip', 'getGatedOutByMonth', 'monthlyTarget', 'availableCargo', 'tripCounts', 'allTrips'));
+        $result = compact('monthsOfTheYear', 'lastYearRevenue', 'currentYearRevenue', 'invoicedNotPaid', 'notInvoiced');
+        return view('finance.financials.overview', $result);
     }
 
     public function loadingSiteOnFinance(Request $request) {
@@ -317,150 +248,4 @@ class financialController extends Controller
     }
 }
 
-/*
-
-        $allTrips = trip::SELECT('id', 'trip_id')->ORDERBY('trip_id', 'DESC')->WHERE('tracker', '>=', 5)->GET();
-        $current_month = date('F');
-        $current_year = date('Y');
-        $tripCounts = trip::WHERE('tracker', '>=', 5)->GET()->COUNT();
-        $availableCargo = DB::SELECT(
-            DB::RAW(
-                'SELECT SUM(available_order) AS total_order FROM `tbl_kaya_cargo_availabilities`'
-            )
-        );
-
-        
-        $monthlyTarget = target::WHERE('current_month', $current_month)
-            ->WHERE('current_year', $current_year)->LIMIT(1)
-            ->GET();
-        $getGatedOutByMonth = trip::WHERE('month', $current_month)
-            ->WHERE('year', $current_year)
-            ->WHERE('tracker', '>=', 5
-            )->GET()
-            ->COUNT();
-        $currentTrip = DB::SELECT(
-            DB::RAW(
-                'SELECT a.id, a.trip_id, a.exact_location_id, a.tracker, b.truck_no, a.transporter_rate, d.product, e.* FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_products d join `tbl_kaya_trip_payments` e ON a.`truck_id` = b.id  AND a.`product_id` = d.`id` AND a.id = e.trip_id ORDER BY a.trip_id DESC LIMIT 1'
-            )
-        );
-        if(sizeof($currentTrip)>0){
-            $trip_id = $currentTrip[0]->trip_id;
-        }
-        else{
-            $trip_id = '';
-        }
-        $tripWaybills = tripWaybill::SELECT('sales_order_no', 'invoice_no', 'invoice_status')
-        ->WHERE('trip_id', $trip_id)
-        ->GET();
-        
-        $topThreeProducts = $this->topThree(
-            'product_id', 
-            'product', 
-            'products', 
-            'tbl_kaya_products'
-        );
-        $threeDestination = DB::SELECT(
-                DB::RAW(
-                    'SELECT exact_location_id, COUNT(exact_location_id) as locations FROM tbl_kaya_trips WHERE tracker >= 5 GROUP BY exact_location_id ORDER BY locations DESC LIMIT 3'
-                )
-            );
-        $threeLoadingSites = $this->topThree(
-            'loading_site_id', 
-            'loading_site', 
-            'sites', 
-            'tbl_kaya_loading_sites'
-        );
-        
-        $expectedRevenue = $this->companyRateAndExpectedRevenue('client_rate', 'expectedrevenue');
-        $expectedCompanyRate = $this->companyRateAndExpectedRevenue('transporter_rate', 'company_rate');
-
-        $actualPaymentsToTransporters = DB::SELECT(
-            DB::RAW(
-                'SELECT SUM(b.advance) AS advancePayment, SUM(b.balance) AS balancePayment FROM tbl_kaya_trips a JOIN tbl_kaya_trip_payments b ON a.id = b.trip_id WHERE a.tracker >= 5 AND b.advance_paid = TRUE'
-            )
-        );
-
-        $offloadedButNotInvoiced = DB::SELECT(
-            DB::RAW(
-                'SELECT count(invoice_status) as completed_not_invoiced FROM tbl_kaya_trips a JOIN tbl_kaya_trip_waybill_statuses b ON a.`id` = b.trip_id WHERE tracker  = 8 AND invoice_status = false'
-            )
-        );
-        $invoicedTrips;
-        $onJourney = trip::WHERE('tracker', '>=', 5)->WHERE('tracker', '<=', 6)->GET()->COUNT();
-        $atDestination = trip::WHERE('tracker', 7)->GET()->COUNT();
-        $offloadedTrips = trip::WHERE('tracker', 8)->GET()->COUNT();
-        $totalTons = DB::SELECT(
-            DB::RAW(
-                'SELECT SUM(c.tonnage) AS tons_in_total FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_truck_types c ON a.truck_id = b.id AND b.truck_type_id = c.id'
-            )
-        );
-
-        $paymentRequest = tripPayment::WHERE('advance_paid', FALSE)->ORWHERE('balance_paid', FALSE)->GET()->COUNT();
-        $clients = client::WHERE('client_status', '1')->GET()->COUNT();
-        Session::put([
-            'payment_request' => $paymentRequest,
-            'on_journey' => $onJourney,
-            'client' => $clients,
-            'offloaded_trips' => $offloadedTrips
-        ]);
-
-        $totalInvoiced = DB::SELECT(
-            DB::RAW(
-                'SELECT SUM(b.client_rate) as totalInvoicedAmount FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b ON a.trip_id = b.id'
-            )
-        );
-
-        $numberofinvoiced = DB::SELECT(
-            DB::RAW(
-                'SELECT count(a.trip_id) as totalInvoiced FROM tbl_kaya_trips a JOIN tbl_kaya_complete_invoices b ON a.id = b.trip_id'
-            )
-        );
-        $numberofdailygatedout = trip::WHEREDATE('gated_out', date('Y-m-d'))->GET()->COUNT();
-        $gatedOutForTheMonth = trip::WHERE('month', $current_month)->WHERE('year', $current_year)->WHERE('tracker', '>=', 5)->GET()->COUNT();
-
-        $lastOneWeek = date('Y-m-d', strtotime('-7 days'));
-        $currentDate = date('Y-m-d');
-
-        //$noOfGatedOutTripForCurrentWeek = trip::WHEREBETWEEN('gated_out', ["'.$lastOneWeek.'", "'.$currentDate.'"])->WHERE('tracker', '>=', 5)->GET()->COUNT();
-
-        $noOfGatedOutTripForCurrentWeek = DB::SELECT(
-            DB::RAW(
-                'select COUNT(*) as weeklygateout  from tbl_kaya_trips where Date(gated_out) between "'.$lastOneWeek.'" and "'.$currentDate.'" and tracker >= 5'
-            )
-        );
-        $noOfGatedOutTripForCurrentWeek;
-
-        $totalamountofinvoicedbutnotpaid = DB::SELECT(
-            DB::RAW(
-                'SELECT SUM(b.client_rate) as invoicedNotPaid FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b ON a.trip_id = b.id WHERE a.paid_status = FALSE '
-            )
-        );
-
-        $notinvoiced = DB::SELECT(
-            DB::RAW(
-                'SELECT SUM(client_rate) as notInvoiced FROM tbl_kaya_trips  WHERE tracker >=5 AND tracker < 8'
-            )
-        );
-
-        $valueofcompletedbutnotinvoiced = DB::SELECT(
-            DB::RAW(
-                'SELECT SUM(client_rate) as completed_value_not_invoiced FROM tbl_kaya_trips a JOIN tbl_kaya_trip_waybill_statuses b  ON a.id = b.trip_id WHERE tracker = 8 AND invoice_status = false'
-            )
-        );
-
-        $totalAdvance = $this->specificPayment('advance', 'totalAdvancePaid', 'advance_paid');
-        $totalBalance = $this->specificPayment('balance', 'totalBalancePaid', 'balance_paid');
-
-        $actualPayments = $totalBalance[0]->totalBalancePaid + $totalAdvance[0]->totalAdvancePaid;
-
-
-        $allLoadingSites = loadingSite::SELECT('id', 'loading_site')->ORDERBY('loading_site', 'ASC')->GET();
-
-        foreach($allLoadingSites as $loadingSite){
-            $countDailyTripByLoadingSite[] = trip::WHERE('loading_site_id', $loadingSite->id)->WHEREDATE('gated_out', date('Y-m-d'))->WHERE('tracker', '>=', 5)->GET()->COUNT();
-            $loading_sites[] = $loadingSite->loading_site;
-        }
-
-
-*/
 

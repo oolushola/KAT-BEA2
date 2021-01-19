@@ -988,6 +988,13 @@ input, select{
             loadingSiteCountChart.data.labels = res.loading_site
             loadingSiteCountChart.data.datasets[0].data = res.loading_site_daily_count
             loadingSiteCountChart.update()
+            
+            if(res.paymentNotification > 1) {
+                $('#payallUploaded').removeClass('d-none')
+            }
+            else{ 
+                $('#payallUploaded').addClass('d-none')
+            }
 
             $('#paymentLabel').text(res.paymentNotification)
         })
@@ -1026,6 +1033,23 @@ input, select{
                 $('#declined'+$paymentId).addClass('d-none')
             }
         })
+    })
+
+    $('#payallUploaded').click(function() {
+        $ask = confirm('Are you sure you want to pay all? ');
+        if($ask) {
+            $('#payallLoader').html('<i class="icon-spinner3 spinner"></i>Processing...');
+            $(this).addClass('d-none')
+            $.get('/approve-uploaded-payment', { paymentNotificationId: 'all'}, function(data) {
+                if(data == 'approved') {
+                    $('#payallLoader').html('<i class="icon-checkmark2"></i>Completed');
+                    window.location = '';
+                }
+            });
+        }
+        else{
+            return false
+        }
     })
 
     $(document).on('click', '.declineFor', function() {

@@ -67,10 +67,24 @@ class PaymentNotificationController extends Controller
     }
 
     public function approveUploadedPayment(Request $request) {
-        $recid = PaymentNotification::findOrFail($request->paymentNotificationId);
-        $recid->paid_status = TRUE;
-        $recid->paid_time_stamps = date('Y-m-d H:i:s');
-        $recid->save();
+        if($request->paymentNotificationId == 'all') {
+            $pendingPayments = PaymentNotification::WHERE('paid_status', FALSE)->GET();
+            if(count($pendingPayments)>0) {
+                foreach($pendingPayments as $payUpload) {
+                    $statusUpdate = PaymentNotification::findOrFail($payUpload->id);
+                    $statusUpdate->paid_status = TRUE;
+                    $statusUpdate->paid_time_stamps = date('Y-m-d H:i:s');
+                    $statusUpdate->save(); 
+                }
+            }
+
+        }
+        else{
+            $recid = PaymentNotification::findOrFail($request->paymentNotificationId);
+            $recid->paid_status = TRUE;
+            $recid->paid_time_stamps = date('Y-m-d H:i:s');
+            $recid->save();
+        }
         return 'approved';
     }
 
