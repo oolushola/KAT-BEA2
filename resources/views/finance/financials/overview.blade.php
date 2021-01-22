@@ -129,8 +129,13 @@
     let lastYearRevenue = <?php echo json_encode($lastYearRevenue); ?>;
     let currentYearRevenue = <?php echo json_encode($currentYearRevenue); ?>;
     $invoiceNotPaid = <?php echo json_encode($invoicedNotPaid); ?>;
-    $notInvoiced = <?php echo json_encode($notInvoiced); ?>
+    $notInvoiced = <?php echo json_encode($notInvoiced); ?>;
+    $cashInflow = <?php echo json_encode($totalCis); ?>;
+    $cashOutflow = <?php echo json_encode($outflow); ?>;
+    $currentInvTrend = <?php echo json_encode($invTrend); ?>;
+    $lastYearInvTrend = <?php echo json_encode($previousYearInvTrend); ?>;
 
+    console.log($currentInvTrend);
     var cashInflow = document.getElementById('cashInflow');
     var mixedChart = new Chart(cashInflow, {
         type: 'line',
@@ -138,7 +143,7 @@
             datasets: [{
                 
                 label: 'Cash Inflow',
-                data: [9, 25, 18, 16, 22, 36, 18, 40, 17, 19, 22, 40],
+                data: $cashInflow,
                 fill: false,
                 borderColor: [
                     '#C56CF0',
@@ -146,7 +151,7 @@
                 ]
             }, {
                 label: 'Cash Outflow',
-                data: [18, 22, 34, 19, 16, 28, 12.7, 35.7, 28.8, 10, 18, 28],
+                data: $cashOutflow,
                 // fill: false,
                 borderColor: [
                     // 'rgba(0, 0, 0, 0.3)'
@@ -412,12 +417,12 @@
         type: 'bar',
         data: {
             datasets: [{
-                label: 'Avg. Invoiced Trend 2019',
-                data: [9, 25, 18, 16, 22, 36, 18, 40, 17, 19, 22, 40],
+                label: 'Avg. Invoiced Trend 2020',
+                data: $lastYearInvTrend,
                 backgroundColor: 'rgba(153, 102, 255, 0.1)'
             }, {
-                label: 'Avg. Invoiced Trend, 2020',
-                data: [18, 22, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                label: 'Avg. Invoiced Trend, 2021',
+                data: $currentInvTrend,
                 fill: false,
                 borderColor:'red',
                 type: 'line'

@@ -29,6 +29,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use App\invoiceClientRename;
 use App\vatRate;
+use App\expenses;
 
 class financialController extends Controller
 {
@@ -39,7 +40,26 @@ class financialController extends Controller
         return $revenueGenerator;
     }
 
+    function outflowCalculator($params, $clause, $monthInview, $yearInview) {
+        $outflow = DB::SELECT(
+            DB::RAW(
+                'SELECT '.$params.' FROM tbl_kaya_trips a JOIN tbl_kaya_trip_payments b ON a.id = b.trip_id WHERE '.$clause.' = TRUE AND MONTH(b.updated_at) = '.$monthInview.' AND YEAR(b.updated_at) = '.$yearInview.' ORDER BY a.trip_id ASC'
+            )
+        );
+        return $outflow;
+    }
+
+    function invoiceTrend($monthInview, $yearInview) {
+        $avgInvoiceTrend = DB::SELECT(
+            DB::RAW(
+                'SELECT SUM(client_rate + ((client_rate + IFNULL(amount, 0)) * (vat_used / 100)))   - SUM((client_rate + IFNULL(amount, 0)) * (withholding_tax_used/100)) as amountPayable FROM tbl_kaya_trips a JOIN tbl_kaya_complete_invoices b ON a.id = b.trip_id LEFT OUTER JOIN tbl_kaya_trip_incentives c ON a.id = c.trip_id WHERE MONTH(b.created_at) = '.$monthInview.' AND YEAR(b.created_at) = '.$yearInview.''
+            )
+        );
+        return $avgInvoiceTrend;
+    }
+
     public function financialsOverview(){
+        $divisor = 1000000;
         $invoicedAndUnpaid = DB::SELECT(
             DB::RAW(
                 'SELECT a.id, client_rate, amount_paid, vat_used, withholding_tax_used, invoice_no, amount as incentive FROM tbl_kaya_trips a JOIN tbl_kaya_complete_invoices b ON a.id = b.trip_id LEFT JOIN tbl_kaya_trip_incentives c ON a.id = c.trip_id WHERE paid_status = FALSE '
@@ -55,7 +75,7 @@ class financialController extends Controller
             $wtx = $clientRate * ($wtx_ / 100);
             $amountPayable+= $totalDue - $wtx;
         }
-        $invoicedNotPaid = round($amountPayable / 1000000, 2);
+        $invoicedNotPaid = round($amountPayable / $divisor, 2);
         $notInvoiced = DB::SELECT(
             DB::RAW(
                 'SELECT SUM(client_rate) as total_uninvoiced_trips FROM tbl_kaya_trips a LEFT JOIN tbl_kaya_trip_waybill_statuses b ON a.id = b.trip_id JOIN `tbl_kaya_vat_rates` c WHERE `date_invoiced` IS NULL AND trip_status = TRUE ORDER BY a.trip_id  ASC'
@@ -66,11 +86,10 @@ class financialController extends Controller
         $subtotalUninvoicedwithVat = $totalUninvoiced_ + ($totalUninvoiced_ * ($taxInfo->vat_rate / 100));
         $totalUninvoicedwithwtx = $totalUninvoiced_ *($taxInfo->withholding_tax / 100);
         $totalUnvoicedTrips_ = $subtotalUninvoicedwithVat - $totalUninvoicedwithwtx;
-        $notInvoiced = round($totalUnvoicedTrips_ / 1000000, 2);
+        $notInvoiced = round($totalUnvoicedTrips_ / $divisor, 2);
 
         $counter = -1;
         $lastYear = date('Y') - 1;
-        $divisor = 1000000;
         for ($m=1; $m<=12; $m++) {
             $counter+=1;
             $monthName = date('F', mktime(0,0,0,$m, 1, date('Y')));
@@ -83,9 +102,44 @@ class financialController extends Controller
             
             [$lastYearRevenue_[]] = $this->revenueCalculator($lastYear, $m, 'lastYearRevenue');
             $lastYearRevenue[] = round(($lastYearRevenue_[$counter]->lastYearRevenue) / $divisor, 2);
+
+            // Cash Inflow Calculator
+
+            [$cashInflow[]] = DB::SELECT(
+                DB::RAW(
+                    'SELECT SUM(client_rate) AS totalClientRate FROM tbl_kaya_trips a JOIN tbl_kaya_complete_invoices b ON a.id = b.trip_id WHERE MONTH(date_paid) = "'.$m.'" AND YEAR(date_paid) = "'.date('Y').'"'
+                )
+            );
+            $cashInflow[$counter]->totalClientRate == NULL ? $cis[] = 0 : $cis[] = $cashInflow[$counter]->totalClientRate;
+            $vatedCis[] = $cis[$counter] + ($cis[$counter] * ($taxInfo->vat_rate / 100));
+            $wtxCis[] = $cis[$counter] *($taxInfo->withholding_tax / 100);
+            $totalCis[] = round(($vatedCis[$counter] - $wtx[$counter]) / $divisor, 2);
+            
+            // Cash Outflow Calculator
+            
+            [$advanceMonthlyCo[]] = $this->outflowCalculator('SUM(advance) AS advanceOutflow', 'b.advance_paid', $m, date('Y'));
+            $advanceMonthlyCo[$counter]->advanceOutflow == NULL ? $advancecof[] = 0 : $advancecof[] = $advanceMonthlyCo[$counter]->advanceOutflow;
+            [$balanceMonthlyCo[]] = $this->outflowCalculator('SUM(balance) AS balanceOutflow', 'b.balance_paid', $m, date('Y'));
+            $balanceMonthlyCo[$counter]->balanceOutflow == NULL ? $balancecof[] = 0 : $balancecof[] = $balanceMonthlyCo[$counter]->balanceOutflow;
+
+            $expenses[] = expenses::WHERE('month', $m)->WHERE('year', date('Y'))->GET()->FIRST();
+            $expenses[$counter] != NULL ? $totalExpenses[] = $expenses[$counter]->expenses : $totalExpenses[] = 0;
+
+            $outflow_[] =  $advancecof[$counter] + $balancecof[$counter] + $totalExpenses[$counter];
+            $outflow[] = round($outflow_[$counter] / $divisor, 2);
+
+            //Invoice Trend...
+            [$lastYearInvoiceTrend[]] = $this->invoiceTrend($m, $lastYear);
+            $lastYearInvTrend_[] = $lastYearInvoiceTrend[$counter]->amountPayable;
+            [$currentYearInvoiceTrend_[]] = $this->invoiceTrend($m, date('Y'));
+            $currentYearInvStatus = $currentYearInvoiceTrend_[$counter]->amountPayable;
+            $currentYearInvStatus == NULL ? $invTrend_[] = 0 : $invTrend_[] = $currentYearInvStatus;
+
+            $invTrend[] = round($invTrend_[$counter] / $divisor, 2);
+            $previousYearInvTrend[] = round($lastYearInvTrend_[$counter] / $divisor, 2);
         }
 
-        $result = compact('monthsOfTheYear', 'lastYearRevenue', 'currentYearRevenue', 'invoicedNotPaid', 'notInvoiced');
+        $result = compact('monthsOfTheYear', 'lastYearRevenue', 'currentYearRevenue', 'invoicedNotPaid', 'notInvoiced', 'totalCis', 'outflow', 'invTrend', 'previousYearInvTrend');
         return view('finance.financials.overview', $result);
     }
 
