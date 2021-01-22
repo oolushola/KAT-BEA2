@@ -130,6 +130,7 @@
                                         <div class="d-block" id="waybillAndEirHolder">
                                             <input type="file" name="received_waybill_and_eir[]" id="receivedWaybillAndEir" class="font-size-xs mb-1 d-inline">
                                         </div>
+                                        <textarea name="waybillRemark" id="" class="col-md-3 col-sm-12" placeholder="Comment / Remark"></textarea>
                                     </div>
                                     
                                     <div class="text-right">

@@ -671,7 +671,7 @@ class ordersController extends Controller
                                 $destination_path = public_path('assets/img/signedwaybills/');
                                 $waybillPath = $destination_path."/".$name;
                                 $collectedWaybill->move($destination_path, $name);
-                                offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => 'Waybill for: '.$request->orderId ]);
+                                offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => $request->waybillRemark ]);
                             }
                         }
                         $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
@@ -718,7 +718,7 @@ class ordersController extends Controller
                                 $destination_path = public_path('assets/img/signedwaybills/');
                                 $waybillPath = $destination_path."/".$name;
                                 $collectedWaybill->move($destination_path, $name);
-                                offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => 'Waybill for: '.$request->orderId ]);
+                                offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => $request->waybillRemark ]);
                             }
                         }
                         $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
@@ -828,7 +828,7 @@ class ordersController extends Controller
                             $destination_path = public_path('assets/img/signedwaybills/');
                             $waybillPath = $destination_path."/".$name;
                             $collectedWaybill->move($destination_path, $name);
-                            offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => 'Waybill for: '.$request->orderId ]);
+                            offloadWaybillRemark::CREATE(['trip_id' => $request->trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => $request->waybillRemark ]);
                         }
                     }
                     $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $request->trip_id]);
