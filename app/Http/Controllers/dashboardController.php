@@ -15,6 +15,7 @@ use App\tripEvent;
 use App\OffloadWaybillStatus;
 use App\OffloadWaybillRemark;
 use App\EirProofOfDelivery;
+use App\tripWaybill;
 
 class dashboardController extends Controller
 {
@@ -315,9 +316,10 @@ class dashboardController extends Controller
         }
         
         $tripEventListing = [];
-        foreach($trips as $trip) {
+        foreach($trips as $key=> $trip) {
             $tripEventListing[] = tripEvent::WHERE('trip_id', $trip->id)->GET()->LAST();
         }
+        
         $response = $this->displayRecords(strtoupper($status), $trips, $fieldId, $tripEventListing, $tracker, $signedWaybills);
         return $response;
     }
@@ -341,6 +343,11 @@ class dashboardController extends Controller
     }
 
     function displayRecords($activeSubheading, $arrayObject, $fieldLabel, $tripEvent, $tracker, $signedWaybills) {
+        $waybills = [];
+        foreach($arrayObject as $key=> $trip) {
+            $waybillsInfo_[] = tripWaybill::WHERE('trip_id', $trip->id)->GET();
+        }
+        
         $data = '<div class="table-responsive">
             <table class="table table-striped table-hover">
                 <thead>
@@ -369,7 +376,7 @@ class dashboardController extends Controller
                 <tbody id="masterDataTable">';
                     if(count($arrayObject)) {
                         $count = 0;
-                        foreach($arrayObject as $object) {
+                        foreach($arrayObject as $k => $object) {
                             $now = time(); // or your date as well
                             $your_date = strtotime($object->$fieldLabel);
                             $datediff = $now - $your_date;
@@ -568,7 +575,20 @@ class dashboardController extends Controller
                             }
                             
                             $data.='
+                            </tr>
+                            <tr>
+                                <td colspan="6">';
+                                    if(count($waybillsInfo_[$k]) > 0) {
+                                        foreach($waybillsInfo_[$k] as $tripWaybills) {
+                                            if($tripWaybills->trip_id == $object->id) {
+                                                $data.= '<span class="badge badge-primary ml-1">'.$tripWaybills->sales_order_no.'</span>';
+                                            }
+                                        }
+                                    }
+                                $data.='
+                                </td>
                             </tr>';
+                            
                         }
 
                         if($tracker == 8) {
@@ -605,6 +625,7 @@ class dashboardController extends Controller
 
                         $data.='<input type="hidden" id="eirStatus" name="eir_status">';
                     }
+                    
                     else {
                         $data.='<tr><td colspan="3">No record is available.</td></tr>';
                     }

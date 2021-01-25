@@ -327,6 +327,7 @@ class invoiceController extends Controller
         $invoiceSpecialRemark = invoiceSpecialRemark::WHERE('invoice_no', $invoiceNumber)->GET()->FIRST();
         
         $incentives = incentives::GET();
+        $poNumber = completeInvoice::SELECT('po_number')->WHERE('completed_invoice_no', $invoiceNumber)->GET()->FIRST();
 
         return view('finance.invoice.invoice-reprint', 
             array(
@@ -348,7 +349,8 @@ class invoiceController extends Controller
                 'waybillinfos' => $waybillinfos,
                 'invoiceSpecialRemark' => $invoiceSpecialRemark,
                 'incentives' => $incentives,
-                'preferedBankDetails' => $preferedBankDetails
+                'preferedBankDetails' => $preferedBankDetails,
+                'po_number' => $poNumber
                
             )
         );
@@ -1084,5 +1086,20 @@ class invoiceController extends Controller
         }
         
         return 'statusChanged';
+    }
+
+    public function updatePoNumber(Request $request) {
+        $checker = completeInvoice::WHERE('completed_invoice_no', $request->invoice_no)->GET();
+        if(count($checker) > 0) {
+            DB::UPDATE(
+                DB::RAW(
+                    'UPDATE tbl_kaya_complete_invoices SET po_number = "'.$request->po_number.'" WHERE completed_invoice_no = "'.$request->invoice_no.'"'
+                )
+            );
+            return 'updated';
+        }
+        else {
+            return 'not_found';
+        }
     }
 }
