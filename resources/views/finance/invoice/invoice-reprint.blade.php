@@ -73,9 +73,20 @@ input{
 						
 					</h6>
 						
-						<div class="deleteInvAndTonsplitter hideOnPrint">
-							<button type="button" class="btn btn-danger deleteInvoice font-size-sm font-weight-semibold" value="{{$invoice_no}}">DELETE INVOICE</button>
+						<div class="deleteInvAndTonsplitter">
+							@if($completedInvoice[0]->company_name == 'Olam International')
+								@if($po_number->po_number != "")
+									<span class="font-weight-semibold font-size-md updatePoNumber" id="displayPo">PO NUMBER: {{ $po_number->po_number }}</span>
+								@else
+									<span class="font-weight-semibold font-size-md text-danger mr-2 updatePoNumber">ADD NEW PO</span>
+								@endif
 
+
+								<input type="text" placeholder="ENTER PO NUMBER" style="font-size:11px; padding:3px; font-family:tahoma" id="updatePoNumber" data-id="{{ $invoice_no }}" class="d-none" value="{{ $po_number->po_number }}"  />
+								<span id="poLoader"></span>
+								
+							@endif
+							<button type="button" class="hideOnPrint btn btn-danger deleteInvoice font-size-sm font-weight-semibold" value="{{$invoice_no}}">DELETE INVOICE</button>
 						</div>
 					</div>
 
@@ -88,14 +99,6 @@ input{
 
 								<div class="mb-4">
 									<img src="{{URL::asset('/assets/img/kaya/'.$companyProfile[0]->company_logo)}}" class="mb-3 mt-2" alt="company's Logo" style="width: 70px;">
-									<!-- <ul class="list list-unstyled mb-0">
-										<li class="font-weight-bold">{!! $companyProfile[0]->address !!}</li>
-										<li class="font-weight-bold">Lagos, Nigeria</li>
-										<li class="font-weight-bold"><a href="#">{!! $companyProfile[0]->website !!}</a> | 
-											<a href="#">{!! $companyProfile[0]->company_email !!}</a>
-										</li>
-										<li class="font-weight-bold">{!! $companyProfile[0]->company_phone_no !!}</li>
-									</ul> -->
 								</div>
 							</div>
 
@@ -712,6 +715,32 @@ input{
 			
 		})
 		
+		$('#updatePoNumber').keypress(function(e) {
+			$invoiceNo = $(this).attr('data-id')
+			$poNumber = $(this).val()
+			if(e.keyCode === 13) {
+				e.preventDefault()
+				$('#poLoader').html('<i class="spinner icon-spinner3"></i>Updating PO NUmber...')
+				$e = $(this)
+				$.get('/update-po-number', { invoice_no: $invoiceNo, po_number: $poNumber }, function(data) {
+					if(data === 'updated') {
+						$('#poLoader').html('<i class="icon-checkmark2"></i>').fadeIn(1000).delay(2000).fadeOut(5000)
+						$e.addClass('d-none')
+						$('#displayPo').html('PO Number: '+$poNumber).removeClass('d-none')
+					}
+				})
+			}
+			else{
+				if(e.keyCode === 27) {
+					$(this).addClass('d-none')
+				}
+			}
+		})
+
+		$('.updatePoNumber').dblclick(function() {
+			$(this).addClass('d-none')
+			$('#updatePoNumber').removeClass('d-none')
+		})
 	});
 
 	

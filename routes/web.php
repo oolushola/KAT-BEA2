@@ -349,6 +349,7 @@ Route::group(['middleware' => 'auth'], function() {
 
     Route::get('change-invoice-status', 'invoiceController@changeInvoiceStatus');
     Route::get('buh-transporter-gained', 'performanceMetricController@transporterGained');
+    Route::get('update-po-number', 'invoiceController@updatePoNumber');
 });
 
 
