@@ -130,7 +130,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
 <script>
 
-
     var unitHeadInformations = <?php echo json_encode($unitHeadInformation); ?>;
     var expectedMargin = <?php echo json_encode($unitHeadSpecificTargets); ?>;
     var achieved = <?php echo json_encode($myGrossMargin); ?>;
@@ -536,6 +535,16 @@
         })
     })
 
+    $(document).on('click', '#filterDateRange', function() {
+        $userid = $('#userSelectedId').val();
+        $dateRangeFrom = $('#drFrom').val();
+        $dateRangeTo = $('#drTo').val();
+        $('#tripsDateRangeFilter').html('<i class="icon-spinner2 spinner"></i>Please wait...')
+        $.get('/buh-trips-breakdown', {user_id: $userid, date_from: $dateRangeFrom, date_to: $dateRangeTo }, function(data){
+            $('#tripsDateRangeFilter').html(data)
+        })
+    })
+
     // var ctx = document.getElementById('tester');
     // var marginExpensesProfitAndLossData = {
     //     labels: ['Success', 'Timi', 'Shola', 'Gbenga', 'Kemi'],
@@ -566,6 +575,8 @@
     //         },
             
     //     });
+
+
 
 </script>
 
