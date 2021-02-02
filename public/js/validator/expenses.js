@@ -71,5 +71,21 @@ $(function() {
     })
 
 
+    $('#addMoreExpensesCategory').click(function(event) {
+        $addMoreExpenses = '<div class="col-md-4"><div class="form-group">';
+        $addMoreExpenses += '<input type="text" name="expenses_description[]" style="width:120px; position:relative; top: 10px; outline: none;border: 1px solid #ccc">';
+        $addMoreExpenses += '</div></div>';
+
+        $addMoreExpenses += '<div class="col-md-8"><div class="form-group" style="margin:0; padding:0">';
+        $addMoreExpenses += '<input type="number" step="0.01" class="form-control" placeholder="Amount" name="amount[]" id="amount" style="margin:0; border-radius:0">';
+        $addMoreExpenses += '</div></div>';
+        $('#moreExpenses').append($addMoreExpenses)
+    })
+
+
+    $(document).on('click', '.removeMoreExpenses', function() {
+        $(this).parent('row').remove()
+    })
+
 })
 
