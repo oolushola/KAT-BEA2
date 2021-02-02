@@ -21,7 +21,6 @@
                 </div>
             </div>
         </div>
-
         <div class="breadcrumb-line breadcrumb-line-light header-elements-md-inline">
             <div class="d-flex">
                 <div class="breadcrumb">
@@ -29,18 +28,7 @@
                     <a href="{{URL('invoices')}}" class="breadcrumb-item">Invoices</a>
                     <span class="breadcrumb-item active">Incentive</span>
                 </div>
-
                 <a href="#" class="header-elements-toggle text-default d-md-none"><i class="icon-more"></i></a>
-            </div>
-
-            <div class="header-elements d-none">
-                <div class="breadcrumb justify-content-center">
-                    <a href="#" class="breadcrumb-elements-item">
-                        <i class="icon-comment-discussion mr-2"></i>
-                        Escalate
-                    </a>
-
-                </div>
             </div>
         </div>
     </div>
@@ -49,25 +37,21 @@
 
     <div class="row">
         <div class="col-md-5">
-        &nbsp;
-
+            &nbsp;
             <!-- Basic layout-->
             <div class="card">
                 <div class="card-header header-elements-inline">
-                    <h5 class="card-title">Incentives </h5>
+                    <h5 class="card-title">Expenses </h5>
                 </div>
-
                 <div class="card-body">
-                
                     <form method="POST" id="frmOtherExpenses">
                         @csrf
-
                         @if(isset($recid))
                             {!! method_field('PATCH') !!} <input type="hidden" name="id" id="id" value="{{$recid->id}}">
                         @endif
 
-                        <div class="row mb-3 mb-md-2">
-                            <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                 <label>Year</label>
                                     <select name="year" id="year" class="form-control">
@@ -84,16 +68,14 @@
                                                     }
                                                 }
                                                 else{
-                                                    
-                                                        echo '<option value="'.$year_started.'" selected>'.$year_started.'</option>';
-                                                
+                                                    echo '<option value="'.$year_started.'" selected>'.$year_started.'</option>';
                                                 }
                                             }
                                         ?>
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Month</label>
                                     <select name="month" id="month" class="form-control">
@@ -111,13 +93,28 @@
                                     </select>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <p class="mb-3 font-weight-bold text-right pointer text-success" style="text-decoration:underline" id="addMoreExpensesCategory">Add More</p>
+
+                        <div class="row mb-3 mb-md-2" id="moreExpenses">
+                            @foreach($expensesCategories as $expenseCategory)
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Amount</label>
-                                    <input type="text" class="form-control" placeholder="Amount" name="amount" id="amount" value="@if(isset($recid)){{$recid->expenses}}@endif">
+                                    <label>{{ $expenseCategory->category }}</label>
+                                    <input type="hidden" name="expenses_description[]" value="{{ $expenseCategory->category}} ">
                                 </div>
                             </div>
+                            <div class="col-md-8">
+                                <div class="form-group" style="margin:0; padding:0">
+                                    <input type="number" step="0.01" class="form-control" placeholder="Amount" name="amount[]" id="amount" value="@if(isset($recid)){{$expenseCategory->amount}}@endif" style="margin:0; border-radius:0">
+                                </div>
+                            </div>
+                            @endforeach
+                            <!-- <section id="moreExpenses"></section> -->
                         </div>
+
+                        
 
                         <input type="hidden" name="expenses" id="expensesAmount">
                         <div id="responsePlace"></div>

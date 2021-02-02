@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\completeInvoice;
 use App\client;
+use App\ExpensesBreakdown;
+use App\expenses;
 
 class trackerController extends Controller
 {
@@ -78,9 +80,6 @@ class trackerController extends Controller
             $avgMarginForLastMonth = 0;
         }
         
-
-
-        
         if(date('m') == 7) { $opsStarted = 0; }
         if(date('m') == 8) { $opsStarted = 1; }
         if(date('m') == 9) { $opsStarted = 2; }
@@ -97,7 +96,7 @@ class trackerController extends Controller
         
         $lastOneYearAndMonth = DB::SELECT(
             DB::RAW(
-                'SELECT DISTINCT YEAR(gated_out) AS "years", MONTH(gated_out) AS "months" FROM tbl_kaya_trips WHERE gated_out <> "" LIMIT 5, 13'
+                'SELECT DISTINCT YEAR(gated_out) AS "years", MONTH(gated_out) AS "months" FROM tbl_kaya_trips WHERE gated_out <> "" LIMIT '.$opsStarted.', 13'
             )  
         );
 
@@ -423,5 +422,57 @@ class trackerController extends Controller
             'no_days_paid' => $days,
             'avg_payment_days' => $avgDayToPayment
         );
+    }
+
+
+    function numericalMonthDetector($selectedMonth) {
+        if($selectedMonth == 'Jan') { $month = 1; }
+        if($selectedMonth == 'Feb') { $month = 2; }
+        if($selectedMonth == 'Mar') { $month = 3; }
+        if($selectedMonth == 'Apr') { $month = 4; }
+        if($selectedMonth == 'May') { $month = 5; }
+        if($selectedMonth == 'Jun') { $month = 6; }
+        if($selectedMonth == 'Jul') { $month = 7; }
+        if($selectedMonth == 'Aug') { $month = 8; }
+        if($selectedMonth == 'Sep') { $month = 9; }
+        if($selectedMonth == 'Oct') { $month = 10; }
+        if($selectedMonth == 'Nov') { $month = 11; }
+        if($selectedMonth == 'Dec') { $month = 12; }
+
+        return $month;
+    }
+
+    public function showExpensesBreakdown(Request $request) {
+        $date = $request->time_inview;
+        $splitter = explode(',', $date);
+        $month = $this->numericalMonthDetector($splitter[0]);
+        $selectedYear = trim($splitter[1]);
+
+        //return $month.' '.$selectedYear;
+
+        $expenseList = ExpensesBreakdown::SELECT('category', 'amount')->WHERE('current_month', $month)->WHERE('current_year', $selectedYear)->GET();
+        $expense = expenses::WHERE('year', $selectedYear)->WHERE('month', $month)->GET()->LAST();
+
+        if(count($expenseList) <= 0) {
+            return 'not_found';
+        }
+        else{
+            foreach($expenseList as $key => $expenses) {
+                $expensesAmount[] = $expenses->amount;
+                $expensesCategory[] = ucfirst($expenses->category); 
+                $percentageOccupied[] = round(($expensesAmount[$key] / $expense->expenses) * 100, 2);
+            }
+
+            return array(
+                'percentage' => $percentageOccupied, 
+                'categories' => $expensesCategory, 
+                'allExpenses' => $expense
+            );
+
+            
+        }
+
+        
+        
     }
 }

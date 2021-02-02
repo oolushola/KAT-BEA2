@@ -430,13 +430,18 @@ class performanceMetricController extends Controller
         $totalTripsData = count($this->masterQueryData('tracker', '>=', 5, $userId));
 
         $myMonthAndYearData = '
-            <div class="table-responsive">
+            <div class="mb-2">
+                <input type="text" placeholder="Search" style="outline:none; font-size:11px; width:150px; padding:5px" id="searchPreviousTripsOfSelectedDate" />
+                <input type="date" id="drFrom" style="outline:none; font-size:11px; width:150px; padding:5px; width:130px;" />
+                <input type="date" id="drTo" style="outline:none; font-size:11px; width:150px; padding:5px; width:130px;" /> 
+                <button id="filterDateRange" class="btn btn-primary font-size-xs font-weight-bold btn-sm">GO!</button>
+                <input type="hidden" id="userSelectedId" value="'.$userId.'" />
+            </div>
+
+            <div class="table-responsive" id="tripsDateRangeFilter">
                 <table class="table table-condensed">
                     <tr class="table-success">
-                        <td colspan="7" class="font-weight-semibold">Total number of trips: ('.count($selectedMonthAndYearData).')
-                            <input type="text" placeholder="Search" style="outline:none; font-size:11px; width:150px; padding:5px" id="searchPreviousTripsOfSelectedDate" />
-                        </td>
-                        
+                        <td colspan="7" class="font-weight-semibold">Total number of trips: ('.count($selectedMonthAndYearData).')</td>
                     </tr>
                     <tr class="table-info">
                         <th class="font-size-xs text-center">SN</th>
@@ -455,6 +460,7 @@ class performanceMetricController extends Controller
                                 <td class="text-center">'.$count++.'</td>
                                 <td class="text-center">'.$trips->trip_id.' 
                                     <span class="font-weight-semibold d-block">'.$trips->loading_site.'</span>
+                                    <span class="d-block">'.date('d-m-Y', strtotime($trips->gated_out)).'</span>
                                 </td>
                                 <td class="text-center">'.$trips->transporter_name.' 
                                     <span class="font-weight-semibold d-block">'.$trips->phone_no.'</span>
@@ -646,6 +652,82 @@ class performanceMetricController extends Controller
         }
         
     }
+
+    public function tripsBreakDown(Request $request) {
+        $userId = $request->user_id;
+        $dateFrom = $request->date_from;
+        $dateTo = $request->date_to;
+    
+        $breakDowns = DB::SELECT(
+            DB::RAW(
+                'SELECT DISTINCT client_id, COUNT(client_id) as trips_done, company_name FROM tbl_kaya_trips a JOIN tbl_kaya_clients b ON a.client_id = b.id WHERE date(gated_out) BETWEEN "'.$dateFrom.'" AND "'.$dateTo.'" AND account_officer_id = "'.$userId.'" AND tracker >= 5 AND trip_status = TRUE AND client_id GROUP BY client_id'
+            )
+        );
+
+        $filteredDate = DB::SELECT(
+            DB::RAW(
+                'SELECT a.trip_id, a.gated_out, a.customers_name, a.customer_no, a.exact_location_id, a.client_rate, a.transporter_rate, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND date(gated_out) BETWEEN "'.$dateFrom.'" AND "'.$dateTo.'" AND tracker >= \'5\' AND account_officer_id = "'.$userId.'" ORDER BY gated_out ASC '
+            )
+        );
+
+        $totalTripsData = count($this->masterQueryData('tracker', '>=', 5, $userId));
+
+        $filtered = '
+        <div class="table-responsive" id="tripsDateRangeFilter">
+            <table class="table table-condensed">
+                <tr class="table-success">
+                    <td colspan="7" class="font-weight-semibold">Total number of trips: ('.count($filteredDate).')</td>
+                </tr>
+                <tr>
+                    <td colspan="7">';
+                        foreach($breakDowns as $tripBd) {
+                            $filtered.='<span class="badge badge-primary mr-2">'.$tripBd->company_name.' ('.$tripBd->trips_done.')</span>';
+                        }
+                    $filtered.'</td>
+                </tr>
+                <tr class="table-info">
+                    <th class="font-size-xs text-center">SN</th>
+                    <th class="font-size-xs text-center">TRIP INFO</th>
+                    <th class="font-size-xs text-center">TRANSPORTER</th>
+                    <th class="font-size-xs text-center">GTV</th>
+                    <th class="font-size-xs text-center">TR</th>
+                    <th class="font-size-xs text-center">MARGIN</th>
+                </tr>
+                <tbody id="selectedDateDataRecord">';
+                $count = 1;
+                if(count($filteredDate)) {
+                    foreach($filteredDate as $trips) {
+                        if($count % 2 == 1) { $css = "table-success"; } else { $css = " "; }
+                        $filtered.='<tr class="font-size-xs '.$css.'">
+                            <td class="text-center">'.$count++.'</td>
+                            <td class="text-center">'.$trips->trip_id.' 
+                                <span class="font-weight-semibold d-block">'.$trips->loading_site.'</span>
+                                <span class="d-block">'.date('d-m-Y', strtotime($trips->gated_out)).'</span>
+                            </td>
+                            <td class="text-center">'.$trips->transporter_name.' 
+                                <span class="font-weight-semibold d-block">'.$trips->phone_no.'</span>
+                            </td>
+                            <td class="text-center">₦'.number_format($trips->client_rate, 2).'</td>
+                            <td class="text-center">₦'.number_format($trips->transporter_rate, 2).'</td>
+                            <td class="text-center">₦'.number_format($trips->client_rate - $trips->transporter_rate, 2).'</td>
+                        </tr>';
+                    }
+                }
+                else{
+                    $filtered.='<tr>
+                        <td colspan="9" class="font-size-sm">They have no trip for this selected date range.</td>
+                    </tr>';
+                }
+            $filtered.='</tbody>
+            </table>
+        </div>
+        ';
+
+        return $filtered;
+    }
+
+
+
 
     function monthGetter($month) {
         if($month == 'January') { $selectedMonth = '01'; }

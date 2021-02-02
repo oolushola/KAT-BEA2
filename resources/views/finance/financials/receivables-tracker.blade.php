@@ -89,7 +89,7 @@
     
     <div class="col-md-9 col-sm-12 mb-2">
         <div class="dashboardbox">
-            <canvas id="marginByMonthStack" height="130"></canvas>
+            <canvas id="marginByMonthStack" height="130" data-toggle="modal" href=".expensesBreakdown"></canvas>
         </div>
     </div>
 
@@ -119,6 +119,7 @@
 </div>
 
 @include('finance.financials._payment-model')
+@include('finance.financials._expenses-breakdown')
 
 @stop
 
@@ -173,6 +174,24 @@
                     display: true,
                     text: 'Margin by Month (₦) - Gate Outs',
                     position: 'bottom'
+                },
+                onClick: function(c, i) {
+                    e = i[0];
+                    if(e) {
+                        var xValue = this.data.labels[e._index];
+                        var yValue = this.data.datasets[0].data[e._index];
+                        const date = new Date();
+                        const fullYear = date.getFullYear();
+
+                        if(fullYear === Number(xValue.split(',')[1])) {
+                            $.get('/expenses-breakdown', { time_inview: xValue }, function(data) {
+                                $('#expensesModelInfo').html('Expenses for '+xValue)
+                                expensesChart.data.labels = data.categories;
+                                expensesChart.data.datasets[0].data = data.percentage
+                                expensesChart.update()
+                            })
+                        }
+                    }
                 }
             },
             
@@ -398,6 +417,33 @@
                 $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
             });
         });
+
+        var expensesCtx = document.getElementById('expensesModel');
+        var expensesChart = new Chart(expensesCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Staff Cost', 'Finance', 'Frieght Charges', 'Service Charge'],
+                datasets: [{
+                    label: '# of Votes',
+                    data: [10, 5, 6, 7],
+                    backgroundColor: [
+                        '#ff7675', 
+                        '#e17055',
+                        '#fd79a8',
+                        '#636e72',
+                        '#2d3436',
+                        '#00b894',
+                        '#a29bfe'
+                    ],
+                    borderColor: '#fff',
+                    borderWidth: 1
+                }]
+            },
+            
+        });
+
+
+
     });
 </script>
 @stop
