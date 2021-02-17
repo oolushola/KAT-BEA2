@@ -133,7 +133,7 @@ class trackerController extends Controller
         $margins = array_column($tripmarginpermonth, 'margin');
         $sumOfTotalMargin = DB::SELECT(
             DB::RAW(
-                'SELECT SUM(client_rate * 1.025) AS totalRevenue, SUM(transporter_rate) AS totalCost, ROUND(SUM((client_rate * 1.025) - transporter_rate), 2) AS totalMargin FROM tbl_kaya_trips'
+                'SELECT SUM(client_rate * 1.025) AS totalRevenue, SUM(transporter_rate) AS totalCost, ROUND(SUM((client_rate * 1.025) - transporter_rate), 2) AS totalMargin FROM tbl_kaya_trips WHERE tracker >= 5 AND trip_status = TRUE'
             )
         );
         $totalMargin = $sumOfTotalMargin[0]->totalMargin;

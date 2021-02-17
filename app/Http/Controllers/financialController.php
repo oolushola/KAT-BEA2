@@ -35,7 +35,7 @@ class financialController extends Controller
 {
     function revenueCalculator($yearInView, $monthInview, $alias) {
         $revenueGenerator =  DB::SELECT(
-            DB::RAW('SELECT SUM(client_rate) AS "'.$alias.'" FROM tbl_kaya_trips WHERE MONTH(gated_out) = "'.$monthInview.'" AND YEAR(gated_out) = "'.$yearInView.'"')
+            DB::RAW('SELECT SUM(client_rate * 1.025) AS "'.$alias.'" FROM tbl_kaya_trips WHERE MONTH(gated_out) = "'.$monthInview.'" AND YEAR(gated_out) = "'.$yearInView.'" AND trip_status = TRUE AND tracker >=5 ')
         );
         return $revenueGenerator;
     }
