@@ -8,9 +8,6 @@
                 <input type="text" class="d-inline t-2 font-weight-semibold findTrip" style="width:80px; border:1px solid #ccc; padding:5px; top:3px; position:relative" placeholder="TRIP ID" id="finderRangeTo"  />
                 @endif
 
-                <span id="searchByWaybill" style="" class="pointer text-info font-size-xs font-weight-semibold mt-2 ml-1">Click here to find by waybill no.</span>
-                <span id="SearchByOthers" style="" class="pointer text-primary font-size-xs font-weight-semibold d-none mt-2 ml-1">Waybill No</span>
-
                 <input type="text" class="d-inline ml-2 t-2 font-weight-semibold" style="width:180px; border:1px solid #ccc; padding:5px; top:3px; position:relative" placeholder="What are you looking for?" id="searchTripFinder" data-value="1" />
                 
 
@@ -38,7 +35,7 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="7">You haven't entered any trip id</td>
+                                <td colspan="7">You haven't entered any search value</td>
                             </tr>
                         </tbody>
                     </table>

@@ -80,24 +80,25 @@ class dashboardController extends Controller
     }
 
     public function searchTripFinder(Request $request) {
-        $checker = $request->checker;
-        if($checker == 1) {
-            $trips = DB::SELECT(
-                DB::RAW(
-                    'SELECT a.id, trip_id, `exact_location_id`, truck_no, transporter_name, loading_site, gated_out, tracker
-                    FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_transporters c JOIN tbl_kaya_loading_sites d ON a.transporter_id = c.id AND a.truck_id = b.id AND a.loading_site_id = d.id WHERE (MATCH(trip_id, transporter_name) AGAINST("+'.$request->search.'" IN BOOLEAN MODE)) OR (truck_no LIKE "'.$request->search.'%") '
-                )
-            );
-            return $res = $this->finderResponse($trips, $checker);
-        }
-        else {
+        $findResult = '';
+        $trips = DB::SELECT(
+            DB::RAW(
+                'SELECT a.id, trip_id, `exact_location_id`, truck_no, transporter_name, loading_site, gated_out, tracker
+                FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_transporters c JOIN tbl_kaya_loading_sites d ON a.transporter_id = c.id AND a.truck_id = b.id AND a.loading_site_id = d.id WHERE (MATCH(trip_id, transporter_name) AGAINST("+'.$request->search.'" IN BOOLEAN MODE)) OR (truck_no LIKE "'.$request->search.'%") '
+            )
+        );
+        if(count($trips) <= 0) {
             $waybills = DB::SELECT(
                 DB::RAW(
-                    'SELECT a.id, a.trip_id, `exact_location_id`, truck_no, transporter_name, loading_site, gated_out, tracker, sales_order_no, invoice_no FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_transporters c JOIN tbl_kaya_loading_sites d JOIN tbl_kaya_trip_waybills e ON a.transporter_id = c.id AND a.truck_id = b.id AND a.loading_site_id = d.id AND e.trip_id = a.id WHERE (MATCH(sales_order_no, invoice_no) AGAINST("+'.$request->search.'" IN BOOLEAN MODE))'
+                    'SELECT a.id, a.trip_id, `exact_location_id`, truck_no, transporter_name, loading_site, gated_out, tracker, sales_order_no, invoice_no FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_transporters c JOIN tbl_kaya_loading_sites d JOIN tbl_kaya_trip_waybills e ON a.transporter_id = c.id AND a.truck_id = b.id AND a.loading_site_id = d.id AND e.trip_id = a.id WHERE (MATCH(sales_order_no, invoice_no) AGAINST("+'.$request->search.'" IN BOOLEAN MODE)) OR (sales_order_no LIKE "'.$request->search.'%")'
                 )
             );
-            return $this->finderResponse($waybills, $checker);
+            $findResult = $waybills;
         }
+        else{
+            $findResult = $trips;
+        }
+        return $this->finderResponse($findResult, '');
     }
 
 
@@ -146,7 +147,8 @@ class dashboardController extends Controller
                                 ';
                             }
                         $response.='</td>
-                        <td>'.$this->statusChecker($trip->tracker).'</td>
+                        <td>
+                            '.$this->statusChecker($trip->tracker).'</td>
                     </tr>';
                 }
             }

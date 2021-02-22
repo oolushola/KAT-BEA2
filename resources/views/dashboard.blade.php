@@ -60,21 +60,23 @@ input, select{
             $warning = 0;
             $danger = 0;
             foreach($yetTobeInvoicedWaybill as $object){
-                
                 $now = time();
                 $gatedOut = strtotime($object->gated_out);;
                 $datediff = $gatedOut - $now;
                 $numberofdays = (floor($datediff / (60 * 60 * 24)) * -1) -1;
-                
-
-                if($numberofdays >=0 && $numberofdays <= 3  ){
+                if($numberofdays >= 0 && $numberofdays <= 3){
                     $healthy += 1;
                 }
                 else if(($numberofdays > 3) && ($numberofdays <=7)){
                     $warning += 1;
                 }
+                else if($numberofdays > 7 && $object->tracker != 8) {
+                    $warning += 1;
+                }
                 else{
-                    $danger += 1;
+                    if($numberofdays > 7 && $object->tracker == 8) {
+                        $danger += 1;
+                    }
                 }
             }
             return $waybillStatusCount = array($healthy, $warning, $danger);
