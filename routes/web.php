@@ -353,6 +353,7 @@ Route::group(['middleware' => 'auth'], function() {
 
     Route::get('buh-trips-breakdown', 'performanceMetricController@tripsBreakdown');
     Route::get('expenses-breakdown', 'trackerController@showExpensesBreakdown');
+    Route::get('performance-analysis', 'performanceMetricController@performanceAnalysis');
 });
 
 

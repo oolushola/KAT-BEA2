@@ -4,7 +4,7 @@
 
 @section('css')
 <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.css">
-<link rel="stylesheet" type="text/css" href="{{URL::asset('/css/custom.css')}}">
+<link rel="stylesheet" type="text/css" href="{{URL::asset('/css/custom.css?v=time()')}}">
 @stop
 
 @section('main')
@@ -23,9 +23,6 @@
 ?>
 
 <div class="content-wrapper">
-   
-
-
     <!-- Page header -->
     <div class="page-header page-header-light">
         <div class="page-header-content header-elements-md-inline">
@@ -97,6 +94,11 @@
 
     <div class="card">
         <div class="row">
+            <section class="col-md-12 m-2">
+                <span class="ml-2 font-size-xs">From: <input type="date" id="datedFrom" style="border:1px solid #000; width: 120px; font-size: 10px; outline: none"> </span>
+                <span class="ml-2 font-size-xs">To: <input type="date" id="datedTo" style="border:1px solid #000; width: 120px; font-size: 10px; outline: none"></span>
+                <button id="shootStatAnalysis" class="font-weight-bold" style="border:1px solid #000; font-size: 10px; outline: none"> SHOOT</button>
+            </section>
             <div class="col-md-6">
                 <canvas id="numbersForTheMonth" height="150" data-toggle="modal" href="#specificBuh"></canvas>
             </div>
@@ -104,20 +106,20 @@
                 <canvas id="newTransporterGained" height="150" data-toggle="modal" href="#transporterGained"></canvas>
             </div>
         </div>
+        <div class="" id="performanceAnalysis"></div>
+        <span class="d-none ml-4 mb-4 font-weight-semibold pointer text-danger" id="closePerformanceAnalysis">Close</span>
     </div>
 
     <!-- <div class="card"> -->
     <div class="row">
-            <div class="col-md-6">
-                <canvas id="bonusAndEarnings" height="200"></canvas>
-            </div>
-            <div class="col-md-6">
-                <canvas id="expectedTripsFromClient" height="225"></canvas>
-            </div>
+        <div class="col-md-6">
+            <canvas id="bonusAndEarnings" height="200"></canvas>
         </div>
+        <div class="col-md-6">
+            <canvas id="expectedTripsFromClient" height="225"></canvas>
+        </div>
+    </div>
     <!-- </div> -->
-
-    
 </div>
 
 @include('performance-metric.partials._specificNumberPerformance')
@@ -545,37 +547,29 @@
         })
     })
 
-    // var ctx = document.getElementById('tester');
-    // var marginExpensesProfitAndLossData = {
-    //     labels: ['Success', 'Timi', 'Shola', 'Gbenga', 'Kemi'],
-    //     datasets: [
-    //         {
-    //             label: 'APMT',
-    //             data: [[5, 10], [2, 8]],
-    //             backgroundColor: '#150e06',
-    //             borderWidth: 1
-    //         }
-    //     ]
-    // }
-    // var marginExpenseProfitAndLossChart = new Chart(ctx, {
-    //         type: 'bar',
-    //         data: marginExpensesProfitAndLossData,
-    //         options: {
-    //             responsive: true,
-    //             legend: {
-    //                 position: 'top',
-    //                 display: true
-    //             },
-                
-    //             title: {
-    //                 display: true,
-    //                 text: 'Margin by Month (₦) - Gate Outs',
-    //                 position: 'bottom'
-    //             }
-    //         },
-            
-    //     });
+    $('#shootStatAnalysis').click(function() {
+        $datedFrom = $('#datedFrom').val()
+        if($datedFrom === '') {
+            $('#datedFrom').focus()
+            return false
+        }
+        $datedTo = $('#datedTo').val();
+        if($datedTo === '') {
+            $('#datedTo').focus()
+            return false
+        }
+        $.get('/performance-analysis', {datedFrom: $datedFrom, datedTo: $datedTo }, function(data) {
+            $('#performanceAnalysis').html(data).addClass('mb-3 ml-3 animate__zoomIn')
+            $('#closePerformanceAnalysis').removeClass('d-none')
+        })
+    })
 
+    $('#closePerformanceAnalysis').click(function() {
+        window.location.href='';
+    })
+
+
+    
 
 
 </script>

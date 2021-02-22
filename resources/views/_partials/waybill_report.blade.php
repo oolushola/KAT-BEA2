@@ -55,7 +55,7 @@
                                             $now = time();
                                             $gatedOut = strtotime($specificRecord->gated_out);;
                                             $datediff = $gatedOut - $now;
-                                            $numberofdays = floor($datediff / (60 * 60 * 24)) * -1;
+                                            $numberofdays = (floor($datediff / (60 * 60 * 24)) * -1) -1;
 
                                             if($numberofdays >=0 && $numberofdays <= 3){
                                                 $bgcolor = '#008000';
@@ -67,11 +67,18 @@
                                                 $color = '#000';
                                                 $checker = '';
                                             }
-                                            else{
-                                                $bgcolor = '#FF0000';
-                                                $extremeWaybillValuation += $specificRecord->client_rate;
+                                            elseif($numberofdays > 7 && $specificRecord->tracker != 8) {
+                                                $bgcolor = '#FFBF00';
                                                 $color = '#000';
                                                 $checker = '';
+                                            }
+                                            else{
+                                                if($numberofdays > 7 && $specificRecord->tracker == 8) {
+                                                    $bgcolor = '#FF0000';
+                                                    $extremeWaybillValuation += $specificRecord->client_rate;
+                                                    $color = '#000';
+                                                    $checker = '';
+                                                }
                                             }
 
                                             if($specificRecord->tracker == 8){

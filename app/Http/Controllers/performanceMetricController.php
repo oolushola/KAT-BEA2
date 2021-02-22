@@ -103,7 +103,7 @@ class performanceMetricController extends Controller
                 )
             );
             $x_profitGenerated[] = 0.1 * $trips[$key]->profitGenerated;
-            $averageWeight[] = 100 / $clientAssigned[$key]->assignedClientId;
+            $averageWeight[] = $clientAssigned[$key]->assignedClientId == 0 ? 0 : 100 / $clientAssigned[$key]->assignedClientId;
             $weightAverageBonus[] = round(($averageWeight[$key] / 100) * $x_profitGenerated[$key] / 1000, 2);
         }
 
@@ -651,6 +651,35 @@ class performanceMetricController extends Controller
             echo 'Something went wrong';
         }
         
+    }
+
+    public function performanceAnalysis(Request $request) {
+        $dateFrom = $request->datedFrom;
+        $dateTo = $request->datedTo;
+        $currentYear = date('Y');
+        $currentMonth = date('F');
+        $unitHeadTargets = buhMonthlyTarget::WHERE('current_month', $currentMonth)->WHERE('current_year', $currentYear)->GET();
+        $count = 0;
+        $response = '';
+        foreach($unitHeadTargets as $key=> $unitHead) {
+            $unitHeadRecord = User::findOrFail($unitHead->user_id);
+            $unitHeadInformation[] = $unitHeadRecord->first_name.' '.substr($unitHeadRecord->last_name, 0, 1).'.';
+            $count++;
+
+            $breakDowns[] = DB::SELECT(
+                DB::RAW(
+                    'SELECT DISTINCT client_id, COUNT(client_id) as trips_done, company_name FROM tbl_kaya_trips a JOIN tbl_kaya_clients b ON a.client_id = b.id WHERE date(gated_out) BETWEEN "'.$dateFrom.'" AND "'.$dateTo.'" AND account_officer_id = "'.$unitHead->user_id.'" AND tracker >= 5 AND trip_status = TRUE AND client_id GROUP BY client_id'
+                )
+            );
+            $response.= '<p class="mt-1 mb-1 p-2 font-weight-bold">'.$unitHeadInformation[$key].'';
+                if(count($breakDowns[$key]) > 0) {
+                    foreach($breakDowns[$key] as $tripBd) {
+                        $response.='<span class="badge badge-primary mr-1">'.$tripBd->company_name.' ('.$tripBd->trips_done.')</span>';
+                    }
+                }
+            $response.='</p>';
+        }
+        return $response;        
     }
 
     public function tripsBreakDown(Request $request) {
