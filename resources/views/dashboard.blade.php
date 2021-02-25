@@ -1024,54 +1024,6 @@ input, select{
         })
     })
 
-    $(document).on('click', '.paidFor', function() {
-        $paymentId = $(this).attr('id')
-        $(this).html('<i class="icon-spinner2 spinner"></i> Processing...')
-        $e = $(this);
-        $.get('/approve-uploaded-payment', { paymentNotificationId: $paymentId }, function(data) {
-            if(data == 'approved') {
-                $e.html('Paid <i class="icon-checkmark2"></i>')
-                $e.removeClass('paidFor')
-                $('#declined'+$paymentId).addClass('d-none')
-            }
-        })
-    })
-
-    $('#payallUploaded').click(function() {
-        $ask = confirm('Are you sure you want to pay all? ');
-        if($ask) {
-            $('#payallLoader').html('<i class="icon-spinner3 spinner"></i>Processing...');
-            $(this).addClass('d-none')
-            $.get('/approve-uploaded-payment', { paymentNotificationId: 'all'}, function(data) {
-                if(data == 'approved') {
-                    $('#payallLoader').html('<i class="icon-checkmark2"></i>Completed');
-                    window.location = '';
-                }
-            });
-        }
-        else{
-            return false
-        }
-    })
-
-    $(document).on('click', '.declineFor', function() {
-        $paymentId = $(this).attr('id')
-        $ask = confirm('Are you sure you want to decline this payment?');
-        if($ask) {
-            $(this).html('<i class="icon-spinner2 spinner"></i> Processing...')
-            $e = $(this);
-            $.get('/decline-uploaded-payment', { paymentNotificationId: $paymentId }, function(data) {
-                if(data == 'declined') {
-                    $('#box'+$paymentId).addClass('d-none')
-                }
-            })
-        }
-        else{
-            return false;
-        }
-    })
-
-
     $(document).on('click', '#uploadEirRequest', function() {
         $('#eirUploadRow').removeClass('d-none')
         $('#eirTripId').val($(this).attr('data-value'));

@@ -40,10 +40,9 @@
 	<div class="navbar navbar-expand-md navbar-dark">
 		<p style="font-size:20px; margin:0; padding:0; margin-top:8px;">Káyá Africa Technology</p>
 		
-
 		<div class="d-md-none">
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-mobile">
-				<i class="icon-tree5"></i>
+				<i class="icon-coins"></i><span class="badge badge-warning ml-1">{{ $paymentNotification }}</span>
 			</button>
 			<button class="navbar-toggler sidebar-mobile-main-toggle" type="button">
 				<i class="icon-paragraph-justify3"></i>
@@ -66,14 +65,14 @@
 					<a href="#" class="navbar-nav-link dropdown-toggle caret-0" data-toggle="dropdown" id="checkPaymentNotifications">
 						<i class="icon-bubbles4"></i>
 						<span class="d-md-none ml-2">Messages</span>
-						<span class="badge badge-pill bg-warning-400 ml-auto ml-md-0" id="paymentLabel">{{ Session::get('paymentNotification') }}</span>
+						<span class="badge badge-pill bg-warning-400 ml-auto ml-md-0 d-none d-sm-block" id="paymentLabel">{{ $paymentNotification }}</span>
 					</a>
 					
 					<div class="dropdown-menu dropdown-menu-right dropdown-content wmin-md-350">
 						<div class="dropdown-content-header">
 							<span class="font-weight-semibold">
 								Payment Notifications
-								@if(Session::get('paymentNotification') > 1)
+								@if($paymentNotification > 1)
 								<span class="text-right pointer badge badge-primary" id="payallUploaded">Pay All</span>
 								@endif
 								<span id="payallLoader" class="font-size-xs"></span>
@@ -215,7 +214,7 @@
 						</li>
 						@endif
 						
-						@if(Session::get('prsSession'))
+						@if($prsSession)
 						<li class="nav-item nav-item-submenu">
 							<a href="#" class="nav-link"><i class="icon-trophy4"></i> <span>Performance Review</span></a>
 
@@ -237,7 +236,7 @@
 						<li class="nav-item-header">
                             <div class="text-uppercase font-size-xs line-height-xs">TRIPS
 							@if(Auth::user()->role_id <= 4)
-							<span class="badge bg-blue-400 align-right ml-auto">{!! Session::get('on_journey') !!} Uncompleted</span>
+							<span class="badge bg-blue-400 align-right ml-auto">{!! $on_journey !!} Uncompleted</span>
 							@endif
 							</div> 
                             <i class="icon-menu" title="Forms"></i>
@@ -358,7 +357,7 @@
 								<li class="nav-item nav-item-submenu">
 									<a href="#" class="nav-link font-weight-semibold"><i class="icon-wallet"></i> Payables
 										<span class="badge bg-danger align-self-center ml-2">
-											{!! Session::get('payment_request') !!} Pending
+											{!! $payment_request !!} Pending
 										</span>
 									</a>
 									<ul class="nav nav-group-sub" style="display: none;">
@@ -485,7 +484,7 @@
 							<a href="{{URL('clients')}}" class="nav-link">
 								<i class="icon-list-ordered"></i>
 								<span>Clients</span>
-								<span class="badge bg-success align-self-center ml-auto">{!! Session::get('client') !!} Active Clients</span>
+								<span class="badge bg-success align-self-center ml-auto">{!! $client !!} Active Clients</span>
 							</a>
 						</li>
 
@@ -614,6 +613,54 @@
 			$('#paymentNotificationDrops').html(data);
 		})
 	})
+
+	$(document).on('click', '.paidFor', function() {
+        $paymentId = $(this).attr('id')
+        $(this).html('<i class="icon-spinner2 spinner"></i> Processing...')
+        $e = $(this);
+        $.get('/approve-uploaded-payment', { paymentNotificationId: $paymentId }, function(data) {
+            if(data == 'approved') {
+                $e.html('Paid <i class="icon-checkmark2"></i>')
+                $e.removeClass('paidFor')
+                $('#declined'+$paymentId).addClass('d-none')
+            }
+        })
+    })
+
+    $('#payallUploaded').click(function() {
+        $ask = confirm('Are you sure you want to pay all? ');
+        if($ask) {
+            $('#payallLoader').html('<i class="icon-spinner3 spinner"></i>Processing...');
+            $(this).addClass('d-none')
+            $.get('/approve-uploaded-payment', { paymentNotificationId: 'all'}, function(data) {
+                if(data == 'approved') {
+                    $('#payallLoader').html('<i class="icon-checkmark2"></i>Completed');
+                    window.location = '';
+                }
+            });
+        }
+        else{
+            return false
+        }
+    })
+
+    $(document).on('click', '.declineFor', function() {
+        $paymentId = $(this).attr('id')
+        $ask = confirm('Are you sure you want to decline this payment?');
+        if($ask) {
+            $(this).html('<i class="icon-spinner2 spinner"></i> Processing...')
+            $e = $(this);
+            $.get('/decline-uploaded-payment', { paymentNotificationId: $paymentId }, function(data) {
+                if(data == 'declined') {
+                    $('#box'+$paymentId).addClass('d-none')
+                }
+            })
+        }
+        else{
+            return false;
+        }
+    })
+
 </script>
 @yield('script')
 @endif
