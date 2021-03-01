@@ -17,6 +17,9 @@ use App\vatRate;
 use App\invoiceClientRename;
 use App\product;
 use App\invoiceSpecialRemark;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class invoiceController extends Controller
 {
@@ -260,15 +263,25 @@ class invoiceController extends Controller
         return 'completed'.'`'.$fullInvoiceNo;
     }
 
-    public function allInvoicedTrip() {
-        $completedInvoice = DB::SELECT(
+    public function allInvoicedTrip(Request $request) {
+        $invoiced = DB::SELECT(
             DB::RAW(
                 'SELECT DISTINCT a.invoice_no, a.paid_status, a.date_paid, a.acknowledged, a.acknowledged_date, b.client_id, c.company_name, a.completed_invoice_no, a.amount_paid_dfferent, invoice_status FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_kaya_trip_waybill_statuses d ON a.trip_id = b.id AND b.client_id = c.id AND d.trip_id = b.id ORDER BY invoice_no DESC'
             )
         );
+
+        $myCollectionObj = collect($invoiced);
+        $completedInvoice = $this->paginate($myCollectionObj);
         $invoiceBillers = invoiceClientRename::GET();
-        
         return view('finance.invoice.all-invoiced-trip', compact('completedInvoice', 'invoiceBillers'));
+    }
+
+    public function paginate($items, $perPage = 300, $page = null, $options = []) {
+        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
+        $items = $items instanceof Collection ? $items : Collection::make($items);
+        $pagination = new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
+        $path = url('/').'/all-invoiced-trips?page='.$page;
+        return $pagination->withPath($path);
     }
 
     public function singleInvoice($invoiceNumber) {

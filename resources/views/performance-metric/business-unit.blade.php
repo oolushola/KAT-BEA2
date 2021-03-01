@@ -370,13 +370,14 @@
         var ctx = document.getElementById('dailyGateOutChart');
         var dayssofar = <?php echo json_encode($daysIntheMonth); ?>;
         var noOfTripsPerDay = <?php echo json_encode($buhNoOfGatePerDayInCurrentMonth); ?>;
+        
 
         var myChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: dayssofar,
                 datasets: [{
-                    label: 'My Daily Gate out for April, 2020',
+                    label: 'Current Month Daily Gate Out Trajectory',
                     data: noOfTripsPerDay,
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.2)',

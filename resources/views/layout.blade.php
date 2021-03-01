@@ -42,7 +42,8 @@
 		
 		<div class="d-md-none">
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-mobile">
-				<i class="icon-coins"></i><span class="badge badge-warning ml-1">{{ $paymentNotification }}</span>
+				<i class="icon-bell3"></i>
+				<span class="badge badge-pill badge-warning ml-1">{{ Session::get('paymentNotification') }}</span>
 			</button>
 			<button class="navbar-toggler sidebar-mobile-main-toggle" type="button">
 				<i class="icon-paragraph-justify3"></i>
@@ -65,14 +66,15 @@
 					<a href="#" class="navbar-nav-link dropdown-toggle caret-0" data-toggle="dropdown" id="checkPaymentNotifications">
 						<i class="icon-bubbles4"></i>
 						<span class="d-md-none ml-2">Messages</span>
-						<span class="badge badge-pill bg-warning-400 ml-auto ml-md-0 d-none d-sm-block" id="paymentLabel">{{ $paymentNotification }}</span>
+						<span class="badge badge-pill bg-warning-400 ml-auto ml-md-0 d-none d-sm-block" id="paymentLabel">
+						{{ Session::get('paymentNotification') }}</span>
 					</a>
 					
 					<div class="dropdown-menu dropdown-menu-right dropdown-content wmin-md-350">
 						<div class="dropdown-content-header">
 							<span class="font-weight-semibold">
 								Payment Notifications
-								@if($paymentNotification > 1)
+								@if(Session::get('paymentNotification') > 1)
 								<span class="text-right pointer badge badge-primary" id="payallUploaded">Pay All</span>
 								@endif
 								<span id="payallLoader" class="font-size-xs"></span>
@@ -214,7 +216,7 @@
 						</li>
 						@endif
 						
-						@if($prsSession)
+						@if(Session::get('$prsSession'))
 						<li class="nav-item nav-item-submenu">
 							<a href="#" class="nav-link"><i class="icon-trophy4"></i> <span>Performance Review</span></a>
 
@@ -236,7 +238,7 @@
 						<li class="nav-item-header">
                             <div class="text-uppercase font-size-xs line-height-xs">TRIPS
 							@if(Auth::user()->role_id <= 4)
-							<span class="badge bg-blue-400 align-right ml-auto">{!! $on_journey !!} Uncompleted</span>
+							<span class="badge bg-blue-400 align-right ml-auto">{!! Session::get('on_journey') !!} Uncompleted</span>
 							@endif
 							</div> 
                             <i class="icon-menu" title="Forms"></i>
@@ -357,7 +359,7 @@
 								<li class="nav-item nav-item-submenu">
 									<a href="#" class="nav-link font-weight-semibold"><i class="icon-wallet"></i> Payables
 										<span class="badge bg-danger align-self-center ml-2">
-											{!! $payment_request !!} Pending
+											{!! Session::get('payment_request') !!} Pending
 										</span>
 									</a>
 									<ul class="nav nav-group-sub" style="display: none;">
@@ -484,7 +486,7 @@
 							<a href="{{URL('clients')}}" class="nav-link">
 								<i class="icon-list-ordered"></i>
 								<span>Clients</span>
-								<span class="badge bg-success align-self-center ml-auto">{!! $client !!} Active Clients</span>
+								<span class="badge bg-success align-self-center ml-auto">{!! Session::get('client') !!} Active Clients</span>
 							</a>
 						</li>
 
@@ -499,7 +501,7 @@
 
 								<ul class="nav nav-group-sub" data-submenu-title="Starter kit">
 									<li class="nav-item"><a href="{{URL('companies-profile')}}" class="nav-link active">Kaya Profile</a></li>
-									<li class="nav-item"><a href="{{URL('payment-request-master')}}" class="nav-link"><i class="icon-coins"></i><span>All Pending Requests</span></a></li>
+									<li class="nav-item"><a href="{{URL('payment-request-master')}}" class="nav-link"><i class="icon-alarm"></i><span>All Pending Requests</span></a></li>
 									<li class="nav-item"><a href="{{URL('product-category')}}" class="nav-link">Product Category</a></li>
 									<li class="nav-item">
 										<a href="{{URL('products')}}" class="nav-link">Products</a>
