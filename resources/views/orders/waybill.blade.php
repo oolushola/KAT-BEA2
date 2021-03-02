@@ -144,7 +144,7 @@ td{
         <!-- Contextual classes -->
         <div class="card">
             <div class="card-header header-elements-inline">
-                <h5 class="card-title">Waybill Status for trip : {{$orderId}}</h5>
+                <h5 class="card-title">Status : {{$orderId}}</h5>
             </div>
 
             <div class="table-responsive">
@@ -218,7 +218,7 @@ td{
                         @endif
                         <tr>
                             <th class="table-info" colspan="7">
-                            <span class="font-weight-semibold">Waybill:</span> 
+                            <span class="font-weight-semibold">Status:</span> 
                                 @if(count($waybillstatus))
                                 <label class="text-primary">{{$waybillstatus[0]['comment']}}<label>
                                 @else
@@ -230,6 +230,48 @@ td{
                     </tbody>
                 </table>
             </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-info">
+                                <tr style="font-size:11px;" class="text-center">
+                                    <th>SN</th>
+                                    <th>Delivered Container</th>
+                                    <th>Remark</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if(count($offloadWaybillLists))
+                                <?php $counter = 0; ?>
+                                    @foreach($offloadWaybillLists as $eir)
+                                        <?php 
+                                            $counter++;
+                                            $counter % 2 == 0 ? $css = '' : $css = 'table-success';
+                                        ?> 
+                                        <tr class="{{$css}} text-center" style="font-size:10px">
+                                            <td>{{$counter}}</td>
+                                            <td>
+                                                <a href="{{URL::asset('assets/img/signedwaybills/'.$eir->received_waybill.'')}}" target="_blank">
+                                                    <i class="icon-eye"></i>
+                                                </a>
+                                            </td>
+                                            <td>{{ $eir->waybill_remark }}</td>
+                                        </tr>
+                                    @endforeach
+                                @else
+                                    <tr>
+                                        <td class="table-success" colspan="8">You have not uploaded any information as regards this waybill</td>
+                                    </tr>
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+            </div>
+
         </div>
         <!-- /contextual classes -->
 

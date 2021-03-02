@@ -354,6 +354,10 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('buh-trips-breakdown', 'performanceMetricController@tripsBreakdown');
     Route::get('expenses-breakdown', 'trackerController@showExpensesBreakdown');
     Route::get('performance-analysis', 'performanceMetricController@performanceAnalysis');
+
+    Route::get('available-incentives', 'overviewController@tripIncentives');
+    Route::post('add-incentives', 'overviewController@addIncentives');
+    Route::get('remove-incentive/{incentiveId}', 'overviewController@removeIncentive');
 });
 
 
