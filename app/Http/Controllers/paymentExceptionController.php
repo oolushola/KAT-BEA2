@@ -15,7 +15,8 @@ use App\transporter;
 use App\PaymentHistory;
 use Auth;
 use App\PaymentNotification;
-
+use App\trucks;
+use App\truckType;
 
 class paymentExceptionController extends Controller
 {
@@ -226,24 +227,30 @@ class paymentExceptionController extends Controller
 
     }
 
-    public function approveBalanceRequest(Request $request) {
+    private $SMS_SENDER = 'Kaya';
+    private $RESPONSE_TYPE = 'json';
+    private $SMS_USERNAME = 'odejobi.olushola@kayaafrica.co';
+    private $SMS_PASSWORD = 'Likemike009@@';
 
+    public function approveBalanceRequest(Request $request) {
         $balanceId = $request->approveBalance;
         foreach($balanceId as $id) {
             $recid = tripPayment::findOrFail($id);
             $recid->balance_paid = TRUE;
             $balance = $recid->balance;
-            $newChunkBalance = 0;
-            $transporterChunkPayment = bulkPayment::WHERE('transporter_id', $recid->transporter_id)->GET();
-            if(sizeof($transporterChunkPayment)>0) {
-                $availableBalance = $transporterChunkPayment[0]->balance;
-                if($availableBalance >= $balance){
-                    $newChunkBalance = $availableBalance - $balance;
-                }
-                $updateAccountBalance = bulkPayment::firstOrNew(['transporter_id' => $recid->transporter_id]);
-                $updateAccountBalance->balance = $newChunkBalance;
-                $updateAccountBalance->save();
+            $getTrip = trip::findOrFail($recid->trip_id);
+            $transporterInfo = transporter::findOrFail($getTrip->transporter_id);
+            $truckInfo = trucks::findOrFail($getTrip->truck_id);
+            $truckType = truckType::findOrFail($truckInfo->truck_type_id);
+            
+            $getAccountName = explode(' ', $transporterInfo->account_name);
+            if(count($getAccountName) <= 1) {
+                $transporter = $getAccountName[0];
             }
+            else {
+                list($firstName, $lastNameInitial) = $getAccountName;
+            }
+            
             $recid->save();
 
             $payment = PaymentNotification::firstOrNew(['trip_id' => $recid->trip_id, 'payment_for' => 'Balance']);
@@ -251,8 +258,58 @@ class paymentExceptionController extends Controller
             $payment->uploaded_at = DATE('Y-m-d H:i:s');
             $payment->uploaded_by = Auth::user()->id;
             $payment->save();
+
+            $transporterPhoneNo = $transporterInfo->phone_no;
+            $messageContent = 'Hi '.$firstName.', Balance of NGN'.number_format($balance).' for '.$truckInfo->truck_no.'; '.
+            $truckType->tonnage/1000 .'T, '.$getTrip->exact_location_id.' has been processed.';
+
+            $this->initiateSms($transporterPhoneNo, $messageContent);
+
         }
         return 'approved';
+    }
+
+    public function initiateSms($receiver, $content) {
+        $isError = 0;
+        $errorMessage = true;
+
+        //preparing post paramters
+        $postData = array(
+            'username' => $this->SMS_USERNAME,
+            'password' => $this->SMS_PASSWORD,
+            'message' => $content,
+            'sender' => $this->SMS_SENDER,
+            'mobiles' => $receiver,
+            'response' => $this->RESPONSE_TYPE
+        );
+        $url = 'https://portal.nigeriabulksms.com/api/';
+        $ch  = curl_init();
+
+        curl_setopt_array($ch, array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $postData 
+        ));
+        // Ignore SSL Certificate Verication
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+
+        //get response
+        $output = curl_exec($ch);
+        
+        //print error if there are any
+        if(curl_errno($ch)) {
+            $isError = true;
+            $errorMessage = curl_error($ch);
+        }
+        curl_close($ch);
+        if($isError) {
+            return array('error' => 1, 'message' => $errorMessage);
+        }
+        else{
+            return array('error' => 0);
+        }
     }
 
     function transactQueryBalance($paymentRequestId) {

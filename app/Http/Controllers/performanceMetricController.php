@@ -26,13 +26,19 @@ class performanceMetricController extends Controller
             $unitHeadIds[] = $unitHeadRecord->id;
             $unitHeadSpecificTargets[] = $unitHead->target / 1000000;
 
-            $myTotalRevenue = trip::WHERE('account_officer_id', $unitHead->user_id)
-                ->WHERE('trip_status', 1)
-                ->WHERE('tracker', '>=', 5)
-                ->WHEREMONTH('gated_out', now())
-                ->WHEREYEAR('gated_out', now())
-                ->VALUE(DB::RAW("SUM(client_rate)")
+            // $myTotalRevenue = trip::WHERE('account_officer_id', $unitHead->user_id)
+            //     ->WHERE('trip_status', 1)
+            //     ->WHERE('tracker', '>=', 5)
+            //     ->WHEREMONTH('gated_out', now())
+            //     ->WHEREYEAR('gated_out', now())
+            //     ->VALUE(DB::RAW("SUM(client_rate)")
+            // );
+            [$myTotalRevenue[]] = DB::SELECT(
+                DB::RAW(
+                    'SELECT SUM(client_rate + IFNULL(b.amount, 0)) as totalRevenue FROM tbl_kaya_trips a LEFT JOIN tbl_kaya_trip_incentives b ON a.id = b.trip_id WHERE account_officer_id = "'.$unitHead->user_id.'" AND trip_status = TRUE AND MONTH(gated_out) = '.date('m').' AND YEAR(gated_out) = '.date('Y').''
+                )
             );
+            
             $myTotalTransporterRate = trip::WHERE('account_officer_id', $unitHead->user_id)
                 ->WHERE('trip_status', 1)
                 ->WHERE('tracker', '>=', 5)
@@ -40,14 +46,15 @@ class performanceMetricController extends Controller
                 ->WHEREYEAR('gated_out', now())
                 ->VALUE(DB::RAW("SUM(transporter_rate)")
             );
-             $myGrossMargin[] = ($myTotalRevenue - $myTotalTransporterRate) / 1000000;
+            
+             $myGrossMargin[] = ($myTotalRevenue[$key]->totalRevenue - $myTotalTransporterRate) / 1000000;
              $myOutstanding[] = $myGrossMargin[$key] - $unitHeadSpecificTargets[$key];
 
-             if($myGrossMargin[$key] == 0 || $myTotalRevenue == 0){
+             if($myGrossMargin[$key] == 0 || $myTotalRevenue[$key]->totalRevenue == 0){
                 $unitHeadCurrentMarkUp[] = number_format(0, 2);
              }
              else{
-                $unitHeadCurrentMarkUp[] = number_format(($myGrossMargin[$key] / ($myTotalRevenue/1000000) * 100), 2);
+                $unitHeadCurrentMarkUp[] = number_format(($myGrossMargin[$key] / ($myTotalRevenue[$key]->totalRevenue/1000000) * 100), 2);
             }
             
             $tripCount[] = trip::WHEREMONTH('gated_out', now())->WHEREYEAR('gated_out', now())->WHERE('trip_status', 1)->WHERE('account_officer_id', $unitHead->user_id)->GET()->COUNT();
@@ -401,7 +408,7 @@ class performanceMetricController extends Controller
 
         $choosenDateRevenueAndCost = DB::SELECT(
             DB::RAW(
-                'SELECT SUM(client_rate) AS revenueForTheMonth, SUM(transporter_rate) AS totalTrFortheMonth FROM tbl_kaya_trips WHERE account_officer_id = "'.$userId.'" AND MONTH(gated_out) = "'.$selectedMonth.'" AND YEAR(gated_out) = "'.$year.'" AND trip_status = \'1\' AND tracker >= 5 '
+                'SELECT SUM(client_rate + IFNULL(b.amount, 0)) AS revenueForTheMonth, SUM(transporter_rate) AS totalTrFortheMonth FROM tbl_kaya_trips a LEFT JOIN tbl_kaya_trip_incentives b ON a.id = b.trip_id WHERE account_officer_id = "'.$userId.'" AND MONTH(gated_out) = "'.$selectedMonth.'" AND YEAR(gated_out) = "'.$year.'" AND trip_status = \'1\' AND tracker >= 5 '
             )
         );
             
@@ -423,7 +430,7 @@ class performanceMetricController extends Controller
         $yetTogateOutData = $this->masterQueryData('tracker', '<=', 4, $userId);            
         $selectedMonthAndYearData = DB::SELECT(
             DB::RAW(
-                'SELECT a.trip_id, a.gated_out, a.customers_name, a.customer_no, a.exact_location_id, a.client_rate, a.transporter_rate, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND MONTH(gated_out) = "'.$selectedMonth.'" AND YEAR(gated_out) = "'.$year.'" AND tracker >= \'5\' AND account_officer_id = "'.$userId.'" ORDER BY gated_out ASC '
+                'SELECT a.trip_id, a.gated_out, a.customers_name, a.customer_no, a.exact_location_id, a.client_rate, a.transporter_rate, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage, IFNULL(h.amount, 0) AS incentive FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id LEFT JOIN tbl_kaya_trip_incentives h ON a.id = h.trip_id WHERE a.trip_status = \'1\' AND MONTH(gated_out) = "'.$selectedMonth.'" AND YEAR(gated_out) = "'.$year.'" AND tracker >= \'5\' AND account_officer_id = "'.$userId.'" ORDER BY gated_out ASC'
             )
         );
 
@@ -453,8 +460,10 @@ class performanceMetricController extends Controller
                     </tr>
                     <tbody id="selectedDateDataRecord">';
                     $count = 1;
+
                     if(count($selectedMonthAndYearData)) {
                         foreach($selectedMonthAndYearData as $trips) {
+                            $rate = $trips->client_rate + $trips->incentive;
                             if($count % 2 == 1) { $css = "table-success"; } else { $css = " "; }
                             $myMonthAndYearData.='<tr class="font-size-xs '.$css.'">
                                 <td class="text-center">'.$count++.'</td>
@@ -465,9 +474,9 @@ class performanceMetricController extends Controller
                                 <td class="text-center">'.$trips->transporter_name.' 
                                     <span class="font-weight-semibold d-block">'.$trips->phone_no.'</span>
                                 </td>
-                                <td class="text-center">₦'.number_format($trips->client_rate, 2).'</td>
+                                <td class="text-center">₦'.number_format($rate, 2).'</td>
                                 <td class="text-center">₦'.number_format($trips->transporter_rate, 2).'</td>
-                                <td class="text-center">₦'.number_format($trips->client_rate - $trips->transporter_rate, 2).'</td>
+                                <td class="text-center">₦'.number_format($rate - $trips->transporter_rate, 2).'</td>
                             </tr>';
                         }
                     }
@@ -484,12 +493,7 @@ class performanceMetricController extends Controller
         $revenueGenerated = $choosenDateRevenueAndCost[0]->revenueForTheMonth;
         $transporterRate = $choosenDateRevenueAndCost[0]->totalTrFortheMonth;
 
-        $tripsDoneWithIncentives = DB::SELECT(
-            DB::RAW(
-                'SELECT SUM(b.amount) AS total_incentive FROM tbl_kaya_trips a JOIN tbl_kaya_trip_incentives b ON a.id = b.trip_id WHERE MONTH(gated_out) = "'.$selectedMonth.'" AND YEAR(gated_out) = "'.$year.'"  AND a.account_officer_id = "'.$userId.'"'
-            )
-        );
-        $gtv_ = $revenueGenerated + $tripsDoneWithIncentives[0]->total_incentive;
+        $gtv_ = $revenueGenerated;
         $profitGenerated = $gtv_ - $transporterRate;
 
         $percentageProfit = number_format(($profitGenerated / $myMonthlyTargetValue->target) * 100, 2);

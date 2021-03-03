@@ -39,6 +39,7 @@ td{
                 <div class="breadcrumb">
                     <a href="{{URL('all-invoiced-trips')}}" class="breadcrumb-item"><i class="icon-home2 mr-2"></i> Home</a>
                     <span class="breadcrumb-item active">Invoiced Trips</span>
+                    <div class="ml-3 mb-2 mt-2 font-size-md">{!! $completedInvoice->links() !!}</div>
                 </div>
 
                 <a href="#" class="header-elements-toggle text-default d-md-none"><i class="icon-more"></i></a>
@@ -50,7 +51,7 @@ td{
 
     <!-- Content area -->
     <div class="content">
-
+        
         <!-- Invoice archive -->
         <div class="card">
             <form method="POST" name="frmPaidInvoices" id="frmPaidInvoices" action="{{URL('paid-invoices')}}">

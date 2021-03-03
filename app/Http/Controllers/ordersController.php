@@ -35,6 +35,7 @@ use App\OffloadWaybillStatus;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use App\ClientAccountManager;
 
 class ordersController extends Controller
 {
@@ -341,8 +342,13 @@ class ordersController extends Controller
                 $trip_category = 1;
             }
 
-            $transporterRecord = transporter::findOrFail($request->transporter_id);
-            $userIdentity = $transporterRecord->assign_user_id;
+            if($request->transporter_id == 225) {
+                $userIdentity = 37;
+            }
+            else {
+                $transporterRecord = ClientAccountManager::WHERE('client_id', $request->client_id)->FIRST();
+                $userIdentity = $transporterRecord->user_id;
+            }
             $tripId = 'KAID'.$kaya_id;
             $addNewTrip = trip::CREATE([
                 'gate_in' => $request->gate_in, 
@@ -857,6 +863,7 @@ class ordersController extends Controller
         $tripId = $tracker_[0]['id'];
         $tripwaybill = tripWaybill::WHERE('trip_id', $tripId)->GET();
         $waybillstatus = tripWaybillStatus::WHERE('trip_id', $tripId)->GET();
+        $offloadWaybillLists = offloadWaybillRemark::WHERE('trip_id', $tripId)->GET();
         return view('orders.waybill',
             compact(
                 'orderId',
@@ -864,7 +871,8 @@ class ordersController extends Controller
                 'tracker',
                 'tripId',
                 'tripwaybill',
-                'waybillstatus'
+                'waybillstatus',
+                'offloadWaybillLists'
             )
         );
     }
@@ -920,6 +928,8 @@ class ordersController extends Controller
         $tripwaybill = tripWaybill::WHERE('trip_id', $tripId)->GET();
         $recid = tripWaybill::findOrFail($id);
         $waybillstatus = tripWaybillStatus::WHERE('trip_id', $tripId)->GET();
+        $offloadWaybillLists = offloadWaybillRemark::WHERE('trip_id', $tripId)->GET();
+
         return view('orders.waybill',
             compact(
                 'orderId',
@@ -928,7 +938,8 @@ class ordersController extends Controller
                 'tripId',
                 'tripwaybill',
                 'recid',
-                'waybillstatus'
+                'waybillstatus',
+                'offloadWaybillLists'
             )
         );
     }
@@ -1434,5 +1445,6 @@ class ordersController extends Controller
         }
         
     }
+    
     
 }
