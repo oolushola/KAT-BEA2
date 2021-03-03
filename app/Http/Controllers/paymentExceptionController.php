@@ -251,13 +251,13 @@ class paymentExceptionController extends Controller
                 list($firstName, $lastNameInitial) = $getAccountName;
             }
             
-            //$recid->save();
+            $recid->save();
 
             $payment = PaymentNotification::firstOrNew(['trip_id' => $recid->trip_id, 'payment_for' => 'Balance']);
             $payment->amount = $balance;
             $payment->uploaded_at = DATE('Y-m-d H:i:s');
             $payment->uploaded_by = Auth::user()->id;
-            //$payment->save();
+            $payment->save();
 
             $transporterPhoneNo = $transporterInfo->phone_no;
             $messageContent = 'Hi '.$firstName.', Balance of NGN'.number_format($balance).' for '.$truckInfo->truck_no.'; '.

@@ -38,6 +38,8 @@ function getPaymentInitiator($arrayRecord, $master) {
 
 <form method="POST" name="frmPayment" id="frmPayment" action="{{URL('bulk-full-payment')}}">
     @csrf
+
+    <h6 class="font-weight-semibold text-primary" id="smsLedgerAcct"></h6>
     <div class="page-header page-header-light">
         <div class="page-header-content header-elements-md-inline">
             <div class="page-title d-flex text-primary" id="advanceRequestLog">
@@ -1037,6 +1039,16 @@ function getPaymentInitiator($arrayRecord, $master) {
                 $(this).toggle($(this).text().toLowerCase().indexOf($clientName) > -1)
             });
         });
+
+        
+        const baseUrl = 'https://portal.nigeriabulksms.com/api/';
+        const username = 'odejobi.olushola@kayaafrica.co';
+        const password = 'Likemike009@@';
+        $.get(`${baseUrl}?&username=${username}&password=${password}&action=balance`, function(data) {
+            const response = JSON.parse(data);
+            $('#smsLedgerAcct').html(`SMS BALANCE: &#x20A6;${response.balance}`)
+        })
+        
     })
 </script>
 @stop
