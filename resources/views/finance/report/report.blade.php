@@ -163,6 +163,12 @@
     <div class="col-md-7 searchBreakdown paidInvoices d-none font-weight-bold font-size-xs">
         <span>From: <input type="date" id="piDateFrom" class="finance-report__input"></span>
         <span>To: <input type="date" id="piDateTo" class="finance-report__input"></span>
+        <select class="finance-report__select" id="paidInvoicesClient">
+            <option value="0">Choose Client</option>
+            @foreach($clients as $client)
+            <option value="{{ $client->id }}">{{ $client->company_name }}</option>
+            @endforeach
+        </select>
         <button id="runPaidInvoices" class="pi">SHOOT <i class="icon-paperplane"></i></button>
     </div>
 
@@ -174,6 +180,12 @@
             <option value="6">On Journey</option>
             <option value="7">Arrived Destination</option>
             <option value="8">Offloaded</option>
+        </select>
+        <select class="finance-report__select" id="uninvoicedClientId">
+            <option value="0">Choose Client</option>
+            @foreach($clients as $client)
+            <option value="{{ $client->id }}">{{ $client->company_name }}</option>
+            @endforeach
         </select>
         <button id="runUninvoicedTrips" class="stat">SHOOT <i class="icon-paperplane"></i></button>
     </div>
@@ -203,7 +215,11 @@
     </div>
 
     <div class="col-md-7 searchBreakdown trips d-none font-weight-bold font-size-xs">
-        TRIP ID LOOK UP <input type="text" id="search" class="finance-report__input" />
+        TRIP ID LOOK UP 
+        <span>From: <input type="date" id="tripSearchFrom" class="finance-report__input"></span>
+        <span>To: <input type="date" id="tripSearchTo" class="finance-report__input"></span>
+        <input type="text" id="search" class="finance-report__input" />
+        
         <button id="runTripSearch" class="tripSearch">SHOOT <i class="icon-paperplane"></i></button>
     </div>
     

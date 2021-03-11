@@ -49,23 +49,30 @@ $(function() {
             if($identifier == 'pi') {
                 $piDateFrom = $('#piDateFrom').val()
                 $piDateTo = $('#piDateTo').val()
+                $piClient = $('#paidInvoicesClient').val()
                 if($piDateFrom == '' || $piDateTo == '') {
                     validator('#validator', 'Date range criteria for paid invoices is incomplete.')
                     return false
                 }
                 const payload = {
                     pi_date_from: $piDateFrom,
-                    pi_date_to: $piDateTo 
+                    pi_date_to: $piDateTo,
+                    pi_client_id: $piClient
                 }
                 submit(url, JSON.stringify(payload))
             }
             if($identifier == 'stat') {
                 $tracker = $('#tracker').val()
+                $uninvoicedClientId = $('#uninvoicedClientId').val()
                 if($tracker == '') {
                     validator('#validator', 'Current trip status is required.')
                     return false
                 }
-                submit(url, $tracker)
+                const payload = {
+                    tracker: $tracker,
+                    clientId: $uninvoicedClientId
+                }
+                submit(url, JSON.stringify(payload))
             }
             if($identifier == 'invd') {
                 $clientInvoiced = $('#clientInvoiced').val()
@@ -104,13 +111,20 @@ $(function() {
                 submit(url, JSON.stringify(payload))
             }
             if($identifier === 'tripSearch') {
+                $tripSearchFrom = $('#tripSearchFrom').val()
+                $tripSearchTo = $('#tripSearchTo').val()
                 $search = $('#search').val();
-                if($search === '') {
-                    validator('#validator', 'A Trip ID is required for look up.')
+                const payload = {
+                    from: $tripSearchFrom,
+                    to: $tripSearchTo,
+                    search: $search
+                }
+                if($tripSearchFrom !='' && $tripSearchTo != '' && $search != '') {
+                    validator('#validator', 'You can only search by a Trip ID or a date range')
                     return false;
                 }
+                submit(url, JSON.stringify(payload))
             }
-            submit(url, $search)
         })
     }
     
