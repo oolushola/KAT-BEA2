@@ -197,7 +197,7 @@ class backendController extends Controller
         $availableTrucks = truckAvailability::WHERE('status', !TRUE)->GET()->COUNT();
 
         $tripWaybillYetToReceive = DB::SELECT(
-            DB::RAW('SELECT a.*, b.comment, c.loading_site, d.transporter_name, e.product, f.truck_no FROM tbl_kaya_trips a JOIN tbl_kaya_trip_waybill_statuses b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f ON a.id = b.trip_id AND a.loading_site_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id WHERE b.waybill_status = FALSE AND a.trip_status = 1 AND a.tracker >= 5 ORDER BY a.gated_out ASC'
+            DB::RAW('SELECT a.*, b.comment, c.loading_site, d.transporter_name, e.product, f.truck_no FROM tbl_kaya_trips a JOIN tbl_kaya_trip_waybill_statuses b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f ON a.id = b.trip_id AND a.loading_site_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id WHERE b.waybill_status = FALSE AND a.trip_status = 1 AND a.tracker >= 8 ORDER BY a.gated_out ASC'
             )
         );
         
@@ -210,6 +210,7 @@ class backendController extends Controller
             $yetToReceiveWaybill = [];
         }
         
+        $yetToReceiveWaybillDetails = [];
         if(count($yetToReceiveWaybill)){
             foreach($yetToReceiveWaybill as $key => $values) {
                 foreach($values as $value) {
