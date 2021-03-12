@@ -1124,6 +1124,38 @@ input, select{
         })
     })
 
+    $('#checkAllWaybills').click(function() {
+        $checkerStatus = $(this).is(':checked');
+        if($checkerStatus) {
+            $('.waybillStatusChecker').prop('checked', true)
+        }
+        else {
+            $('.waybillStatusChecker').prop('checked', false)
+        }
+    })
+    //waybillStatusChecker
+    $('.waybillStatusChecker').click(function() {
+        if($('.waybillStatusChecker').length == $('.waybillStatusChecker:checked').length) {
+            $('#checkAllWaybills').prop('checked', true)
+        }
+        else{
+            $('#checkAllWaybills').prop('checked', false)
+        }
+    })
+
+    $('#receiveAllWaybills').click(function(e) {
+       if($('.waybillStatusChecker:checked').length <= 0) {
+           alert('C\'mon, you should at least select a trip before marking as received.')
+           return false
+       } 
+       $('#waybillAction').html('<i class="icon-spinner2"></i> Please wait...')
+       $.post('/receive-waybills-bulk', $('#updateAllReceivedWaybills').serializeArray(), function(data) {
+           $('#waybillAction').html('Updated successfully.')
+           window.location.href = '/dashboard'
+       }) 
+    })
+    
+
 </script>
 @stop
 @endif

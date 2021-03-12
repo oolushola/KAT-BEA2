@@ -11,12 +11,16 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
-
-
-
-
 class lpoController extends Controller
 {
+    public function paginate($items, $perPage = 300, $page = null, $options = []) {
+        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
+        $items = $items instanceof Collection ? $items : Collection::make($items);
+        $pagination = new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
+        $path = url('/').'/local-purchase-order?page='.$page;
+        return $pagination->withPath($path);
+    }
+
     public function index(Request $request) {
         $lposummary = DB::SELECT(
             DB::RAW(
@@ -35,14 +39,9 @@ class lpoController extends Controller
                 $waybillinfos[] = $waybills;
             }
         }
-        $collection = new Collection($lposummary);
-        $perPage = 200;
-        $currentPage =  $request->get('page');
-        $pagedData = $collection->slice($currentPage * $perPage, $perPage)->all();
-        $path = url('/').'/local-purchase-order?'.$currentPage;
-        $pagination = new LengthAwarePaginator(($pagedData), count($collection), $perPage );
-        $pagination = $pagination->withPath($path);
-        
+                
+        $myCollectionObj = collect($lposummary);
+        $pagination = $this->paginate($myCollectionObj);
 
         return view('finance.lpo.lpo-listing',
             compact(

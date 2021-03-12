@@ -44,7 +44,7 @@ class expensesController extends Controller
     public function edit($id) {
         $recid = expenses::findOrFail($id);
         $expenses = expenses::WHERE('year', date('Y'))->GET();
-        $expensesCategories = ExpensesBreakdown::GET();
+        $expensesCategories = ExpensesBreakdown::WHERE('current_year', $recid->year)->WHERE('current_month', $recid->month)->GET();
         return view('finance.financials.expenses', compact('expenses', 'recid', 'expensesCategories')); 
     }
 

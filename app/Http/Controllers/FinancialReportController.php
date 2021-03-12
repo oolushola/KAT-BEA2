@@ -54,17 +54,33 @@ class FinancialReportController extends Controller
         $payloads = json_decode($request->payload); 
         $date_from = $payloads->pi_date_from;
         $date_to = $payloads->pi_date_to;
+        $client_id = $payloads->pi_client_id;
+        if($client_id != 0) {
+            $qExtension = 'AND client_id = '.$client_id.'';
+        }
+        else{ 
+            $qExtension = '';
+        }
         $type = strtoupper($request->v);
         $trips = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, a.trip_id, truck_no, loading_site, exact_location_id, client_rate, amount_paid, transporter_rate, invoice_no, d.created_at, d.date_paid, company_name FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_complete_invoices d JOIN tbl_kaya_clients e ON a.truck_id = b.id AND a.loading_site_id = c.id AND a.id = d.trip_id AND e.id = a.client_id WHERE date_paid AND tracker >= 5 AND trip_status = TRUE AND date_paid BETWEEN "'.$date_from.'" AND "'.$date_to.'" ORDER BY invoice_no ASC' 
+                'SELECT a.id, a.trip_id, truck_no, loading_site, exact_location_id, client_rate, amount_paid, transporter_rate, invoice_no, d.created_at, d.date_paid, company_name FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_complete_invoices d JOIN tbl_kaya_clients e ON a.truck_id = b.id AND a.loading_site_id = c.id AND a.id = d.trip_id AND e.id = a.client_id WHERE date_paid AND tracker >= 5 AND trip_status = TRUE AND date_paid BETWEEN "'.$date_from.'" AND "'.$date_to.'" '.$qExtension.' ORDER BY invoice_no ASC' 
             )
         );
         return $this->secondResponseLogger($trips, $type);
     }
 
     public function uninvoicedTrips(Request $request) {
-        $status = $request->payload;
+        $payloads = json_decode($request->payload);
+        $status = $payloads->tracker;
+        $clientId = $payloads->clientId;
+        if($clientId != 0) {
+            $qExtension = ' AND a.client_id = '.$clientId.'';
+        }
+        else{
+            $qExtension = '';
+        }
+        
         if($status == 'all') { $tracker = '5 AND 8'; }
         if($status == 6) { $tracker = '5 AND 6'; }
         if($status == 7) { $tracker = '7 AND 7'; }
@@ -73,7 +89,7 @@ class FinancialReportController extends Controller
         $type = strtoupper($request->v);
         $trips = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, a.trip_id, truck_no, loading_site, transporter_name, exact_location_id, invoice_status, gated_out, DATEDIFF("'.$currentDate.'", a.gated_out) as gated_out_since, client_rate, transporter_rate FROM tbl_kaya_trips a JOIN tbl_kaya_trip_waybill_statuses b JOIN tbl_kaya_trucks c JOIN tbl_kaya_loading_sites d JOIN tbl_kaya_transporters e ON a.id = b.trip_id AND a.truck_id = c.id AND a.loading_site_id = d.id AND a.transporter_id = e.id WHERE a.tracker BETWEEN '.$tracker.' AND b.invoice_status = FALSE' 
+                'SELECT a.id, a.trip_id, truck_no, loading_site, transporter_name, exact_location_id, invoice_status, gated_out, DATEDIFF("'.$currentDate.'", a.gated_out) as gated_out_since, client_rate, transporter_rate FROM tbl_kaya_trips a JOIN tbl_kaya_trip_waybill_statuses b JOIN tbl_kaya_trucks c JOIN tbl_kaya_loading_sites d JOIN tbl_kaya_transporters e ON a.id = b.trip_id AND a.truck_id = c.id AND a.loading_site_id = d.id AND a.transporter_id = e.id WHERE a.tracker BETWEEN '.$tracker.' AND b.invoice_status = FALSE '.$qExtension.'' 
             )
         );
         return $this->responseLogger($trips, $type);
@@ -122,9 +138,18 @@ class FinancialReportController extends Controller
     }
 
     public function tripSearch(Request $request) {
-        $search = strtoupper($request->payload);
+        $payloads = json_decode($request->payload);
+        $search = strtoupper($payloads->search);
+        $from = $payloads->from;
+        $to = $payloads->to;
+        if($from != '' && $to != '') {
+            $qExtension = 'a.gated_out BETWEEN "'.$from.'" AND "'.$to.'"';
+        }
+        else {
+            $qExtension = 'a.trip_id LIKE "'.$search.'%"';
+        }
         $type = $request->v;
-        $trips = $this->paymentDetails('WHERE a.trip_id LIKE "'.$search.'%"');
+        $trips = $this->paymentDetails('WHERE '.$qExtension.'');
         return $this->paymentDetailsResponse($trips, $search);
     }
 
