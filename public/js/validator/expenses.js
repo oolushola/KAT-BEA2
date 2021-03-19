@@ -87,5 +87,20 @@ $(function() {
         $(this).parent('row').remove()
     })
 
+    $('.addOpexValue').click(function() {
+        $opexYear = $('#opexYear').val();
+        $opexMonth = $('#opexMonth').val();
+        $opexValue = $('#opexValue').val();
+        $.get('/opex-update', {opexYear:$opexYear, opexMonth:$opexMonth, opexValue:$opexValue }, function(data) {
+            $('#dataDropper').html(data)
+        })
+    })
+
+    $('.showOpex').click(function() {
+        $.get('/opex-listings', {}, function(data) {
+            $('#dataDropper').html(data)
+        })
+    })
+
 })
 

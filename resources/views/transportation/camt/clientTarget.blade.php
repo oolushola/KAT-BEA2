@@ -48,7 +48,9 @@
                                 <div class="card">
                                     <div class="card-body">
                                         <p class="text-success font-weight-bold font-size-xs">{{ strtoupper($client->company_name) }}</p>
-                                        <input type="number" class="form-control" name="target[]" value="{{ $client->target }}">
+                                        <input type="number" name="target[]" value="{{ $client->target }}" style="border:1px solid #ccc; padding: 5px; width:70px; margin-right: 5px; font-size: 10px; outline: none" placeholder="Client Target">
+                                        <input type="number" name="percentage[]" value="{{ $client->percentage }}" style="border:1px solid #ccc; padding: 5px; width:70px; margin-right: 5px; font-size: 10px; outline: none" placeholder="Percentage">
+                                        
                                         <input type="hidden" name="client_id[]" value="{{ $client->id }}" />
                                     </div>
                                 </div>

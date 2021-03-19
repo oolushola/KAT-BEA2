@@ -80,4 +80,64 @@ class expensesController extends Controller
             return 'updated';
         }
     }
+
+    public function showOpex() {
+        $currentYear = date('Y');
+        return $this->opexListings(date('Y'));
+    }
+
+    public function opex(Request $request) {
+        $currentYear = $request->opexYear;
+        $currentMonth = $request->opexMonth;
+        $opex = $request->opexValue;
+
+        $operatingExpenses = expenses::firstOrNew(['year'=>$currentYear, 'month' => $currentMonth]);
+        $operatingExpenses->opex = $opex;
+        $operatingExpenses->save();
+        return $this->opexListings(date('Y'));
+    }
+
+    function opexListings($year) {
+       $opexListings = expenses::WHERE('year', $year)->GET();
+        $response = '
+            <table class="table table-condensed">
+                <thead>
+                    <tr>
+                        <th>SN</th>
+                        <th>Year</th>
+                        <th>Month</th>
+                        <th>Operating Expense</th>
+                    </tr>
+                </thead>
+                <tbody>';
+        
+        if(count($opexListings) > 0) {
+            $count = 0;
+            foreach($opexListings as $opex) {
+                $count++;
+                $response.='
+                    <tr class="text-center">
+                        <td>'.$count.'</td>
+                        <td>'.$opex->year.'</td>
+                        <td>'.date('F', mktime(0,0,0,$opex->month, 1, date($year))).'</td>
+                        <td>'.number_format($opex->opex, 2).'</td>
+                    </tr>
+                ';
+            }
+        }
+        else{
+            $response.= '
+                <tr>
+                    <td colspan="4">You have not added any operating expense for the year</td>
+                </tr>
+            ';
+        }
+        $response.='
+            <tbody>
+            </table>
+        ';
+
+        return $response;
+        
+    }
 }

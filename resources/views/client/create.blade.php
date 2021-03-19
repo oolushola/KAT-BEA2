@@ -192,55 +192,70 @@ td{
                     <thead class="table-info" style="font-size:9px;">
                         <tr>
                             <th>#</th>
-                            <th>Client Name</th>
-                            <th>Person of Contact</th>
-                            <th>Phone Number</th>
+                            <th>Client Information</th>
+                            <th>
+                                <button id="updateClientExpectedMargin">Update Expected Margin</button>
+                            </th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                    <?php $counter = 0; ?>
-                    @if(count($clients))
-                    @foreach($clients as $client)
-                    <?php
-                        $counter++;
-                        $counter % 2 == 0 ? $css = '' : $css = 'table-success';
-                    ?>
-                        <tr class="{{$css}}" style="font-size:10px;">
-                            <td>{{$counter}}</td>
-                            <td>
-                                {{strtoupper($client->company_name)}}<br>
-                                @if($client->account_no_payment)
-                                <span class="badge badge-primary">Pays to: {{ ucfirst($client->bank_name_payment) }}, {{ ucfirst($client->account_no_payment) }}</span>
-                                @endif
-                            </td>
-                            <td>{{ucwords($client->person_of_contact)}}</td>
-                            <td>{{$client->phone_no}}</td>
-                            <td>
-                                <div class="list-icons">
-                                    <a href="{{URL('client-products/'.str_slug($client->company_name).'/'.$client->id)}}" target="_blank" class="list-icons-item" title="Add client product">
-                                        <i class="icon-basket"></i>
-                                    </a>
-                                    <a href="{{URL('/client-fare-rates/'.str_slug($client->company_name).'/'.$client->id)}}" class="list-icons-item text-info-600" title="Add fare ratings" target="_blank">
-                                        <i class="icon-coins"></i>
-                                    </a>
-                                    <a href="{{URL('client-loading-site/'.str_slug($client->company_name).'/'.$client->id)}}" class="list-icons-item text-warning-600" title="Assign loading site to this client" target="_blank">
-                                        <i class="icon-cog"></i>
-                                    </a>
-                                    <a href="{{URL('clients/'.$client->id.'/edit')}}" class="list-icons-item text-primary-600" title="Edit this client information"><i class="icon-pencil7"></i></a>
-                                <a href="#" class="list-icons-item text-danger-600" title="Delete this client">
-                                        <i class="icon-trash"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                    @else
-                        <tr>
-                            <td class="6" colspan="table-secondary">You've have not created any information</td>
-                        </tr>
-                    @endif
-                        
+                        <form method="POST" id="updateClientMonthlyTarget">
+                            @csrf
+                        <?php $counter = 0; ?>
+                        @if(count($clients))
+                        @foreach($clients as $client)
+                        <?php
+                            $counter++;
+                            $counter % 2 == 0 ? $css = '' : $css = 'table-success';
+                        ?>
+                            <tr class="{{$css}}" style="font-size:10px;">
+                                <td>{{$counter}}</td>
+                                <td>
+                                    {{strtoupper($client->company_name)}}  <br>
+                                    <span class="badge badge-success">{{ucwords($client->person_of_contact)}} {{$client->phone_no}}</span><br>
+                                    
+                                    @if($client->account_no_payment) 
+                                    <span class="badge badge-primary">Pays to: {{ ucfirst($client->bank_name_payment) }}, {{ ucfirst($client->account_no_payment) }}</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <input type="hidden" name="clientId[]" value="{{$client->id}}">
+                                    <?php
+                                        if($client->expected_margin) {
+                                            $expectedMargin = $client->expected_margin;
+                                        }
+                                        else {
+                                            $expectedMargin = 10000000;
+                                        }
+                                    ?>
+                                    <input type="text" name="expectedMonthlyMargin[]" style="border: 1px solid #ccc; padding: 5px; outline:none" value="{{number_format($expectedMargin,2)}}">
+                                </td>
+                                <td>
+                                    <div class="list-icons">
+                                        <a href="{{URL('client-products/'.str_slug($client->company_name).'/'.$client->id)}}" target="_blank" class="list-icons-item" title="Add client product">
+                                            <i class="icon-basket"></i>
+                                        </a>
+                                        <a href="{{URL('/client-fare-rates/'.str_slug($client->company_name).'/'.$client->id)}}" class="list-icons-item text-info-600" title="Add fare ratings" target="_blank">
+                                            <i class="icon-coins"></i>
+                                        </a>
+                                        <a href="{{URL('client-loading-site/'.str_slug($client->company_name).'/'.$client->id)}}" class="list-icons-item text-warning-600" title="Assign loading site to this client" target="_blank">
+                                            <i class="icon-cog"></i>
+                                        </a>
+                                        <a href="{{URL('clients/'.$client->id.'/edit')}}" class="list-icons-item text-primary-600" title="Edit this client information"><i class="icon-pencil7"></i></a>
+                                    <a href="#" class="list-icons-item text-danger-600" title="Delete this client">
+                                            <i class="icon-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                        @else
+                            <tr>
+                                <td class="6" colspan="table-secondary">You've have not created any information</td>
+                            </tr>
+                        @endif
+                        </form>
                     </tbody>
                 </table>
             </div>

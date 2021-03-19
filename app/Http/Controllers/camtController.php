@@ -15,7 +15,7 @@ class camtController extends Controller
     {
         $clientsDefault = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, a.company_name, b.target FROM tbl_kaya_clients a LEFT JOIN tbl_kaya_account_manager_targets b ON a.id = b.client_id WHERE client_status = "1" AND current_year = "'.date('Y').'" AND current_month = "'.date('m').'"  ORDER BY company_name ASC'
+                'SELECT a.id, a.company_name, a.expected_margin, b.target, b.percentage FROM tbl_kaya_clients a LEFT JOIN tbl_kaya_account_manager_targets b ON a.id = b.client_id WHERE client_status = "1" AND current_year = "'.date('Y').'" AND current_month = "'.date('m').'"  ORDER BY company_name ASC'
             )
         );
         if(count($clientsDefault) <= 0) {
@@ -38,14 +38,18 @@ class camtController extends Controller
     {
         $clientIds = $request->client_id;
         $targets = $request->target;
+        $percentages = $request->percentage;
         foreach($clientIds as $key => $client_id) {
             if(isset($targets[$key]) && $targets[$key] != ''){
+               $clientBusinessValue = client::findOrFail($client_id); 
                $accountTarget = AccountManagerTarget::firstOrNew([
                     'current_year' => date('Year'),
                     'current_month' => date('m'),
                     'client_id' => $client_id,
                 ]);
                 $accountTarget->target = $targets[$key];
+                $accountTarget->percentage = $percentages[$key];
+                $accountTarget->business_value = $clientBusinessValue->expected_margin;
                 $accountTarget->save();
             }
         }

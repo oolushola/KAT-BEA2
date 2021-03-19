@@ -16,7 +16,7 @@
 
             <div class="header-elements d-none">
                 <div class="d-flex justify-content-center">
-                    <a href="{{URL('invoices')}}" class="btn btn-link btn-float text-default"><i class="icon-folder-search text-primary"></i><span>Invoice Archive</span></a>
+                    <a href=".opex" data-toggle="modal"  class="btn btn-link btn-float text-default showOpex"><i class="icon-coins text-primary"></i><span>Opex</span></a>
                     <a href="{{URL('all-invoiced-trips')}}" class="btn btn-link btn-float text-default"><i class="icon-calculator text-primary"></i> <span>Invoiced</span></a>
                 </div>
             </div>
@@ -191,6 +191,7 @@
 
 </div>
 
+@include('finance.financials._opex')
 
 @stop
 
