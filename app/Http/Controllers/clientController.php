@@ -419,5 +419,16 @@ class clientController extends Controller
         return view('client.client-explicit-pricing', compact('clientName', 'clientRates', 'ratings'));
     }
 
+    public function expectedMonthlyMargin(Request $request) {
+        $clientIds = $request->clientId;
+        $expectedMonthlyMargins = $request->expectedMonthlyMargin;
+        foreach($clientIds as $key=> $client_id) {
+            $sanitizedMargin[] = preg_replace("/,/", "", $expectedMonthlyMargins[$key]);
+            $clientObject = client::findOrFail($client_id);
+            $clientObject->expected_margin = $sanitizedMargin[$key];
+            $clientObject->save();
+        }
+        return 'updated';
+    }
 
 }
