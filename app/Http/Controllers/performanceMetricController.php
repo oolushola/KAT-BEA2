@@ -12,6 +12,8 @@ use App\transporter;
 use App\client;
 use App\AccountManagerTarget;
 use App\transporterDocuments;
+use App\BonusAccrued;
+use App\expenses;
 
 class performanceMetricController extends Controller
 {
@@ -26,13 +28,6 @@ class performanceMetricController extends Controller
             $unitHeadIds[] = $unitHeadRecord->id;
             $unitHeadSpecificTargets[] = $unitHead->target / 1000000;
 
-            // $myTotalRevenue = trip::WHERE('account_officer_id', $unitHead->user_id)
-            //     ->WHERE('trip_status', 1)
-            //     ->WHERE('tracker', '>=', 5)
-            //     ->WHEREMONTH('gated_out', now())
-            //     ->WHEREYEAR('gated_out', now())
-            //     ->VALUE(DB::RAW("SUM(client_rate)")
-            // );
             [$myTotalRevenue[]] = DB::SELECT(
                 DB::RAW(
                     'SELECT SUM(client_rate + IFNULL(b.amount, 0)) as totalRevenue FROM tbl_kaya_trips a LEFT JOIN tbl_kaya_trip_incentives b ON a.id = b.trip_id WHERE account_officer_id = "'.$unitHead->user_id.'" AND trip_status = TRUE AND MONTH(gated_out) = '.date('m').' AND YEAR(gated_out) = '.date('Y').''
@@ -73,6 +68,9 @@ class performanceMetricController extends Controller
             }
 
             $transportersGained[] = transporter::WHEREYEAR('registration_completed', now())->WHEREMONTH('registration_completed', now())->WHERE('assign_user_id', $unitHead->user_id)->GET()->COUNT();
+
+            $bonuses[] = BonusAccrued::WHERE('user_id', $unitHeadIds[$key])->GET()->SUM('bonus_accrued');
+
         }
         
         $clients = client::ORDERBY('client_alias', 'ASC')->SELECT('id', 'company_name', 'client_alias')->WHERE('client_status', "1")->GET();
@@ -98,24 +96,11 @@ class performanceMetricController extends Controller
         }
 
         // Bonus & Earnings Generator!
-        foreach($unitHeadIds as $key => $assignedUserId) {
-            [$trips[]] = DB::SELECT(
-                DB::RAW(
-                    'SELECT COUNT(*) as noOfTrips, SUM(client_rate) as totalClientRate, SUM(transporter_rate) as totalTransporterRate, SUM(client_rate - transporter_rate) as profitGenerated  FROM tbl_kaya_trips a JOIN tbl_kaya_client_account_manager b ON a.client_id = b.client_id LEFT JOIN tbl_kaya_trip_incentives c ON a.id = c.trip_id WHERE trip_status = TRUE AND YEAR(gated_out) = '.date('Y').' AND account_officer_id = '.$assignedUserId.''
-                )
-            );
-            [$clientAssigned[]] = DB::SELECT(
-                DB::RAW(
-                    'SELECT COUNT(client_id) AS assignedClientId FROM tbl_kaya_client_account_manager WHERE user_id = '.$assignedUserId.''
-                )
-            );
-            $x_profitGenerated[] = 0.1 * $trips[$key]->profitGenerated;
-            $averageWeight[] = $clientAssigned[$key]->assignedClientId == 0 ? 0 : 100 / $clientAssigned[$key]->assignedClientId;
-            $weightAverageBonus[] = round(($averageWeight[$key] / 100) * $x_profitGenerated[$key] / 1000, 2);
-        }
+        
 
 
-        $currentMonthOverview = array('unitHeadInformation' =>  $unitHeadInformation, 'unitHeadSpecificTargets' => $unitHeadSpecificTargets, 'myGrossMargin' => $myGrossMargin, 'myOutstanding' => $myOutstanding, 'unitHeadCurrentMarkUp' => $unitHeadCurrentMarkUp, 'trip_count' => $tripCount, 'remainingTrip' => $monthlyTripRemainder, 'transporter_gained' => $transportersGained, 'clientNames' => $clientNames, 'tripDoneWithClient' => $clientTripCount, 'pendingTrips' => $uncompletedTrips, 'totalBonus' => $weightAverageBonus);
+
+        $currentMonthOverview = array('unitHeadInformation' =>  $unitHeadInformation, 'unitHeadSpecificTargets' => $unitHeadSpecificTargets, 'myGrossMargin' => $myGrossMargin, 'myOutstanding' => $myOutstanding, 'unitHeadCurrentMarkUp' => $unitHeadCurrentMarkUp, 'trip_count' => $tripCount, 'remainingTrip' => $monthlyTripRemainder, 'transporter_gained' => $transportersGained, 'clientNames' => $clientNames, 'tripDoneWithClient' => $clientTripCount, 'pendingTrips' => $uncompletedTrips, 'totalBonus' => $bonuses);
         
         return view('performance-metric.master', $currentMonthOverview);
     }
@@ -759,8 +744,140 @@ class performanceMetricController extends Controller
         return $filtered;
     }
 
+    function amountGenerated($currentYear, $currentMonth, $clientId) {
+        $moneyGenerated = DB::SELECT(
+            DB::RAW(
+                'SELECT  SUM(client_rate) AS revenue, SUM(IFNULL(amount, 0)) AS incentive, SUM(transporter_rate) AS transporterRate, (SUM(client_rate) + SUM(IFNULL(amount,0)) - SUM(transporter_rate)) as marginGenerated  FROM tbl_kaya_trips a LEFT JOIN tbl_kaya_trip_incentives b ON a.id = b.trip_id WHERE trip_status = TRUE AND tracker >= 5 AND client_id = "'.$clientId.'" AND YEAR(gated_out) = "'.$currentYear.'" AND MONTH(gated_out) = "'.$currentMonth.'"'
+            )
+        );
+        return $moneyGenerated;
+    }
+
+    public function getBonusBreakDown(Request $request) {
+        //print_r($moneyGenerated)
+        $currentYear = date('Y');
+        $currentMonth = date('m');
+        $user = explode(' ', $request->user);
+        $firstName = $user[0];
+        $userRecord = User::WHERE('first_name', $firstName)->GET()->FIRST();
+        $userRecord = User::WHERE('first_name', $firstName)->GET()->FIRST();
+        $userId = $userRecord->id;
+        
+        [$revenueGenerated] = DB::SELECT(
+            DB::RAW(
+                'SELECT SUM(client_rate) AS totalRevenue, SUM(transporter_rate) AS transporterRate, SUM(IFNULL(amount, 0)) AS totalAddOn FROM tbl_kaya_trips a LEFT JOIN tbl_kaya_trip_incentives b ON a.id = b.trip_id WHERE YEAR(gated_out) = "'.$currentYear.'" AND MONTH(gated_out) = "'.$currentMonth.'" AND a.tracker >= 5 AND trip_status = TRUE'
+            )
+        );
+        $profitGenerated = ($revenueGenerated->totalRevenue - $revenueGenerated->transporterRate) + $revenueGenerated->totalAddOn;
+        $opex = expenses::WHERE('year', $currentYear)->WHERE('month', (int)$currentMonth)->GET()->FIRST();
+        $currentMonthOpex = $opex->opex;
+        $currentMonthNetMargin_ = $profitGenerated - $currentMonthOpex;
+        if($currentMonthNetMargin_ > 0) {
+            $currentMonthNetMargin = $currentMonthNetMargin_;
+        }
+        else {
+            $currentMonthNetMargin = 0;
+        }
+        $netBonus = 0.05 * $currentMonthNetMargin;
+        $supposedBonus = 0;
+
+        $dealsDone = DB::SELECT(
+            DB::RAW(
+                'SELECT a.percentage, a.business_value, a.client_id, b.user_id, company_name, client_alias, @targetPercentage := ((percentage/100) * a.business_value) as targetPercentage, @threshold := (0.5 * @targetPercentage) as threshold FROM tbl_kaya_account_manager_targets a JOIN tbl_kaya_client_account_manager b ON a.client_id = b.client_id LEFT JOIN tbl_kaya_clients c ON a.client_id = c.id WHERE current_year = "'.$currentYear.'" AND current_month = "'.$currentMonth.'" AND user_id ="'.$userId.'"'
+            )
+        );
+
+        $sumOfGeneratedValue_ = 0;
+        $generatedValue_ = [];
+        foreach($dealsDone as $key => $dealings) {
+            $marginGenerated_ = $this->amountGenerated($currentYear, $currentMonth, $dealings->client_id);
+            $generatedValue_ = $marginGenerated_[0]->marginGenerated;
+            $sumOfGeneratedValue_ +=  $generatedValue_; 
+        }
+        
+        if($profitGenerated > 0) {
+            $supposedBonus = ($sumOfGeneratedValue_ / $profitGenerated) * $netBonus;
+        }
+        else {
+            $supposedBonus = 0;
+        }
+
+        $log = '
+            <div class="row table-responsive">
+                <table class="table table-condensed">
+                    <thead class="font-size-xs font-weight-bold">
+                        <tr class="font-size-lg table-success text-success">
+                            <th colspan="2">Profit Generated: &#8358;'.number_format($profitGenerated, 2).'</th>                            
+                            <th colspan="2">Operating Expenses: &#8358;'.number_format($currentMonthOpex, 2).'</th>
+                            <th colspan="2">Net Margin: &#8358;'.number_format($currentMonthNetMargin, 2).'</th>
+                            <th>&nbsp;</th>
+                        </tr>
+                        <tr class="text-center">
+                            <th>CLIENT</th>
+                            <th>ALLOTED WEIGHT(%)</th>
+                            <th>EXPECTED MARGIN(&#8358;)</th>
+                            <th>THRESHOLD(&#8358;)</th>
+                            <th>MARGIN(&#8358;)</th>
+                            <th>STATUS</th>
+                            <th>BONUS(&#8358;)</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
+                    if(count($dealsDone) > 0) {
+                        $generatedValue = [];
+                        $sumOfAccruedBonuses = 0;
+                        foreach($dealsDone as $key => $dealings) {
+                            $marginGenerated = $this->amountGenerated($currentYear, $currentMonth, $dealings->client_id);
+                            $generatedValue = $marginGenerated[0]->marginGenerated;    
+                            if($generatedValue >= $dealings->threshold) {
+                                $statusCheck = '<i class="icon-checkmark4 text-primary" title="Passed"></i>';
+                                $bonusAccrued = $dealings->percentage / 100 * $supposedBonus;
+                            }
+                            else {
+                                $statusCheck = '<i class="icon-cancel-circle2 text-danger" title="Not Passed"></i>';
+                                $bonusAccrued = 0;
+                            }
+                            $sumOfAccruedBonuses += $bonusAccrued;
+                            $log.='
+                                <tr class="text-center">
+                                    <td>'.$dealings->client_alias.'</td>
+                                    <td>'.$dealings->percentage.'</td>
+                                    <td>'.number_format($dealings->targetPercentage, 2).'</td>
+                                    <td>'.number_format($dealings->threshold, 2).'</td>
+                                    <td>'.number_format($generatedValue, 2).'</td>
+                                    <td>'.$statusCheck.'</td>
+                                    <td class="bg-info">'.number_format($bonusAccrued, 2).'</td>
+                                </tr>
+                            ';
+                        }
+                        $log.='
+                            <tr class="text-center font-weight-bold bg-info">
+                                <td>Net Bonus:</td>
+                                <td>&#8358;'.number_format($netBonus, 2).'</td>
+                                <td>Supposed Bonus:</td>
+                                <td>&#8358;'.number_format($supposedBonus, 2).'</td>
+                                <td>Total Bonus Accrued:</td>
+                                <td colspan="2" class="bg-success">&#8358;'.number_format($sumOfAccruedBonuses, 2).'</td>
+                            </tr>';
+                    }
+
+                    else {
+                        $log.='<tr>
+                            <td colspan="5">No businesses were assigned to this account</td>
+                        </tr>';
+                    }
+                    
+        $log.='
+                </tbody>
+            </table>
+        </div>';
+
+        return $log;
+        
+        
 
 
+    }
 
     function monthGetter($month) {
         if($month == 'January') { $selectedMonth = '01'; }
