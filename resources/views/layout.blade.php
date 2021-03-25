@@ -171,10 +171,14 @@
 
 								</div>
 							</div>
-
-							<div class="ml-3 align-self-center">
-								<a href="#" class="text-white"><i class="icon-cog3"></i></a>
+							@if($auth == 1)
+							<div class="ml-3 align-self-center" id="approvePaymentVoucher">
+								<a class="text-white" href=".approvePaymentVoucher" data-toggle="modal">
+									<i class="icon-checkmark4" title="Approve All Payment Vouchers" style="margin-top:7px"></i>
+									<span class="badge badge-pill bg-warning-400" style="z-index:1000; position:relative; margin-left:-8px; margin-top:-5px">2</span>
+								</a>
 							</div>
+							@endif
 						</div>
 					</div>
 				</div>
@@ -212,6 +216,12 @@
 							<a href="{{URL('performance-metrics')}}" class="nav-link">
 								<i class="icon-stats-bars3"></i>
 								<span>Overall Metrics</span>
+							</a>
+						</li>
+						<li class="nav-item">
+							<a href="{{URL('payment-voucher-request')}}" class="nav-link">
+								<i class="icon-coins"></i>
+								<span>Refunds</span>
 							</a>
 						</li>
 						@endif
@@ -404,6 +414,12 @@
 									</ul>
 								</li>
 								<li class="nav-item">
+									<a href="{{URL('payment-vouchers')}}" class="nav-link font-weight-semibold">
+										<i class="icon-cash3"></i>
+										<span>Payment Voucher</span>
+									</a>
+								</li>
+								<li class="nav-item">
 									<a href="{{URL('financial/report')}}" class="nav-link font-weight-semibold">
 										<i class="icon-book"></i>
 										<span>Report</span>
@@ -450,6 +466,11 @@
 								<li class="nav-item">
 									<a href="{{ URL('camt/client-target') }}" class="nav-link"><i class="icon-target2"></i>A.M.T</a>
 								</li>
+								@if(Auth::user()->verify_payment_access == TRUE || $auth == 1)
+								<li class="nav-item">
+									<a href="{{ URL('verify-payment-voucher') }}" class="nav-link"><i class="icon-checkmark4"></i>Verify Voucher</a>
+								</li>
+								@endif
 							</ul>
 						</li>
 						@endif
@@ -594,8 +615,8 @@
 	<!-- /page content -->
 
 	@include('general-partials._upload-profile-photo')
-
 	@include('general-partials._update-password')
+	@include('_partials._approve_voucher')
 
 
 <script src="{{URL::asset('global_assets/js/main/jquery.min.js')}}"></script>
@@ -609,13 +630,15 @@
 <script type="text/javascript" src="{{URL::asset('/js/validator/jquery.form.js')}}"></script>
 <script type="text/javascript" src="{{URL::asset('/js/validator/validatefile.js')}}"></script>
 <script type="text/javascript" src="{{URL::asset('/js/validator/dashboard.js')}}"></script>
+<script type="text/javascript" src="{{URL('/js/validator/refunds.js?v=').time()}}"></script>
+
 <script>
 	$('#checkPaymentNotifications').click(function() {
 		$.get('payment-notification-history', function(data) {
 			$('#paymentNotificationDrops').html(data);
 		})
 	})
-
+	
 	$(document).on('click', '.paidFor', function() {
         $paymentId = $(this).attr('id')
         $(this).html('<i class="icon-spinner2 spinner"></i> Processing...')
