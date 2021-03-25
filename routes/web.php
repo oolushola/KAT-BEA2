@@ -362,7 +362,12 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('opex-update', 'expensesController@opex');
     Route::get('opex-listings', 'expensesController@showOpex');
     Route::get('bonus-breakdown', 'performanceMetricController@getBonusBreakDown');
-    
+    Route::resource('payment-voucher-request', 'PaymentVoucherController');
+    Route::get('verify-payment-voucher', 'PaymentVoucherController@verifyPaymentVoucher');
+    Route::patch('verify-payment-voucher', 'PaymentVoucherController@verifyPayments');
+    Route::get('payment-voucher-approvals', 'PaymentVoucherController@getPaymentVoucherApprovals');
+    Route::patch('approve-payment-voucher', 'PaymentVoucherController@approvePaymentVouchers');
+    Route::get('payment-vouchers', 'PaymentVoucherController@vouchers');
 });
 
 
