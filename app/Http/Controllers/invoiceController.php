@@ -20,6 +20,7 @@ use App\invoiceSpecialRemark;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use App\PaymentBreakdown;
 
 class invoiceController extends Controller
 {
@@ -737,7 +738,7 @@ class invoiceController extends Controller
 
         $clientInfo = DB::SELECT(
             DB::RAW(
-                'SELECT b.id, b.trip_id, b.gated_out, a.vat_used, a.withholding_tax_used, b.client_rate, b.amount_paid, c.address, c.company_name, c.phone_no, c.email, d.truck_no, invoice_status FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_kaya_trucks d JOIN tbl_kaya_trip_waybill_statuses e ON a.trip_id = b.id AND b.client_id = c.id AND b.truck_id = d.id AND e.trip_id = b.id WHERE a.invoice_no = "'.$invoiceNo.'"'
+                'SELECT b.id, b.trip_id, b.gated_out, a.vat_used, a.payment_type, a.withholding_tax_used, b.client_rate, b.amount_paid, c.address, c.company_name, c.phone_no, c.email, d.truck_no, invoice_status FROM tbl_kaya_complete_invoices a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_kaya_trucks d JOIN tbl_kaya_trip_waybill_statuses e ON a.trip_id = b.id AND b.client_id = c.id AND b.truck_id = d.id AND e.trip_id = b.id WHERE a.invoice_no = "'.$invoiceNo.'"'
             )
         );
         $companyProfile = companyProfile::GET()->FIRST();
@@ -745,6 +746,7 @@ class invoiceController extends Controller
             $tripIncentives[] = tripIncentives::WHERE('trip_id', $clientDetails->id)->GET()->FIRST();
         }        
         $invoicePreview ='<div class="card-body" style="font-family:tahoma; font-size:11px;">
+        <input type="hidden" name="thisInvoiceNo" value="'.$invoiceNo.'" />
         <div class="row">
             <div class="mb-4 col-md-6">
                 <span class="text-muted">Client</span>
@@ -757,6 +759,7 @@ class invoiceController extends Controller
                     <li>'.$clientInfo[0]->phone_no.'</li>
                 </ul>
             </div>
+            
             <div class="mb-2  col-md-6">
                 <div class="d-flex flex-wrap wmin-md-400">
                     <ul class="list list-unstyled mb-0">
@@ -779,8 +782,8 @@ class invoiceController extends Controller
                         </li>
 
                         <li>
-                            <h6 class="my-1 font-weight-bold font-size-sm mt-2">Payment Received?';
-                                if($payment_status == TRUE) {
+                            <h6 class="my-1 font-weight-bold font-size-sm mt-2">Recognize Payment';
+                                if($payment_status == TRUE && $clientInfo[0]->payment_type == TRUE) {
                                     $paymentStatus = 'disabled checked';
                                     $paymentState = '<i class="icon-checkmark4 text-success"></i>';
                                 }
@@ -789,9 +792,19 @@ class invoiceController extends Controller
                                     $paymentState = '<i class="icon-x text-danger"></i>';
                                 }
                                 $invoicePreview.='<input type="checkbox" class="paidChecker ml-1 '.$paymentApplicable.'" '.$paymentStatus.' />
-                                <input type="date" style="width:120px; font-size:10px" class="d-none" id="paidDateChecker" name="'.$invoiceNo.'"  />
+                                <input type="date" style="width:120px; font-size:10px" class="d-none" id="paidDateChecker" title="'.$invoiceNo.'" name="paidDateChecker"  />
                                 <span id="paidPlaceholder"></span>
                             </h6>
+                                <div class="d-none mt-2" id="paymentTypeHolder">
+                                    Full Payment <input type="radio" name="paymentType" class="paymentType" value="1">
+                                    <span class="ml-2">Part Payment <input type="radio" name="paymentType" class="paymentType" value="0"></span>
+                                    <span class="ml-4 font-weight-bold d-none" id="partPaymentCompleted">
+                                        Payment Completed
+                                        <input type="checkbox" name="paymentCompleted" class="partPaymentComplete ml-2" value="1">
+                                    </span>
+                                    <input type="hidden" id="paymentType" class="">
+                                </div>
+                            
                         </li>';
                         if($clientInfo[0]->invoice_status == TRUE) {
                             $classes = 'btn btn-danger font-size-xs font-weight-semibold';
@@ -816,11 +829,20 @@ class invoiceController extends Controller
                 </div>
             </div>
         </div>
-    </div>';
+        <span class="font-weight-bold text-primary pointer" value="'.$invoiceNo.'" id="viewPaymentHistory" >View Payment History</span>
+        <div id="paymentHistoryLoader" class="mb-3 mt-2"></div>
+        ';
     
-    $invoicePreview.='<div class="table-responsive">
+    $invoicePreview.='<div class="table-responsive mt-3">
         <table class="table table-striped" >
             <thead>
+                <tr id="partPaymentBtn" class="d-none">
+                    <th colspan="4"></th>
+                    <th class="text-center">
+                        <button class="font-size-xs btn btn-danger font-weight-bold" id="updatePayment" type="button">UPDATE PAYMENT</button>
+                    </th>
+                    <th>&nbsp;</th>
+                </tr>
                 <tr style="font-size:12px; font-family:tahoma; font-weight:bold">
                     <th class="text-center"><b>Trip ID</b></th>
                     <th class="text-center"><b>Invoice Date</b></th>
@@ -877,8 +899,8 @@ class invoiceController extends Controller
                         $invoicePreview.='</td>
                         <td class="text-center">
                             
-                            
-                            <input type="text" value="'.$amountPaid.'" class="d-none" id="amountPaid'.$tripDetails->trip_id.'" style="width:80px; font-size:10px; outline:none">
+                            <input type="hidden" name="tripIdListings[]" value="'.$tripDetails->trip_id.'" />
+                            <input type="text" value="" class="d-none amountPaid" name="amountPaid[]" id="amountPaid'.$tripDetails->trip_id.'" style="width:80px; font-size:10px; outline:none">
                             <span id="loader'.$tripDetails->trip_id.'"></span>';
                             
                             $invoicePreview.='<span id="incentive'.$tripDetails->trip_id.'">';
@@ -965,8 +987,32 @@ class invoiceController extends Controller
     }
 
     public function paidInvoices(Request $request) {
+        $paymentType = $request->paymentType;
+        $invoiceNo = $request->thisInvoiceNo;
+        $amountPaidListings = $request->amountPaid;
+        if($paymentType == 0 && $request->paymentCompleted == 1) {
+            $paymentType = 1;
+        }
         if($request->checker == 1) {
-            completeInvoice::WHERE('invoice_no', $request->invoice_no)->UPDATE(['paid_status' => TRUE, 'date_paid' => $request->date_paid]);
+            completeInvoice::WHERE('invoice_no', $invoiceNo)->UPDATE([
+                'paid_status' => TRUE,
+                'date_paid' => $request->paidDateChecker,
+                'payment_type' => $paymentType
+            ]);
+            foreach($request->tripIdListings as $key => $tripId) {
+                if(isset($amountPaidListings[$key]) && $amountPaidListings[$key] != '') {
+                    $tripInfo = trip::WHERE('trip_id', $tripId)->GET()->FIRST();
+                    $tripInfo->amount_paid = $tripInfo->amount_paid + $amountPaidListings[$key];
+                    PaymentBreakdown::CREATE([
+                        'trip_id' => $tripInfo->id,
+                        'invoice_no' => $invoiceNo,
+                        'date_paid' => $request->paidDateChecker,
+                        'amount' => $amountPaidListings[$key]
+                    ]);
+                    $tripInfo->save();
+                }
+            }
+            // return $request->all();   
         }
         if($request->checker == 2) {
             completeInvoice::WHERE('invoice_no', $request->invoice_no)->UPDATE(['acknowledged' => TRUE, 'acknowledged_date' => $request->acknowledgement_date]);
@@ -1114,5 +1160,24 @@ class invoiceController extends Controller
         else {
             return 'not_found';
         }
+    }
+
+    public function getInvoicePaymentHistory(Request $request) {
+        $invoiceNo = $request->invoice_no;
+
+        $paymentDates = DB::SELECT(
+            DB::RAW(
+                'SELECT DISTINCT date_paid FROM tbl_kaya_trip_payment_breakdowns WHERE invoice_no = "'.$invoiceNo.'"'
+            )
+        );
+        $paymentHistory = '';
+        foreach($paymentDates as $paymentDate) {
+            $getAmountPaid = PaymentBreakdown::WHERE('invoice_no', $invoiceNo)->WHERE('date_paid', $paymentDate->date_paid)->GET()->SUM('amount');
+            $paymentHistory.='<span class="bg-primary p-2 font-weight-bold">'.$paymentDate->date_paid.'</span>
+                <span class="bg-success p-2 font-weight-bold mr-2" style="margin-left:-5px">&#x20a6;'.number_format($getAmountPaid, 2).'</span>
+            ';
+        }
+
+        return $paymentHistory;
     }
 }
