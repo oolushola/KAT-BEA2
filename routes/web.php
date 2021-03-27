@@ -66,6 +66,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::post('remove-loading-site', 'clientController@removeLoadingSite');
     Route::patch('clientFareRatings', 'clientController@storeBulkClientRate');
     Route::get('client-rate/{id}/{clientName}', 'clientController@detailedSpecificClientRate');
+    Route::post('client-expected-margin', 'clientController@expectedMonthlyMargin');
 
     Route::get('trip-initial-requirement', 'ordersController@getinitialrequirement');
     Route::resource('truck-availability', 'truckAvailabilityController');
@@ -359,6 +360,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::post('add-incentives', 'overviewController@addIncentives');
     Route::get('remove-incentive/{incentiveId}', 'overviewController@removeIncentive');
     Route::get('invoice-payment-history', 'invoiceController@getInvoicePaymentHistory');
+
 });
 
 

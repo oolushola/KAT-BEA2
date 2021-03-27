@@ -113,7 +113,7 @@
     <!-- <div class="card"> -->
     <div class="row">
         <div class="col-md-6">
-            <canvas id="bonusAndEarnings" height="200"></canvas>
+            <canvas id="bonusAndEarnings" height="200" href=".bonuses" data-toggle="modal"></canvas>
         </div>
         <div class="col-md-6">
             <canvas id="expectedTripsFromClient" height="225"></canvas>
@@ -124,7 +124,7 @@
 
 @include('performance-metric.partials._specificNumberPerformance')
 @include('performance-metric.partials._transporter_gained')
-
+@include('performance-metric.partials._bonuses')
 @stop
 
 
@@ -464,7 +464,7 @@
             labels: unitHeadInformations,
             datasets: [
                 {
-                    label: 'Bonus',
+                    label: 'Accrued Bonuses',
                     data: totalBonus,
                     backgroundColor: 'rgba(153, 102, 255, 0.2)',
                     borderWidth: 1
@@ -490,6 +490,16 @@
                     }
                 }]
             },
+            onClick:function(c, i) {
+                e = i[0];
+                var xValue = this.data.labels[e._index];
+                var yValue = this.data.datasets[0].data[e._index];
+                $('#selectedAccountOfficer').html(`${xValue} Bonus Breakdown`)
+                $('#resultLoader').html('<i class="icon-spinner3 spinner"></i>Please wait...')
+                $.get('/bonus-breakdown', { user: xValue }, function(res) {
+                    $('#resultLoader').html(res)
+                })
+            }
         },
     });
 

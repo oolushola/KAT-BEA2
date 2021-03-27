@@ -367,4 +367,13 @@ $(function() {
     }
   });
 
+  $('#updateClientExpectedMargin').click(function() {
+    $(this).prop('disabled', 'disabled').html('<i class="spinner icon-spinner3"></i> Updating...')
+    $.post('/client-expected-margin', $('#updateClientMonthlyTarget').serializeArray(), function(data) {
+      if(data === 'updated') {
+        window.location = '';
+      }
+    })
+  })
+
 })
