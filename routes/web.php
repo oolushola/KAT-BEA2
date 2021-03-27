@@ -358,6 +358,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('available-incentives', 'overviewController@tripIncentives');
     Route::post('add-incentives', 'overviewController@addIncentives');
     Route::get('remove-incentive/{incentiveId}', 'overviewController@removeIncentive');
+    Route::get('invoice-payment-history', 'invoiceController@getInvoicePaymentHistory');
 });
 
 

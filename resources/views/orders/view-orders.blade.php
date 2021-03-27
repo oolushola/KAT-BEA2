@@ -22,6 +22,34 @@ td{
     <div class="ml-3 mb-2 mt-2">{!! $pagination->links() !!}</div>
 
     <span id="responsePlace"></span>
+    <div class="card-header header-elements-inline">
+        @if(Auth::user()->id == 1)
+        <form action="{{URL('/upload-bulk-trip')}}" method="POST" enctype="multipart/form-data">
+        @csrf
+        <div class="form-group d-none d-sm-block">
+            <input type="file" name="bulktrip" style="font-size:10px">
+            <button type="submit" class="btn btn-primary" style="font-size:10px">Upload Bulk Trip</button>
+        </div> 
+        </form>
+
+        <form action="{{URL('/upload-bulk-sales-order-no')}}" method="POST" enctype="multipart/form-data">
+        @csrf
+        <div class="form-group d-none d-sm-block">
+            <input type="file" name="bulksalesOrder" style="font-size:10px">
+            <button type="submit" class="btn btn-primary" style="font-size:10px">Upload Bulk Sales Order No</button>
+        </div> 
+        </form>
+
+        <form action="{{URL('/upload-bulk-event-time')}}" method="POST" enctype="multipart/form-data">
+        @csrf
+        <div class="form-group d-none d-sm-block">
+            <input type="file" name="eventTime" style="font-size:10px">
+            <button type="submit" class="btn btn-primary" style="font-size:10px">Upload Bulk Event Time</button>
+        </div> 
+        </form>
+        @endif
+    </div>
+
     <div class="row ml-2 mr-2 mt-1">
        <div class="col-md-2">
            <div class="card hover filter" data-id="showClients">
