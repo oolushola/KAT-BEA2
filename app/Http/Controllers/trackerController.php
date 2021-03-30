@@ -151,7 +151,7 @@ class trackerController extends Controller
             $companyNames[] = $clientListings->client_alias;
             $clientOutStandingPayment[] = DB::SELECT(
                 DB::RAW(
-                    'SELECT a.id, a.trip_id, a.client_id, a.client_rate, b.id AS invoiceTripId, b.invoice_no, b.completed_invoice_no, b.acknowledged_date FROM tbl_kaya_trips a JOIN `tbl_kaya_complete_invoices` b ON a.id = b.trip_id WHERE client_id = "'.$clientListings->id.'" AND tracker = 8 AND trip_status = 1 AND b.date_paid IS NULL'
+                    'SELECT a.id, a.trip_id, a.client_id, a.client_rate, @amountPaid := IFNULL(a.amount_paid, 0) as amountPaid, a.client_rate - @amountPaid as diff, b.id AS invoiceTripId, b.invoice_no, b.completed_invoice_no, b.acknowledged_date FROM tbl_kaya_trips a JOIN `tbl_kaya_complete_invoices` b ON a.id = b.trip_id WHERE client_id = "'.$clientListings->id.'" AND tracker = 8 AND trip_status = 1 AND b.`payment_type` = FALSE'
                 )
             );
 
@@ -160,7 +160,7 @@ class trackerController extends Controller
                 $sumOfAllOutstandingTrips = 0;
                 $sumOfOverdueInvoices = 0;
                 foreach($clientOutStandingPayment[$key] as $specificTrip){
-                    $sumOfAllOutstandingTrips += $specificTrip->client_rate * 1.025;
+                    $sumOfAllOutstandingTrips += $specificTrip->diff * 1.025;
 
                     //perform overdue invoices operation here
                     $now = time();
@@ -169,7 +169,7 @@ class trackerController extends Controller
                     $numberofdays = (floor($datediff / (60 * 60 * 24)) * -1) -1;
 
                     if($numberofdays > 14) {
-                        $sumOfOverdueInvoices += $specificTrip->client_rate * 1.025;
+                        $sumOfOverdueInvoices += $specificTrip->diff * 1.025;
                     }
                 }
 

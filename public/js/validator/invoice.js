@@ -282,6 +282,7 @@ $(function() {
         $paymentStatus = $(this).attr('data-payment')
         $acknowledgment = $(this).attr('data-acknowledgement')
         $('#invoiceNoPlaceholder').html(`INVOICE NO: ${ $completedInvoiceNo }`)
+        $('#fullInvoiceNo').val($completedInvoiceNo);
         $('#invoiceQuickViewController').html('<i class="icon-spinner3 spinner"></i>Please wait, fetching details...').addClass('font-weight-semibold')
 
         $.get('/invoice-preview', { invoice_no: $invoiceNo, payment_status: $paymentStatus, acknowledgement: $acknowledgment }, function(data) {
@@ -309,37 +310,89 @@ $(function() {
         })
     })
 
-    $(document).on('click', '.paidChecker', function() {
+    $(document).on('click', '.paidChecker', function() { 
         $checker = $(this).is(":checked");
         if($checker) {
             $('#paidDateChecker').removeClass('d-none')
             $('#paidDateChecker').val('');
+            $('#changeInvoiceStatus').addClass('d-none')
+            $('#paymentTypeHolder').removeClass('d-none')
+            $('#partPaymentBtn').removeClass('d-none')
         }
         else {
             $('#paidDateChecker').addClass('d-none')
+            $('#changeInvoiceStatus').removeClass('d-none')
+            $('#paymentTypeHolder').addClass('d-none')
+            $('#partPaymentBtn').addClass('d-none')
         }
     })
 
-    $(document).on('keyup', '#paidDateChecker', function(e) {
-        $paidDate = $(this).val()
-        $invoiceNo = $(this).attr('name')
-        $event = $(this)
-        if(e.keyCode === 13) {
-            $('#paidPlaceholder').html('<i class="icon-spinner3 spinner"></i>')
-            $.get('/paid-invoices', { date_paid: $paidDate, invoice_no: $invoiceNo, checker: 1 }, function(data) {
-                if(data == "updated") {
-                    $event.addClass('d-none')
-                    $('#paymentState').html('<i class="icon-checkmark4 text-success"></i>')
-                    $('.paidChecker').attr('disabled', 'disabled')
-                    $('#paidPlaceholder').html('')
-        
-                }
-                else{
-                    return false
-                }
-            })
+    //amountPaid initialRatePlaceholder
+
+    $(document).on('click', '.paymentType', function() {
+        $value = $(this).attr('value');
+        if($value == 0) {
+            $('#partPaymentCompleted').removeClass('d-none')
+            $('.initialRatePlaceholder').addClass('d-none')
+            $('.amountPaid').removeClass('d-none')
         }
+        else{
+            $('#partPaymentCompleted').addClass('d-none')
+            $('.initialRatePlaceholder').removeClass('d-none')
+            $('.amountPaid').addClass('d-none')
+        }
+        $('#paymentType').val($value);
     })
+
+    $(document).on('click', '#updatePayment', function(e) {
+        e.preventDefault();
+        $paidDateChecker = $('#paidDateChecker').val()
+        if($paidDateChecker == '') {
+            return false;
+        }
+        $paymentTypeHolder = $('#paymentType').val()
+        if($paymentTypeHolder == "") {
+            return false;
+        }
+        $('#paidPlaceholder').html('<i class="icon-spinner3 spinner"></i>')
+        $.get('/paid-invoices', $('#frmUpdatePayment').serializeArray(), function(data) {
+            if(data == "updated") {
+                window.location.href=''
+                // $event.addClass('d-none')
+                // $('#paymentState').html('<i class="icon-checkmark4 text-success"></i>')
+                // $('.paidChecker').attr('disabled', 'disabled')
+                // $('#paidPlaceholder').html('')
+            }
+            else{
+                return false
+            }
+        })
+    })
+
+    // $(document).on('keyup', '#paidDateChecker', function(e) {
+    //     $paidDate = $(this).val()
+    //     $paymentType = $('#paymentType').val();
+    //     $invoiceNo = $(this).attr('title')
+    //     $event = $(this)
+    //     if(e.keyCode === 13) {
+    //         if($paymentType == 0) {
+    //             return false
+    //         }
+    //         $('#paidPlaceholder').html('<i class="icon-spinner3 spinner"></i>')
+    //         $.get('/paid-invoices', { date_paid: $paidDate, invoice_no: $invoiceNo, checker: 1, paymentType: $paymentType }, function(data) {
+    //             if(data == "updated") {
+    //                 $event.addClass('d-none')
+    //                 $('#paymentState').html('<i class="icon-checkmark4 text-success"></i>')
+    //                 $('.paidChecker').attr('disabled', 'disabled')
+    //                 $('#paidPlaceholder').html('')
+        
+    //             }
+    //             else{
+    //                 return false
+    //             }
+    //         })
+    //     }
+    // })
 
     $(document).on('click', '.acknowledgementChecker', function() {
         $checker = $(this).is(":checked");
@@ -371,6 +424,14 @@ $(function() {
                 }
             })
         }
+    })
+
+    $(document).on('click', '#viewPaymentHistory', function(){
+        $invoiceNo = $(this).attr('value')
+        $('#paymentHistoryLoader').html('<i class="spinner icon-spinner3 ml-2"></i>')
+        $.get('/invoice-payment-history', {invoice_no: $invoiceNo}, function(data) {
+            $('#paymentHistoryLoader').html(data)
+        })
     })
 
 })
