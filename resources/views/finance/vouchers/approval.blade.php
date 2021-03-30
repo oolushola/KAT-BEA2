@@ -30,7 +30,7 @@
         <div class="card">
             <div class="card-header header-elements-inline">
                 <h5 class="card-title font-size-sm font-weight-bold"> 
-                    Verify All Payment Vouchers <input type="checkbox" class="ml-2" id="checkAllPaymentVouchers">
+                    Pay All Payment Vouchers <input type="checkbox" class="ml-2" id="checkPendingPaymentVouchers">
                 </h5>
             </div>
 
@@ -38,15 +38,15 @@
                 <form method="POST" name="frmPaymentVoucher" id="frmPaymentVoucher" enctype="multipart/form-data">
                     @csrf {!! method_field('PATCH') !!}
                     <div class="row">
-                        @if(count($getUnverifiedVouchers))
-                            @foreach($getUnverifiedVouchers as $key => $voucher)
+                        @if(count($unpaidVouchers))
+                            @foreach($unpaidVouchers as $key => $voucher)
                                 <div class="col-md-3 col-sm-6 col-xs-12">
                                     <div class="card">
                                         <div class="card-body">
                                             <p class="text-success font-weight-bold font-size-xs mb-3">
                                                 {{ strtoupper($voucher->uniqueId) }}
                                                 <span class="text-primary font-weight-bold font-size-xs" style="float:right;">
-                                                    Requested by: {{ ucfirst($users[$key]->first_name)}}
+                                                    Requested by: {{ ucfirst($people[$key]->first_name)}}
                                                 </span>
                                             </p>
                                                 <?php $count = 0; $sumTotal = 0; ?>
@@ -55,6 +55,9 @@
                                                     <?php $sumTotal += $desc->amount; ?>
                                                     <span class="d-block mt-1 font-weight-semibold" style="font-size:12px">
                                                         ({{ $count += 1 }}) {{$desc->description}} &#x20A6;{{ number_format($desc->amount, 2) }}
+                                                        @if($desc->attachment)
+                                                        <a target="_blank" href="{{URL::asset('assets/img/vouchers/'.$desc->attachment.'')}}"><i class="icon-attachment ml-4"></i></a>
+                                                        @endif
                                                     </span>
                                                     @endif
                                                 @endforeach
@@ -87,5 +90,4 @@
 @stop
 
 @section('script')
-<script type="text/javascript" src="{{URL('/js/validator/refunds.js?v=').time()}}"></script>
 @stop

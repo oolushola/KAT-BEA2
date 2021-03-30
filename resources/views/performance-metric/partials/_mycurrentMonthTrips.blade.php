@@ -24,8 +24,7 @@
                                     <td class="text-center" width="10%">TRUCK NO.</td>
                                     <td>LOADING SITE</td>
                                     <td>DESTINATION</td>
-                                    <td>CUSTOMER</td>
-                                    <td>PRODUCT</td>
+                                    <td>WAYBILL INFO</td>
                                     <td>
                                         <span id="clientRateTitle">CLIENT RATE</span>
                                         <button class="btn btn-primary hidden" id="submitClientRate">Save Changes</button> 
@@ -52,9 +51,13 @@
                                             <td class="text-center">{{ $specificRecord->truck_no }}</td>
                                             <td>{{$specificRecord->loading_site}}</b></span></td>
                                             <td>{{$specificRecord->exact_location_id}}</td>
-
-                                            <td>{{ $specificRecord->customers_name }}</td>
-                                            <td>{{ $specificRecord->product }}</td>
+                                            <td>
+                                                @foreach($waybillDetails as $waybill)
+                                                    @if($waybill->trip_id == $specificRecord->id)
+                                                        {{ $waybill->sales_order_no }} {{ $waybill->invoice_no }}
+                                                    @endif
+                                                @endforeach
+                                            </td>
                                             <td>
                                                 <span class="defaultClientRate">{{ number_format($specificRecord->client_rate, 2) }}</span>
                                                 <input type="number" name="clientRates[]" class="hidden clientRate" value="{{$specificRecord->client_rate}}">

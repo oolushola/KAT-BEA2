@@ -1,14 +1,17 @@
 $(function() {
     $('#addPaymentVoucher').click(function($e) {
+        // $(this).attr('disabled', 'disabled')
         $e.preventDefault();
-        $.post('/payment-voucher-request', $('#frmPaymentVoucher').serializeArray(), function(data) {
-            if(data == 'saved') {
-                window.location = '';
-            }
-            else{
-                $('#responsePlace').html('This record already exist. Update it instead.').addClass('error')
-            }
-        })
+        $('#frmPaymentVoucher').submit()
+    })
+
+    $('#frmPaymentVoucher').ajaxForm(function(data) {
+        if(data == 'saved' || data == 'updated') {
+            window.location = '';
+        }
+        else{
+            $('#responsePlace').html('This record already exist. Update it instead.').addClass('error')
+        }
     })
 
 
@@ -27,18 +30,23 @@ $(function() {
 
 
     $('#addMoreExpensesCategory').click(function(event) {
-        $addMoreExpenses = '<div class="col-md-4"><div class="form-group">';
+        $addMoreExpenses = '<div class="col-md-3"><div class="form-group mt-2">';
         $addMoreExpenses += '<input type="text" name="description[]" class="form-control" placeholder="Description">';
         $addMoreExpenses += '</div></div>';
 
-        $addMoreExpenses += '<div class="col-md-4"><div class="form-group" style="margin:0; padding:0">';
-        $addMoreExpenses += '<input type="text" class="form-control" placeholder="Owner" name="owner[]" id="amount">';
+        $addMoreExpenses += '<div class="col-md-3 mt-1"><div class="form-group" style="margin:0; padding:0">';
+        $addMoreExpenses += '<input type="text" class="form-control" placeholder="Owner" name="owner[]">';
         $addMoreExpenses += '</div></div>';
 
-        $addMoreExpenses += '<div class="col-md-4"><div class="form-group" style="margin:0; padding:0">';
-        $addMoreExpenses += '<input type="text"  class="form-control" placeholder="Amount" name="amount[]" id="amount">';
-
+        $addMoreExpenses += '<div class="col-md-3"><div class="form-group mt-1" style="margin:0; padding:0">';
+        $addMoreExpenses += '<input type="text"  class="form-control" placeholder="Amount" name="amount[]">';
         $addMoreExpenses += '</div></div>';
+
+        $addMoreExpenses += '<div class="col-md-3"><div class="form-group mb-1" style="margin:0; padding:0">';
+        $addMoreExpenses += '<input type="file" placeholder="Amount" class="mt-2" name="attachment[]" style="font-size:10px">';
+        $addMoreExpenses += '</div></div>';
+        
+        
         $('#moreExpenses').append($addMoreExpenses)
     })
 
@@ -133,6 +141,65 @@ $(function() {
                }
            }
        }) 
+    })
+
+
+    $('#checkAllVoucherUploads').click(function() {
+        $checked = $(this).is(':checked')
+        if($checked) {
+            $('.paymentVoucherUploads').prop('checked', true)
+        }
+        else {
+            $('.paymentVoucherUploads').prop('checked', false)
+        }
+    })
+
+    $('.paymentVoucherUploads').click(function() {
+        if($('.paymentVoucherUploads').length == $('.paymentVoucherUploads:checked').length) {
+            $('#checkAllVoucherUploads').prop('checked', true)
+        }
+        else{
+            $('#checkAllVoucherUploads').prop('checked', false)
+        }
+    })
+
+    $(document).on('click', '#uploadPaymentVouchers', function(e) {
+        e.preventDefault();
+       if($('.paymentVoucherUploads:checked').length <= 0) {
+           alert('Stop It! You need to select at least one voucher.')
+           return false
+       } 
+       
+       $e = $(this)    
+       $e.html('<i class="icon-spinner3 spinner"></i> Uploading...').prop('disabled', true)       
+       $.post('/upload-payment-voucher', $('#frmUploadPaymentVoucher').serializeArray(), function(data) {
+           if(data === 'cantUpdate') {
+                alert('Operation Aborted! You do not have permission to approve payments')
+                return false
+           }
+           else {
+               if(data === 'uploaded') {
+                   window.location = '';
+               }
+           }
+       }) 
+    })
+
+    $('#pendingUploads').click(function() {
+        $checkStatus = $('#checkStatus').val();
+        if($checkStatus == 1) {
+            $('#availableUploads').addClass('col-md-6').removeClass('d-none')
+            $('#defaultView').removeClass('col-md-12').addClass('col-md-6')
+            $('#checkStatus').val(0)
+        }
+        else {
+            if($checkStatus == 0) {
+                $('#availableUploads').addClass('d-none')
+                $('#defaultView').removeClass('col-md-6').addClass('col-md-12')
+                $('#checkStatus').val(1)
+            }
+        }
+       
     })
 })
 

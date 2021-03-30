@@ -31,7 +31,7 @@
 
 
     <div class="row">
-        <div class="col-md-5">
+        <div class="col-md-7">
             &nbsp;
             <!-- Basic layout-->
             <div class="card">
@@ -45,7 +45,7 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form method="POST" id="frmPaymentVoucher" action="{{URL('payment-voucher-request')}}">
+                    <form method="POST" id="frmPaymentVoucher" enctype="multipart/form-data" action="{{URL('payment-voucher-request')}}">
                         @csrf
                         @if(isset($recid))
                             {!! method_field('PATCH') !!} <input type="hidden" name="id" id="id" value="{{$recid->id}}">
@@ -69,26 +69,31 @@
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group" style="margin:0; padding:0">
-                                            <input type="number" step="0.01" class="form-control" placeholder="Amount" name="amount[]" id="amount"  value="{{ $voucherDesc->amount }}" style="margin:0; border-radius:0">
+                                            <input type="number" class="form-control" placeholder="Amount" name="amount[]" id="amount"  value="{{ $voucherDesc->amount }}" style="margin:0; border-radius:0" value="">
                                         </div>
                                     </div>                            
                                 @endforeach
                             </div>
                         @else
                         <div class="row mb-3 mb-md-2" id="moreExpenses">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <input type="text" class="form-control" name="description[]" value="" placeholder="Description"> 
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <input type="text" class="form-control" name="owner[]" placeholder="Owner">
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group" style="margin:0; padding:0">
                                     <input type="number" step="0.01" class="form-control" placeholder="Amount" name="amount[]" id="amount" value="" style="margin:0; border-radius:0">
+                                </div>
+                            </div> 
+                            <div class="col-md-3">
+                                <div class="form-group" style="margin:0; padding:0">
+                                    <input type="file" class="mt-2" name="attachment[]" value="" style="font-size:10px">
                                 </div>
                             </div>                            
                         </div>
@@ -114,7 +119,7 @@
 
         </div>
 
-        <div class="col-md-7">
+        <div class="col-md-5">
         &nbsp;
 
             <!-- Contextual classes -->
@@ -137,6 +142,41 @@
                             @if(count($paymentVoucher) > 0)
                                 <?php $count = 0; ?>
                                 @foreach($paymentVoucher as $voucher)
+                                    <?php 
+                                         if(
+                                             $voucher->voucher_status == FALSE && 
+                                             $voucher->check_status == FALSE && 
+                                             $voucher->approved_status == FALSE) {
+                                            $status = '<i class="icon-spinner3 spinner text-danger" title="Awaiting Verification"></i>';
+                                            $editAndDeleteStatus = '';
+                                         }
+                                         elseif(
+                                             $voucher->voucher_status == FALSE && 
+                                             $voucher->check_status == TRUE && 
+                                             $voucher->approved_status == FALSE) {
+                                            $status = '<i class="icon-stamp text-primary" title="Verified"></i>';
+                                            $editAndDeleteStatus = 'd-none';
+                                         }
+                                         elseif(
+                                             $voucher->voucher_status == FALSE && 
+                                             $voucher->check_status == TRUE && 
+                                             $voucher->approved_status == TRUE) {
+                                            $status = '<i class="icon-checkmark4 text-primary" title="Approved"></i>';
+                                            $editAndDeleteStatus = 'd-none';
+                                         }
+                                         elseif(
+                                             $voucher->voucher_status == TRUE && 
+                                             $voucher->check_status == TRUE && 
+                                             $voucher->approved_status == TRUE && 
+                                             $voucher->upload_status == TRUE) {
+                                            $status = '<i class="icon-checkmark4 text-success" title="Approved"></i>';
+                                            $editAndDeleteStatus = 'd-none';
+                                         }
+                                         else{
+                                            $status = '<i class="icon-stamp text-primary"></i>';
+                                         }
+                                         
+                                    ?>
                                     <tr>
                                         <td>{{ $count += 1 }}</td>
                                         <td>
@@ -151,18 +191,12 @@
                                                 @endif
                                             @endforeach
                                         </td>
+                                        <td>{!! $status !!}</td>
                                         <td>
-                                            @if($voucher->voucher_status == FALSE)
-                                                OPEN
-                                            @else
-                                                CLOSE
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <a href="{{URL('payment-voucher-request/'.$voucher->id.'/edit')}}">
+                                            <a href="{{URL('payment-voucher-request/'.$voucher->id.'/edit')}}" class="{{$editAndDeleteStatus}}">
                                                 <i class="icon-pen"></i>
                                             </a>
-                                            <i class="icon-trash"></i>
+                                            <i class="icon-trash {{ $editAndDeleteStatus }}"></i>
                                         </td>
                                     </tr>
                                 @endforeach

@@ -368,6 +368,8 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('payment-voucher-approvals', 'PaymentVoucherController@getPaymentVoucherApprovals');
     Route::patch('approve-payment-voucher', 'PaymentVoucherController@approvePaymentVouchers');
     Route::get('payment-vouchers', 'PaymentVoucherController@vouchers');
+    Route::get('payment-voucher/{voucherId}/{encryptedVoucherId}', 'PaymentVoucherController@showPaymentVoucher');
+    Route::patch('upload-payment-voucher', 'PaymentVoucherController@uploadPaymentVoucher');
 });
 
 
