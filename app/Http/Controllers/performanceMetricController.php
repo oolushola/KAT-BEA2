@@ -14,6 +14,7 @@ use App\AccountManagerTarget;
 use App\transporterDocuments;
 use App\BonusAccrued;
 use App\expenses;
+use App\tripWaybill;
 
 class performanceMetricController extends Controller
 {
@@ -174,9 +175,17 @@ class performanceMetricController extends Controller
 
             $currentMonthData = DB::SELECT(
                 DB::RAW(
-                    'SELECT a.trip_id, a.gated_out, a.customers_name, a.customer_no, a.exact_location_id, a.client_rate, a.transporter_rate, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND MONTH(gated_out) = MONTH(CURRENT_DATE()) AND YEAR(gated_out) = YEAR(CURRENT_DATE())  AND tracker >= \'5\' AND account_officer_id = "'.$userId.'" ORDER BY gated_out ASC '
+                    'SELECT a.trip_id, a.id, a.gated_out, a.customers_name, a.customer_no, a.exact_location_id, a.client_rate, a.transporter_rate, b.loading_site, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND MONTH(gated_out) = MONTH(CURRENT_DATE()) AND YEAR(gated_out) = YEAR(CURRENT_DATE())  AND tracker >= \'5\' AND account_officer_id = "'.$userId.'" ORDER BY gated_out ASC '
                 )
             );
+
+            $waybillListings = [];
+            foreach($currentMonthData as $trips) {
+                $waybillInfo = tripWaybill::SELECT('trip_id', 'sales_order_no', 'invoice_no')->WHERE('trip_id', $trips->id)->GET();
+                if($waybillInfo) {
+                    [$waybillDetails[]] = tripWaybill::WHERE('trip_id', $trips->id)->GET();
+                }
+            }
 
             return view('performance-metric.business-unit', 
                 array(
@@ -195,6 +204,7 @@ class performanceMetricController extends Controller
                     'yetTogateOut' => $yetTogateOutData,
                     'totalTripsData' => $totalTripsData,
                     'currentMonthData' => $currentMonthData,
+                    'waybillDetails' => $waybillDetails
                 )
             );
         //}
@@ -744,10 +754,10 @@ class performanceMetricController extends Controller
         return $filtered;
     }
 
-    function amountGenerated($currentYear, $currentMonth, $clientId) {
+    function amountGenerated($currentYear, $currentMonth, $clientId, $accountOfficer) {
         $moneyGenerated = DB::SELECT(
             DB::RAW(
-                'SELECT  SUM(client_rate) AS revenue, SUM(IFNULL(amount, 0)) AS incentive, SUM(transporter_rate) AS transporterRate, (SUM(client_rate) + SUM(IFNULL(amount,0)) - SUM(transporter_rate)) as marginGenerated  FROM tbl_kaya_trips a LEFT JOIN tbl_kaya_trip_incentives b ON a.id = b.trip_id WHERE trip_status = TRUE AND tracker >= 5 AND client_id = "'.$clientId.'" AND YEAR(gated_out) = "'.$currentYear.'" AND MONTH(gated_out) = "'.$currentMonth.'"'
+                'SELECT  SUM(client_rate) AS revenue, SUM(IFNULL(amount, 0)) AS incentive, SUM(transporter_rate) AS transporterRate, (SUM(client_rate) + SUM(IFNULL(amount,0)) - SUM(transporter_rate)) as marginGenerated  FROM tbl_kaya_trips a LEFT JOIN tbl_kaya_trip_incentives b ON a.id = b.trip_id WHERE trip_status = TRUE AND tracker >= 5 AND client_id = "'.$clientId.'" AND YEAR(gated_out) = "'.$currentYear.'" AND MONTH(gated_out) = "'.$currentMonth.'" AND a.account_officer_id = "'.$accountOfficer.'"'
             )
         );
         return $moneyGenerated;
@@ -790,7 +800,7 @@ class performanceMetricController extends Controller
         $sumOfGeneratedValue_ = 0;
         $generatedValue_ = [];
         foreach($dealsDone as $key => $dealings) {
-            $marginGenerated_ = $this->amountGenerated($currentYear, $currentMonth, $dealings->client_id);
+            $marginGenerated_ = $this->amountGenerated($currentYear, $currentMonth, $dealings->client_id, $userId);
             $generatedValue_ = $marginGenerated_[0]->marginGenerated;
             $sumOfGeneratedValue_ +=  $generatedValue_; 
         }
@@ -827,7 +837,7 @@ class performanceMetricController extends Controller
                         $generatedValue = [];
                         $sumOfAccruedBonuses = 0;
                         foreach($dealsDone as $key => $dealings) {
-                            $marginGenerated = $this->amountGenerated($currentYear, $currentMonth, $dealings->client_id);
+                            $marginGenerated = $this->amountGenerated($currentYear, $currentMonth, $dealings->client_id, $userId);
                             $generatedValue = $marginGenerated[0]->marginGenerated;    
                             if($generatedValue >= $dealings->threshold) {
                                 $statusCheck = '<i class="icon-checkmark4 text-primary" title="Passed"></i>';

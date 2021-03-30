@@ -25,6 +25,9 @@ use App\tripWaybill;
 use App\PaymentHistory;
 use App\User;
 use Auth;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class transporterController extends Controller
 {
@@ -138,13 +141,24 @@ class transporterController extends Controller
         
     }
 
+    public function paginate($items, $perPage = 100, $page = null, $options = []) {
+        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
+        $items = $items instanceof Collection ? $items : Collection::make($items);
+        $pagination = new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
+        $path = url('/').'/request-transporter-payment?page='.$page;
+        return $pagination->withPath($path);
+    }
+
     public function requestForPayment() {
         $user = Auth::user();
-        $advancePaymentRequest = DB::SELECT(
+        $advancePaymentRequests = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, d.bank_name, d.account_name, d.account_number, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id  WHERE  a.trip_status = \'1\' AND advance_paid = \'FALSE\' AND tracker >= 4 AND account_officer_id = "'.$user->id.'" ORDER BY a.trip_id DESC LIMIT 100'
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, d.bank_name, d.account_name, d.account_number, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g  ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id  WHERE  a.trip_status = \'1\' AND advance_paid = \'FALSE\' AND tracker >= 4 AND account_officer_id = "'.$user->id.'" ORDER BY a.trip_id DESC'
             )
         );
+
+        $myCollectionObj = collect($advancePaymentRequests);
+        $advancePaymentRequest = $this->paginate($myCollectionObj);
         
         $allpendingbalanceRequests = DB::SELECT(
             DB::RAW(

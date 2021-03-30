@@ -359,6 +359,18 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('available-incentives', 'overviewController@tripIncentives');
     Route::post('add-incentives', 'overviewController@addIncentives');
     Route::get('remove-incentive/{incentiveId}', 'overviewController@removeIncentive');
+
+    Route::get('opex-update', 'expensesController@opex');
+    Route::get('opex-listings', 'expensesController@showOpex');
+    Route::get('bonus-breakdown', 'performanceMetricController@getBonusBreakDown');
+    Route::resource('payment-voucher-request', 'PaymentVoucherController');
+    Route::get('verify-payment-voucher', 'PaymentVoucherController@verifyPaymentVoucher');
+    Route::patch('verify-payment-voucher', 'PaymentVoucherController@verifyPayments');
+    Route::get('payment-voucher-approvals', 'PaymentVoucherController@getPaymentVoucherApprovals');
+    Route::patch('approve-payment-voucher', 'PaymentVoucherController@approvePaymentVouchers');
+    Route::get('payment-vouchers', 'PaymentVoucherController@vouchers');
+    Route::get('payment-voucher/{voucherId}/{encryptedVoucherId}', 'PaymentVoucherController@showPaymentVoucher');
+    Route::patch('upload-payment-voucher', 'PaymentVoucherController@uploadPaymentVoucher');
     Route::get('invoice-payment-history', 'invoiceController@getInvoicePaymentHistory');
 
 });

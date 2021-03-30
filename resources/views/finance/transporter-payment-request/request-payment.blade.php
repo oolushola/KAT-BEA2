@@ -40,6 +40,7 @@ input::placeholder{
 <input type="text" class="form-control mb-2" placeholder="QUICK SEARCH" id="searchTrip">
 
 <div class="card" id="advancePaymentPlace">
+    {!! $advancePaymentRequest->links() !!}
     <form method="POST" id="frmRequestAdvancePayment">
         @csrf
         <div class="row">
