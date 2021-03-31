@@ -1033,8 +1033,9 @@ input, select{
 
     $(document).on('click', '#addMoreEir', function() {
         $moreImages = '<span class="mr-3">';
-        $moreImages += '<input type="file" name="eir[]" class="font-size-xs mb-1 d-inline">';
-        $moreImages += '<i class="icon-minus-circle2 text-danger removeEir"></i>';
+        $moreImages += '<input type="file" name="eir[]"  class="font-size-xs mb-1 d-inline" style="width:100px">';
+        $moreImages += '<input type="text" name="container_cards[]" style="width:100px; border: 1px solid #ccc; font-size:13px;">';
+        $moreImages += '<i class="icon-minus-circle2 text-danger removeEir ml-2"></i>';
         $moreImages += '</span>';
         $('#moreEirHolder').append($moreImages)
     })

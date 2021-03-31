@@ -11,6 +11,7 @@ class offloadWaybillRemark extends Model
        'trip_id', 
        'waybill_collected_status',
        'received_waybill',
-       'waybill_remark'
+       'waybill_remark',
+       'container_card_no'
     ];
 }

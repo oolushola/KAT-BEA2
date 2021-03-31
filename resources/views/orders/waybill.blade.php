@@ -239,6 +239,7 @@ td{
                                 <tr style="font-size:11px;" class="text-center">
                                     <th>SN</th>
                                     <th>Delivered Container</th>
+                                    <th>Container No.</th>
                                     <th>Remark</th>
                                 </tr>
                             </thead>
@@ -257,6 +258,7 @@ td{
                                                     <i class="icon-eye"></i>
                                                 </a>
                                             </td>
+                                            <td>{{ $eir->container_card_no }}</td>
                                             <td>{{ $eir->waybill_remark }}</td>
                                         </tr>
                                     @endforeach

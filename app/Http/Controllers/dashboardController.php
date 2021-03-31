@@ -600,7 +600,8 @@ class dashboardController extends Controller
                                     <input type="hidden" name="eirTripId" id="eirTripId" />
                                     <span class="font-size-xs mb-1 pointer" id="addMoreEir">Add More</span>
                                     <div id="moreEirHolder" >
-                                        <input type="file" name="eir[]"  class="font-size-xs mb-1 d-inline">
+                                        <input type="file" name="eir[]"  class="font-size-xs mb-1 d-inline" style="width:100px">
+                                        <input type="text" name="container_cards[]" style="width:100px; border: 1px solid #ccc; font-size:13px;">
                                     </div>
                                     <button class="btn btn-primary font-size-xs font-weight-bold" id="uploadEirs">
                                         UPLOAD EIR
@@ -646,12 +647,18 @@ class dashboardController extends Controller
             $signedWaybill = $request->file('eir');
             if($request->eir[0] != '') { 
                 foreach($signedWaybill as $key => $collectedWaybill) {
-                    if(isset($collectedWaybill) && $collectedWaybill != '') {
+                    if((isset($collectedWaybill) && $collectedWaybill != '') && ($request->container_cards[$key] != '')) {
                         $name = 'signed-waybill-'.$trip_id.'.'.$collectedWaybill->getClientOriginalExtension();
                         $destination_path = public_path('assets/img/signedwaybills/');
                         $waybillPath = $destination_path."/".$name;
                         $collectedWaybill->move($destination_path, $name);
-                        offloadWaybillRemark::CREATE(['trip_id' => $trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => 'Waybill for: '.$tripInfo->trip_id ]);
+                        offloadWaybillRemark::CREATE([
+                            'trip_id' => $trip_id, 
+                            'waybill_collected_status' => TRUE, 
+                            'received_waybill' => $name, 
+                            'waybill_remark' => 'Waybill for: '.$tripInfo->trip_id,
+                            'container_card_no' => $request->container_cards[$key]
+                        ]);
                     }
                 }
                 $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $trip_id]);
@@ -673,7 +680,12 @@ class dashboardController extends Controller
                             $destination_path = public_path('assets/img/signedwaybills/');
                             $waybillPath = $destination_path."/".$name;
                             $collectedWaybill->move($destination_path, $name);
-                            offloadWaybillRemark::CREATE(['trip_id' => $trip_id, 'waybill_collected_status' => TRUE, 'received_waybill' => $name, 'waybill_remark' => 'POD for: '.$tripInfo->trip_id ]);
+                            offloadWaybillRemark::CREATE([
+                                'trip_id' => $trip_id, 
+                                'waybill_collected_status' => TRUE, 
+                                'received_waybill' => $name, 
+                                'waybill_remark' => 'POD for: '.$tripInfo->trip_id,
+                            ]);
                         }
                     }
                     $offloadEir = OffloadWaybillStatus::firstOrNew(['trip_id' => $trip_id]);
