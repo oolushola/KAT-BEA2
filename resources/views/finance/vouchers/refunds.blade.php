@@ -78,7 +78,7 @@
                         <div class="row mb-3 mb-md-2" id="moreExpenses">
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <input type="text" class="form-control" name="description[]" value="" placeholder="Description"> 
+                                    <textarea class="form-control" name="description[]" value="" placeholder="Description"></textarea>
                                 </div>
                             </div>
                             <div class="col-md-3">
