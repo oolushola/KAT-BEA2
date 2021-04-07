@@ -176,10 +176,10 @@ class PaymentVoucherController extends Controller
                 if(count($getUnapprovedVouchers)) {
                     foreach($getUnapprovedVouchers as $key => $voucher){
                         $response.='
-                            <div class="col-md-6 col-sm-6 col-xs-12">
+                            <div class="col-md-6 col-sm-6 col-xs-12" style="max-height:400px; overflow:auto">
                                 <div class="card">
                                     <div class="card-body">
-                                        <p class="text-success font-weight-bold font-size-xs mb-2">
+                                        <p class="text-success font-weight-bold font-size-xs mb-2 paymentBreakdown pointer" id="'.$voucher->uniqueId.'" value="0" title="Click to view breakdown and attachments(if any)">
                                             '.strtoupper($voucher->uniqueId).'
                                             <span class="text-primary font-weight-bold font-size-xs" style="float:right;">
                                                 Requested by: '.ucfirst($users[$key]->first_name).'
@@ -193,14 +193,14 @@ class PaymentVoucherController extends Controller
                                                 if($desc->payment_voucher_id == $voucher->id) {
                                                     $sumTotal += $desc->amount;
                                                     $response.='
-                                                        <span class="d-block mt-1 font-weight-semibold" style="font-size:12px">
-                                                        ('.$count++.') '.$desc->description.' &#x20A6; '. number_format($desc->amount, 2) .'';
-
-                                                        if($desc->attachment) {
-                                                            $response.='<a target="_blank" href="assets/img/vouchers/'.$desc->attachment.'"><i class="icon-attachment ml-4"></i></a>';
-                                                        }
+                                                        <span class="mt-1 font-weight-semibold" style="font-size:12px">
+                                                            <pre class="d-none voucher'.$voucher->uniqueId.'" style="padding:10px; margin-bottom: 3px; font-size: 11px; font-family:tahoma">
+                                                            ('.$count++.') '.$desc->description.' &#x20A6; '. number_format($desc->amount, 2) .'';
+                                                            if($desc->attachment) {
+                                                                $response.='<a target="_blank" href="assets/img/vouchers/'.$desc->attachment.'"><i class="icon-attachment ml-4"></i></a>';
+                                                            }
                                                         
-                                                    $response.='</span>';
+                                                    $response.='</pre></span>';
                                                     
                                                 }
                                             }

@@ -28,6 +28,7 @@ use App\target;
 use Session;
 use App\PrsSession;
 use App\truckAvailability;
+use App\PaymentVoucher;
 
 class backendController extends Controller
 {
@@ -114,11 +115,14 @@ class backendController extends Controller
         $clients = client::WHERE('client_status', '1')->GET()->COUNT();
         $prsSession = PrsSession::WHERE('user_id', Auth::user()->id)->WHERE('prs_starts', TRUE)->WHERE('prs_ends', FALSE)->GET()->LAST();
 
-        $paymentNotification = DB::SELECT(
+        $paymentNotification_ = DB::SELECT(
             DB::RAW(
                 'SELECT COUNT(a.trip_id) AS trips FROM tbl_kaya_trips a JOIN tbl_kaya_payment_notifications b ON a.id = b.trip_id WHERE paid_status = FALSE'
             )
         );
+
+        $paymentVoucherCount = PaymentVoucher::WHERE('check_status', TRUE)->WHERE('approved_status', FALSE)->WHERE('voucher_status', FALSE)->GET()->COUNT();
+        $paymentNotification = $paymentVoucherCount + $paymentNotification_[0]->trips;
 
         Session::put([
             'payment_request' => $paymentRequested,
@@ -126,7 +130,8 @@ class backendController extends Controller
             'client' => $clients,
             'offloaded_trips' => $offloadedTrips,
             'prsSession' => $prsSession,
-            'paymentNotification' => $paymentNotification[0]->trips
+            'paymentNotification' => $paymentNotification,
+            'paymentVoucherCount' => $paymentVoucherCount
         ]);
 
         $currentGateOutRecord = $this->displayRecordOfTrips('gated_out', $currentDate);

@@ -78,6 +78,9 @@
 								<span class="text-right pointer badge badge-primary" id="payallUploaded">Pay All</span>
 								@endif
 								<span id="payallLoader" class="font-size-xs"></span>
+								<a href=".approvePaymentVoucher" data-toggle="modal" id="approvePaymentVoucher">
+									<span class="ml-4">Vouchers({{ session::get('paymentVoucherCount') }})</span>
+								</a>
 							</span>
 							<!-- <a href="#" class="text-default"><i class="icon-compose"></i></a> -->
 						</div>
@@ -172,10 +175,9 @@
 								</div>
 							</div>
 							@if($auth == 1)
-							<div class="ml-3 align-self-center" id="approvePaymentVoucher">
+							<div class="ml-3 align-self-center">
 								<a class="text-white" href=".approvePaymentVoucher" data-toggle="modal">
-									<i class="icon-checkmark4" title="Approve All Payment Vouchers" style="margin-top:7px"></i>
-									<span class="badge badge-pill bg-warning-400" style="z-index:1000; position:relative; margin-left:-8px; margin-top:-5px">2</span>
+									<i class="icon-cog2" title="Approve All Payment Vouchers" style="margin-top:7px"></i>
 								</a>
 							</div>
 							@endif

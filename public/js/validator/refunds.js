@@ -31,7 +31,7 @@ $(function() {
 
     $('#addMoreExpensesCategory').click(function(event) {
         $addMoreExpenses = '<div class="col-md-3"><div class="form-group mt-2">';
-        $addMoreExpenses += '<input type="text" name="description[]" class="form-control" placeholder="Description">';
+        $addMoreExpenses += '<textarea name="description[]" class="form-control" placeholder="Description"></textarea>';
         $addMoreExpenses += '</div></div>';
 
         $addMoreExpenses += '<div class="col-md-3 mt-1"><div class="form-group" style="margin:0; padding:0">';
@@ -199,7 +199,21 @@ $(function() {
                 $('#checkStatus').val(1)
             }
         }
-       
+    })
+
+    $(document).on('click', '.paymentBreakdown', function() {
+        $voucherId = $(this).attr("id")
+        $toggleValue = $(this).attr('value')
+        if($toggleValue == 0) {
+            $('.voucher'+$voucherId).removeClass('d-none')
+            $(this).attr('value', 1)
+        }
+        else{
+            if($toggleValue == 1) {
+                $('.voucher'+$voucherId).addClass('d-none')
+                $(this).attr('value', 0)
+                }
+        }       
     })
 })
 

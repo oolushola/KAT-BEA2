@@ -107,7 +107,7 @@ input{
 							<thead>
 								<tr style="font-size:13px; font-family:tahoma; font-weight:bold" >
 									<th><b>SN</b></th>
-									<th><b>DESCRIPTION</b></th>
+									<th width="70%"><b>DESCRIPTION</b></th>
 									<th><b>OWNED BY</b></th>
 									<th><b>AMOUNT</b></th>
 								</tr>
@@ -119,7 +119,7 @@ input{
                                         <?php $sum += $desc->amount; ?>
                                         <tr>
                                             <td>{{ $count += 1 }}</td>
-                                            <td class="font-weight-bold">{{ strtoupper($desc->description) }}</td>
+                                            <td class="font-weight-bold"><pre style="border:none; padding: 0; margin:0">{{ strtoupper($desc->description) }}</pre></td>
                                             <td>{{ $desc->owner }}</td>
                                             <td class="font-weight-bold">&#x20a6;{{ number_format($desc->amount, 2) }}</td>
                                         </tr>

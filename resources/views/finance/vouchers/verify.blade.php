@@ -40,10 +40,10 @@
                     <div class="row">
                         @if(count($getUnverifiedVouchers))
                             @foreach($getUnverifiedVouchers as $key => $voucher)
-                                <div class="col-md-3 col-sm-6 col-xs-12">
+                                <div class="col-md-3 col-sm-6 col-xs-12" style="max-height:400px; overflow:auto">
                                     <div class="card">
                                         <div class="card-body">
-                                            <p class="text-success font-weight-bold font-size-xs mb-3">
+                                            <p class="text-success font-weight-bold font-size-xs mb-3 pointer paymentBreakdown" id="{{$voucher->uniqueId}}" value="0">
                                                 {{ strtoupper($voucher->uniqueId) }}
                                                 <span class="text-primary font-weight-bold font-size-xs" style="float:right;">
                                                     Requested by: {{ ucfirst($users[$key]->first_name)}}
@@ -54,10 +54,12 @@
                                                     @if($desc->payment_voucher_id == $voucher->id)
                                                     <?php $sumTotal += $desc->amount; ?>
                                                     <span class="d-block mt-1 font-weight-semibold" style="font-size:12px">
-                                                        ({{ $count += 1 }}) {{$desc->description}} &#x20A6;{{ number_format($desc->amount, 2) }}
-                                                        @if($desc->attachment)
-                                                        <a target="_blank" href="{{URL::asset('assets/img/vouchers/'.$desc->attachment.'')}}"><i class="icon-attachment ml-4"></i></a>
-                                                        @endif
+                                                        <pre class="d-none voucher{{ $voucher->uniqueId }}" style=" font-size: 11px; font-family:tahoma">
+                                                            @if($desc->attachment)
+                                                                <a target="_blank" href="{{URL::asset('assets/img/vouchers/'.$desc->attachment.'')}}"><i class="icon-attachment ml-4"></i></a>
+                                                            @endif
+                                                            ({{ $count += 1 }}) {{$desc->description}} &#x20A6;{{ number_format($desc->amount, 2) }}
+                                                        </pre>
                                                     </span>
                                                     @endif
                                                 @endforeach
