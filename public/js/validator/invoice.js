@@ -405,12 +405,15 @@ $(function() {
         }
     })
 
-    $(document).on('keyup', '#acknowledgementDateChecker', function(e) {
+    $(document).on('keypress', '#acknowledgementDateChecker', function($e) { //alert('Ok') 
+        $e.preventDefault()
         $acknowledgementDate = $(this).val()
         $invoiceNo = $(this).attr('name')
         $event = $(this)
-        if(e.keyCode === 13) {
+        if($e.keyCode === 13) {
+            alert('OK')
             $('#acknowledgmentPlaceholder').html('<i class="icon-spinner3 spinner"></i>')
+            console.log('Here...')
             $.get('/paid-invoices', { acknowledgement_date: $acknowledgementDate, invoice_no: $invoiceNo, checker: 2 }, function(data) {
                 if(data == "updated") {
                     $event.addClass('d-none')
