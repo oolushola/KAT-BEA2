@@ -132,8 +132,8 @@ class ordersController extends Controller
     }
 
     public function getExactDestination(request $request) {
-        $answer = '<label class="font-weight-semibold">Destination</label>
-                    <select class="form-control" name="exact_location_id" id="exactLocation">
+        $answer = '<label class="font-weight-semibold">Destination *</label>
+                    <select class="form-control" name="locations" id="exactLocation">
                         <option value="">Exact destination</option>';
         
         $exactdestions = transporterRate::SELECT('transporter_destination')->WHERE('transporter_to_state_id', $request->state_id)->distinct()->GET();
@@ -359,7 +359,7 @@ class ordersController extends Controller
                 'driver_id' => $request->driver_id,
                 'product_id' => $request->product_id,
                 'destination_state_id' => $request->destination_state_id,
-                'exact_location_id' => $request->exact_location_id,
+                'exact_location_id' => trim($request->exact_location_id),
                 'user_id' => $request->user_id,
                 'trip_id' => $tripId,
                 'account_officer' => $request->account_officer,
@@ -470,7 +470,7 @@ class ordersController extends Controller
         else{
             $recid = trip::findOrFail($id);
             if($request->tracker <= 3){
-                $previousTripRecord = trip::SELECT('client_rate', 'transporter_rate')->WHERE('client_id', $request->client_id)->WHERE('loading_site_id', $request->loading_site_id)->WHERE('destination_state_id', $request->destination_state_id)->WHERE('exact_location_id', $request->exact_location_id)->WHERE('trip_status', '!=', 0)->WHERE('tracker', '>=', 5)->LATEST()->FIRST();
+                $previousTripRecord = trip::SELECT('client_rate', 'transporter_rate')->WHERE('client_id', $request->client_id)->WHERE('loading_site_id', $request->loading_site_id)->WHERE('destination_state_id', $request->destination_state_id)->WHERE('exact_location_id', trim($request->exact_location_id))->WHERE('trip_status', '!=', 0)->WHERE('tracker', '>=', 5)->LATEST()->FIRST();
 
                 if($previousTripRecord) {
                     $recid->client_rate = $previousTripRecord->client_rate;
@@ -581,9 +581,7 @@ class ordersController extends Controller
     public function fieldOpsUpdate() {
         $orders = DB::SELECT(
             DB::RAW(
-                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker < \'5\' ORDER BY a.trip_id ASC
-                '
-
+                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker < \'5\' ORDER BY a.trip_id ASC'
             )
         );
         $tripWaybills = tripWaybill::GET();

@@ -1144,7 +1144,8 @@ input, select{
         }
     })
 
-    $('#receiveAllWaybills').click(function(e) {
+    $('#receiveAllWaybills').click(function($e) {
+       $e.preventDefault()
        if($('.waybillStatusChecker:checked').length <= 0) {
            alert('C\'mon, you should at least select a trip before marking as received.')
            return false

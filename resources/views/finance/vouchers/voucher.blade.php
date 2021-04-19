@@ -121,6 +121,14 @@
                                         <td>{{ $voucher->request_timestamps }}</td>
                                         <td class="font-weight-semibold">
                                             {{ strtoupper($voucher->uniqueId) }}
+                                            @foreach($voucherDescriptions as $vdesc)
+                                            @if($vdesc->payment_voucher_id == $voucher->id && $vdesc->attachment)
+                                            <a target="_blank" href="{{URL::asset('assets/img/vouchers/'.$vdesc->attachment.'')}}">
+                                                <i class="icon-attachment ml-1 mr-2"></i>
+                                            </a>
+                                            @endif
+                                            @endforeach
+                                            
                                         </td>
                                         <td class="font-weight-semibold">{{ ucfirst($users[$key]->first_name) }} {{ ucfirst($users[$key]->last_name) }}</td>
                                         <td><a href="{{URL('payment-voucher/'.$voucher->uniqueId.'/'.md5($voucher->id).'')}}">View</a> <i class="icon-cloud-upload"></i></td>

@@ -111,8 +111,7 @@
         </div>
         
         <div class="row ml-3 mr-3 mt-3">
-            
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group">
                     <label class="font-weight-semibold">Client *</label>
                     <select class="form-control" name="client_id" id="clientId">
@@ -131,7 +130,7 @@
                     </select>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group" id="loadingSiteContainer">
                     <label class="font-weight-semibold">Loading Site *</label>
                     <select class="form-control" name="loading_site_id" id="loadingSite">
@@ -147,7 +146,7 @@
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group">
                     <label class="font-weight-semibold">Truck No *</label>
                     <input type="text" value="<?php if(isset($recid)){ echo $recid[0]->truck_no; } else echo ''; ?>" class="form-control" name="truck_no" id="searchTruckNo">
@@ -176,7 +175,7 @@
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group">
                     <label class="font-weight-semibold">Truck Type *</label>
                     
@@ -193,7 +192,7 @@
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group">
                     <label class="font-weight-semibold">Tonnage *<sub>(Kg)</sub></label>
                     <input type="text" class="form-control" value="<?php if(isset($recid)){ echo $recid[0]->tonnage; } else echo ''; ?>" name="tonnage" id="tonnage">
@@ -201,7 +200,7 @@
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group">
                     <label class="font-weight-semibold">Transporter Name *</label>
                     <select name="transporter_id" id="transporterIdValue" class="form-control">
@@ -215,10 +214,9 @@
                         @endforeach
                     </select>
                 </div>
-                
             </div>
             
-            <div class="col-md-4" id="transporterPhoneNumber">
+            <div class="col-md-3" id="transporterPhoneNumber">
                 <div class="form-group">
                     <label class="font-weight-semibold">Transporter's Phone Number *</label>
                     <input type="text" class="form-control" name="transporter_phone_no" id="transporterNumber" value="<?php if(isset($recid)) { echo $recid[0]->phone_no;} ?>" >
@@ -226,7 +224,7 @@
             </div>
 
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group">
                     <label class="font-weight-semibold">Driver's Name *</label>
                     <input type="text" class="form-control" value="<?php if(isset($recid)){ echo $recid[0]->driver_first_name.' '.$recid[0]->driver_last_name; } else echo ''; ?>" name="drivers_name" id="searchDriver">
@@ -254,28 +252,28 @@
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group">
                     <label class="font-weight-semibold">Driver's Number *</label>
                     <input type="text" class="form-control" name="drivers_phone_no" id="driverPhoneNumber" value="<?php if(isset($recid)) { echo $recid[0]->driver_phone_number; } ?>">
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group">
                     <label class="font-weight-semibold">Motor Boy's Name</label>
                     <input type="text" name="motor_boy_name" id="motorBoyName" class="form-control" value="<?php if(isset($recid)) { echo $recid[0]->motor_boy_first_name.' '.$recid[0]->motor_boy_last_name; } ?>">
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group">
                     <label class="font-weight-semibold">Motor Boy's Number</label>
                     <input type="text" class="form-control" name="motor_boy_number" id="motorBoyNumber" value="<?php if(isset($recid)) { echo $recid[0]->motor_boy_phone_no; } ?>">
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group" id="productContainer">
                     <label class="font-weight-semibold">Product *</label>
                     
@@ -293,7 +291,7 @@
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group">
                     <label class="font-weight-semibold">Destination: State on AX *</label>
                     <select class="form-control" name="destination_state_id" id="destinationState">
@@ -309,10 +307,10 @@
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group" id="exactLocationHolder">
                     <label class="font-weight-semibold">Destination *</label>
-                    <select class="form-control" name="exact_location_id" id="exactLocation">
+                    <select class="form-control" name="locations" id="exactLocation">
                         <option value="">Exact destination</option>
                         @if(isset($recid))
                             @foreach($exactdestinations as $destination)
@@ -329,21 +327,19 @@
                 </div>
             </div>
 
-            
-
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group">
-                    <label class="font-weight-semibold">Acount Officer</label>
-                    <input type="text" class="form-control" name="account_officer" id="account_officer" value="<?php if(isset($recid)) { echo $recid[0]->account_officer; } else { echo ''; } ?>">
+                    <label class="font-weight-semibold">Locations</label>
+                    <input type="text" class="form-control" name="exact_location_id" id="exactLocationIds" value="<?php if(isset($recid)) { echo $recid[0]->exact_location_id; } else { echo ''; } ?>">
                 </div>
             </div>
         </div>
 
-            <div class="text-left  ml-4 mr-3 mb-3">
-                @if(!isset($recid))
-                <button type="submit" class="btn btn-primary" name="registerTrip" id="registerTrip">Register Trip</button>
-                @endif
-            </div>
+        <div class="text-left  ml-4 mr-3 mb-3">
+            @if(!isset($recid))
+            <button type="submit" class="btn btn-primary" name="registerTrip" id="registerTrip">Register Trip</button>
+            @endif
+        </div>
 
     </div>
 

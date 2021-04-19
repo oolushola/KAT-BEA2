@@ -62,6 +62,18 @@ $(function() {
         });
     });
 
+    $(document).on("change", '#exactLocation', function() {
+        $selectedLocation = $(this).val()
+        $exactLocations = $('#exactLocationIds').val()
+        $myLocations = $exactLocations+' '+$selectedLocation
+        $exactLocations = $('#exactLocationIds').val($myLocations)
+    })
+
+    $('#exactLocationIds').blur(function(data) {
+        const value = $(this).val().replace(',', ' ')
+        $(this).val(value)
+    })
+
     
     function submitTrip(uri, frmName, pageReloadUrl) {
         $ask = confirm('Are you sure all informations supplied are accurate? once submitted, it can\t be modified. Click on cancel to proofread');
@@ -101,6 +113,7 @@ $(function() {
     $("#registerTrip").click(function(e) {
          e.preventDefault();
          if(validateGatedIn()===false) {return};
+         $(this).attr('disabled', 'disabled')
          submitTrip('/trips', '#frmTrips', '/update-trip');
     });
 

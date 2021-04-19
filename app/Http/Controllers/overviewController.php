@@ -427,7 +427,8 @@ class overviewController extends Controller
     public function addIncentives(Request $request) {
         $incentiveLabel = $request->incentive_desc;
         $incentiveAmount = $request->incentiveAmount;
-        $tripId = $request->id;
+        $paymentId = tripPayment::findOrFail($request->id);
+        $tripId = $paymentId->trip_id;
         
         tripIncentives::CREATE([
             'trip_id' => $tripId,
@@ -438,15 +439,15 @@ class overviewController extends Controller
     }
 
     public function removeIncentive(Request $request, $incentiveId) {
-        $tripId = $request->trip_id;
+        $tripId = $payment->trip_id;
         $tripIncentive = tripIncentives::findOrFail($incentiveId);
         $tripIncentive->DELETE();
-
         return $this->showIncentives($tripId);
-
     }
 
-    function showIncentives($tripId) {
+    function showIncentives($paymentId) {
+        $thisPayment = tripPayment::findOrFail($paymentId);
+        $tripId = $thisPayment->trip_id;
         $tripIncentives = tripIncentives::WHERE('trip_id', $tripId)->GET();
         $response = '
             <table class="table table-condensed">
