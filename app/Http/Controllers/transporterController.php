@@ -189,6 +189,11 @@ class transporterController extends Controller
         if($transporter->transporter_status == FALSE) {
             return 'blackListed';
         }
+        $checkDocuments = tripWaybill::WHERE('trip_id', $recid->id)->GET();
+        if(count($checkDocuments) <= 0) {
+            return 'noDocs';
+        }
+
         $user_id = $request->user_id;
         $tripRate = $recid->transporter_rate;
         $standardAdvanceRate = $tripRate * 0.7;
