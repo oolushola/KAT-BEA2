@@ -135,6 +135,8 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('invoice-multi-search', 'invoiceController@bulksearchinvoice');
     Route::get('multi-search', 'invoiceController@multipleinvoicesearch');
     Route::resource('local-purchase-order', 'lpoController');
+    Route::get('filter-lpo', 'lpoController@filterLpo');
+
     Route::get('financials/overview', 'financialController@financialsOverview');
     Route::get('financials/dashboard', 'financialController@displayFinancialRecords');
     Route::post('invoice-incentives', 'invoiceController@addIncentives');

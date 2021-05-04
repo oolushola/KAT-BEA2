@@ -242,6 +242,10 @@ $(function(){
          $title = $(this).attr("title")
          $requester = $("#userId").val();
          $.get('/advance-request-payment', {trip_id:$specificTripId, user_id:$requester}, function(data){
+            if(data == 'noDocs') {
+                alert('Request Refused! No proof of financial document attached.')
+                return false
+            }
             if(data == 'blackListed') {
             alert('Sorry, you can not request for this transporter payment until onboarding is completed.')
             return false

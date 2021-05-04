@@ -253,7 +253,8 @@ class PaymentVoucherController extends Controller
         $users = [];
         foreach($paymentVouchers as $voucher) {
             $voucherListings[] = PaymentVoucherDesc::WHERE('payment_voucher_id', $voucher->id)->GET(); 
-            $users[] = User::findOrFail($voucher->requested_by);   
+            $users[] = User::findOrFail($voucher->requested_by); 
+            [$voucherDescriptions[]] = PaymentVoucherDesc::WHERE('payment_voucher_id', $voucher->id)->GET(); 
         }
         foreach($voucherListings as $vouchers) {
             foreach($vouchers as $voucher) {
@@ -274,7 +275,7 @@ class PaymentVoucherController extends Controller
             }
         }
 
-        return view('finance.vouchers.voucher', compact('paymentVouchers', 'users', 'unpaidVouchers', 'unpaidVouchersDesc', 'people'));
+        return view('finance.vouchers.voucher', compact('paymentVouchers', 'users', 'unpaidVouchers', 'unpaidVouchersDesc', 'people', 'voucherDescriptions'));
     }
 
     public function showPaymentVoucher($voucherId) {

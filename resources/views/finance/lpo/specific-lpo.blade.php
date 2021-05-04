@@ -163,16 +163,16 @@
 									?>
 									@foreach($lposummary as $lpoParams)
 										<?php 
-											if(date('Y-m-d', strtotime($lpoParams->gated_out) > '2020-01-31')) {
+											$date = date('Y-m-d', strtotime($lpoParams->gated_out));
+											if($date > date('2021-02-15')) {
 												$vatValue = 7.5;
 												$vat = $vatValue / 105 *  $lpoParams->transporter_rate;
 											}
 											else {
 												$vatValue = 5;
 												$vat = $vatValue / 107 *  $lpoParams->transporter_rate;
-											}
-                                            
-                                            $subtotal+=$lpoParams->transporter_rate - $vat;
+											}                      
+                      $subtotal+=$lpoParams->transporter_rate - $vat;
 											$totalVatRate+=$vat;
 										?>
 										<tr>

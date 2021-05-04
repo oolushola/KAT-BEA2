@@ -18,6 +18,12 @@ td{
             {{ $pagination->links() }}
         </ul>
 
+        <div class="display:inline-table">
+            <input type="date" id="dateRangeFrom" style="width:150px; border: 1px solid #ccc; padding:3px; display:inline-table; margin: 5px; outline: none"> 
+            <input type="date" id="dateRangeTo" style="width:150px; border: 1px solid #ccc; padding:3px; display:inline-table; margin: 5px; outline: none">
+            <button type="button" id="shootLpoFilter">SHOOT</button>
+        </div>
+
     <!-- Page header -->
     <div class="page-header page-header-light">
         <div class="page-header-content header-elements-md-inline">
@@ -63,6 +69,7 @@ td{
                         <thead>
                             <tr>
                                 <th class="text-center">TRIP ID</th>
+                                <th class="text-center">GATED OUT</th>
                                 <th>TRANSPORTER</th>
                                 <th>CUSTOMER</th>
                                 <th>PRODUCT</th>
@@ -79,6 +86,7 @@ td{
                                 
                                     <tr class="hover" style="font-size:11px; cursor:pointer" onclick="window.location='local-purchase-order/{{$lpo->trip_id}}'">
                                         <td class="text-center">{!! $lpo->trip_id !!}</td>
+                                        <td class="text-center">{!! date('d-m-Y', strtotime($lpo->gated_out)) !!}</td>
                                         <td>{!! $lpo->transporter_name !!}</td>
                                         <td>{!! $lpo->customers_name !!}</td>
                                         <td>{!! $lpo->product !!}</td>
@@ -117,4 +125,15 @@ td{
 
 @section('script')
 <script type="text/javascript" src="{{URL::asset('js/validator/invoice.js')}}"></script>
+<script type="text/javascript">
+    $('#shootLpoFilter').click(function($e) {
+        $e.preventDefault()
+        $dateRangeFrom = $('#dateRangeFrom').val()
+        $dateRangeTo = $('#dateRangeTo').val()
+        $('#contentLoader').html('<i class="icon-spinner2 spinner"></i>')
+        $.get('/filter-lpo', { dateRangeFrom: $dateRangeFrom, dateRangeTo: $dateRangeTo }, function(data) {
+            $('#contentLoader').html(data)
+        })
+    })
+</script>
 @stop

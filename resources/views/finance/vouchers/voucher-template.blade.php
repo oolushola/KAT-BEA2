@@ -71,8 +71,8 @@ input{
 								<ul class="list list-unstyled mb-0">
 									<div id="defaultCompanyInfo" style="font-size:13px">
 										<li class="font-weight-bold">3A Gbenga Ademulegun, Lane</li>
-                                        <li class="font-weight-bold">Parkview Estate</li>
-                                        <li class="font-weight-bold">Ikoyi, Lagos</li>
+										<li class="font-weight-bold">Parkview Estate</li>
+										<li class="font-weight-bold">Ikoyi, Lagos</li>
 										<li class="font-weight-bold">Nigeria</li>
 									</div>
 								</ul>
@@ -84,23 +84,19 @@ input{
 									<ul class="list list-unstyled mb-0">
 										<li><h6 class="my-1 font-weight-bold">Total Due:</h6></li>
 										<li>Staff Name:</li>
-                                        
-										
 									</ul>
-
 									<ul class="list list-unstyled text-right mb-0 ml-auto">
 										<li><h6 class="font-weight-bold my-1">&#x20a6;{{ number_format($sum, 2) }}</h6>
 										</li>
 										<li><h6 class="font-weight-bold my-1"></h6>
 										</li>
-										
 									</ul>
 								</div>
 							</div>
 						</div>
 					</div>
 
-                    <h3 class="text-center mt-4 mb-4 font-weight-bold">PAYMENT VOUCHER</h3>
+          <h3 class="text-center mt-4 mb-4 font-weight-bold">PAYMENT VOUCHER</h3>
 
 					<div class="table-responsive">
 						<table class="table table-bordered">
@@ -113,64 +109,64 @@ input{
 								</tr>
 							</thead>
 							<tbody style="font-size:13px; font-family:tahoma">
-                                <?php $count = 0; $sum = 0; ?>
-                                @if(count($voucherDesc))
-                                    @foreach($voucherDesc as $desc)
-                                        <?php $sum += $desc->amount; ?>
-                                        <tr>
-                                            <td>{{ $count += 1 }}</td>
-                                            <td class="font-weight-bold"><pre style="border:none; padding: 0; margin:0">{{ strtoupper($desc->description) }}</pre></td>
-                                            <td>{{ $desc->owner }}</td>
-                                            <td class="font-weight-bold">&#x20a6;{{ number_format($desc->amount, 2) }}</td>
-                                        </tr>
-                                    @endforeach
-                                        <tr>
-                                            <td colspan="3" class="font-weight-bold text-right" style="border:none">TOTAL</td>
-                                            <td class="font-weight-bold">&#x20a6;{{ number_format($sum, 2)}}</td>
-                                        </tr>
-                                @else
+									<?php $count = 0; $sum = 0; ?>
+									@if(count($voucherDesc))
+											@foreach($voucherDesc as $desc)
+												<?php $sum += $desc->amount; ?>
+												<tr>
+														<td>{{ $count += 1 }}</td>
+														<td class="font-weight-bold"><pre style="border:none; padding: 0; margin:0">{{ strtoupper($desc->description) }}</pre></td>
+														<td>{{ $desc->owner }}</td>
+														<td class="font-weight-bold">&#x20a6;{{ number_format($desc->amount, 2) }}</td>
+												</tr>
+											@endforeach
+												<tr>
+														<td colspan="3" class="font-weight-bold text-right" style="border:none">TOTAL</td>
+														<td class="font-weight-bold">&#x20a6;{{ number_format($sum, 2)}}</td>
+												</tr>
+									@else
 
-                                @endif
+									@endif
 							</tbody>
 						</table>
-                        &nbsp;
+              &nbsp;
 					</div>
 
-                    <section class="row m-2 mt-4 mb-3">
-                        <div class="col-md-3"></div>
-						<div class="col-md-6 text-center font-weight-bold">
-                            <span class="d-block ml-2 mr-2 font-weight-bold mt-2" style="border-bottom:2px dotted #000">
-                                {{ strtoupper(ucwords($amountInWords)) }}
-                            </span>
-                            Amount in Words
-                        </div>
-						<div class="col-md-3"></div>
-                    </section>
+          <section class="row m-2 mt-4 mb-3">
+            <div class="col-md-3"></div>
+							<div class="col-md-6 text-center font-weight-bold">
+									<span class="d-block ml-2 mr-2 font-weight-bold mt-2" style="border-bottom:2px dotted #000">
+											{{ strtoupper(ucwords($amountInWords)) }}
+									</span>
+									Amount in Words
+							</div>
+							<div class="col-md-3"></div>
+        	</section>
 
-                    <section class="row mt-4 m-2 mb-4">
-                        <div class="col-md-4 text-center font-weight-bold">
-                            <span class="d-block ml-2 mr-2 mt-5 font-weight-bold" style="border-bottom:2px dotted #000">
-                                <small>{{ $voucher->request_timestamps}}</small><br>
-                                {{ strtoupper($requester->first_name) }} {{ strtoupper($requester->last_name) }}
-                            </span>
-                            Requested By
-                        </div>
-                        <div class="col-md-4 text-center font-weight-bold">
-                            <span class="d-block ml-2 mr-2 mt-5 font-weight-bold" style="border-bottom:2px dotted #000">
-                                <small>{{ $voucher->checked_timestamps}}</small><br>
-                                {{ strtoupper($checker->first_name) }} {{ strtoupper($checker->last_name) }}
-                            </span>
-                            Checked By
-                        </div>
-                        <div class="col-md-4 text-center font-weight-bold">
-							<img src="{{URL::asset('assets/img/kaya/autha.png')}}" alt="authroizedapproval" srcset="" width="50" height="50">
-                            <span class="d-block ml-2 mr-2 font-weight-bold mt-2" style="border-bottom:2px dotted #000">
-                                <small>{{ $voucher->approval_timestamps}}</small><br>
-                                {{ strtoupper($approval->first_name) }} {{ strtoupper($approval->last_name) }}
-                            </span>
-                            Approved by
-                        </div>
-                    </section>
+					<section class="row mt-4 m-2 mb-4">
+							<div class="col-md-4 text-center font-weight-bold">
+									<span class="d-block ml-2 mr-2 mt-5 font-weight-bold" style="border-bottom:2px dotted #000">
+											<small>{{ $voucher->request_timestamps}}</small><br>
+											{{ strtoupper($requester->first_name) }} {{ strtoupper($requester->last_name) }}
+									</span>
+									Requested By
+							</div>
+							<div class="col-md-4 text-center font-weight-bold">
+									<span class="d-block ml-2 mr-2 mt-5 font-weight-bold" style="border-bottom:2px dotted #000">
+											<small>{{ $voucher->checked_timestamps}}</small><br>
+											{{ strtoupper($checker->first_name) }} {{ strtoupper($checker->last_name) }}
+									</span>
+									Checked By
+							</div>
+              <div class="col-md-4 text-center font-weight-bold">
+								<img src="{{URL::asset('assets/img/kaya/autha.png')}}" alt="authroizedapproval" srcset="" width="50" height="50">
+									<span class="d-block ml-2 mr-2 font-weight-bold mt-2" style="border-bottom:2px dotted #000">
+											<small>{{ $voucher->approval_timestamps}}</small><br>
+											{{ strtoupper($approval->first_name) }} {{ strtoupper($approval->last_name) }}
+									</span>
+									Approved by
+							</div>
+					</section>
 
 					<div class="card-body" style="font-family:tahoma; font-size:13px; ">
 						<div class="row">
