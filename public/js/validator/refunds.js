@@ -126,7 +126,7 @@ $(function() {
        if($('.paymentVouchers:checked').length <= 0) {
            alert('Hi Boss! You need to select at least one voucher.')
            return false
-       } 
+        } 
        
        $e = $(this)    
        $e.html('<i class="icon-spinner4 spinner"></i> Validating Approval...').prop('disabled', true)       
@@ -214,6 +214,35 @@ $(function() {
                 $(this).attr('value', 0)
                 }
         }       
+    })
+
+    $(document).on('click', '.declineOneVoucher', function() {
+        $voucherId = $(this).attr('value')
+        $uniqueId = $(this).attr('title')
+        $.get('/deline-payment-voucher', {declineStatus: 0, voucherId: $voucherId }, function(data) {
+            if(data === 'declined') {
+                alert('This payment has been declined.')
+                $(`#parent${$uniqueId}`).addClass('d-none')
+            }
+        })
+    })
+
+    $(document).on('click', '#declineAllVerifiedPayments', function() {
+        if($('.paymentVouchers:checked').length <= 0) {
+            alert('Hi Boss! You need to select at least one voucher.')
+            return false
+        } 
+        $ask = confirm('Do you really want to cancel all vouchers? ')
+        if($ask) {
+            $(this).attr('disabled', 'disabled').html('Please wait... <i class="icon-spinner2 spinner"></i>')
+            $.get('/deline-payment-voucher', $('#frmApprovePaymentVoucher').serializeArray(), function(data) {
+                if(data === 'declined') {
+                    alert('This payment has been declined.')
+                    window.location = ''
+                }
+            })
+            //frmApprovePaymentVoucher
+        }
     })
 })
 

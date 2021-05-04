@@ -176,7 +176,7 @@ class PaymentVoucherController extends Controller
                 if(count($getUnapprovedVouchers)) {
                     foreach($getUnapprovedVouchers as $key => $voucher){
                         $response.='
-                            <div class="col-md-6 col-sm-6 col-xs-12" style="max-height:400px; overflow:auto">
+                            <div class="col-md-6 col-sm-6 col-xs-12" style="max-height:400px; overflow:auto" id="parent'.$voucher->uniqueId.'">
                                 <div class="card">
                                     <div class="card-body">
                                         <p class="text-success font-weight-bold font-size-xs mb-2 paymentBreakdown pointer" id="'.$voucher->uniqueId.'" value="0" title="Click to view breakdown and attachments(if any)">
@@ -207,6 +207,7 @@ class PaymentVoucherController extends Controller
                                         $response.='
                                             <h5 class="mt-2 font-weight-bold mb-0">Total: &#x20A6;'.number_format($sumTotal, 2).'
                                                 <input type="checkbox" name="voucherIds[]" value="'.$voucher->id.'" id="" class="ml-1 paymentVouchers"  >
+                                                <span class="badge badge-danger font-size-xs pointer ml-2 declineOneVoucher" value="'.$voucher->id.'" title="'.$voucher->uniqueId.'">Decline</span>
                                             </h5>
                                     </div>
                                 </div>
@@ -214,9 +215,13 @@ class PaymentVoucherController extends Controller
                     }
                     $response.='
                     <div class="text-right d-block">
+                        <input type="hidden" name="declineStatus" value="1" />
                         <span id="loader"></span>
                         <button type="submit" class="btn btn-primary mt-2" id="approveVerifiedPayment">Approve 
                             <i class="icon-stamp ml-2"></i>
+                        </button>
+                        <button type="submit" class="btn btn-danger mt-2 font-size-sm pointer" id="declineAllVerifiedPayments">Decline  
+                            <i class="icon-x ml-2"></i>
                         </button>
                     </div>';
                 }
@@ -228,6 +233,31 @@ class PaymentVoucherController extends Controller
         </div>';
 
         return $response;
+    }
+
+    public function declinePaymentVoucher(Request $request) {
+        $decline_status = $request->declineStatus;
+        $voucherId = $request->voucherId;
+        if($decline_status == 0) {
+            $voucher = PaymentVoucher::findOrFail($voucherId);
+            $voucher->check_status = 0;
+            $voucher->checked_timestamps = NULL;
+            $voucher->checked_by = NULL;
+            $voucher->save();
+        }
+        else{
+            if($decline_status == 1) {
+                foreach($request->voucherIds as $voucherId) {
+                    $voucher = PaymentVoucher::findOrFail($voucherId);
+                    $voucher->check_status = 0;
+                    $voucher->checked_timestamps = NULL;
+                    $voucher->checked_by = NULL;
+                    $voucher->save();
+                }
+
+            }
+        }
+        return 'declined';
     }
 
     public function approvePaymentVouchers(Request $request) {

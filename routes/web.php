@@ -374,6 +374,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('payment-voucher/{voucherId}/{encryptedVoucherId}', 'PaymentVoucherController@showPaymentVoucher');
     Route::patch('upload-payment-voucher', 'PaymentVoucherController@uploadPaymentVoucher');
     Route::get('invoice-payment-history', 'invoiceController@getInvoicePaymentHistory');
+    Route::get('deline-payment-voucher', 'PaymentVoucherController@declinePaymentVoucher');
 
 });
 
