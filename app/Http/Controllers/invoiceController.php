@@ -51,7 +51,7 @@ class invoiceController extends Controller
     function detailedInvoiceInformation() {
         $query = DB::SELECT(
             DB::RAW(
-                'SELECT b.id, b.client_rate, b.transporter_rate, b.trip_id, b.client_id, b.customers_name, b.exact_location_id, c.truck_no, c.truck_type_id, d.product, b.gated_out, e.truck_type, e.tonnage, f.state FROM tbl_kaya_trip_waybill_statuses a JOIN tbl_kaya_trips b JOIN tbl_kaya_trucks c JOIN tbl_kaya_products d JOIN tbl_kaya_truck_types e JOIN tbl_regional_state f ON a.trip_id = b.id AND c.id = b.truck_id AND b.product_id = d.id AND c.truck_type_id = e.id AND b.destination_state_id = f.regional_state_id    WHERE waybill_status = TRUE AND comment = \'Recieved\' AND invoice_status = FALSE ORDER BY a.trip_id ASC'
+                'SELECT b.id, b.client_rate, b.transporter_rate, b.trip_id, b.client_id, b.customers_name, b.exact_location_id, c.truck_no, c.truck_type_id, d.product, b.gated_out, e.truck_type, e.tonnage, f.state FROM tbl_kaya_trip_waybill_statuses a JOIN tbl_kaya_trips b JOIN tbl_kaya_trucks c JOIN tbl_kaya_products d JOIN tbl_kaya_truck_types e JOIN tbl_regional_state f ON a.trip_id = b.id AND c.id = b.truck_id AND b.product_id = d.id AND c.truck_type_id = e.id AND b.destination_state_id = f.regional_state_id    WHERE waybill_status = TRUE AND comment = \'Recieved\' AND invoice_status = FALSE ORDER BY a.trip_id ASC LIMIT 50'
             )
         );
         
@@ -200,7 +200,7 @@ class invoiceController extends Controller
         );
 
         $availableIncentives = incentives::ALL();
-        $vatRate = vatRate::first();
+        $vatRate = vatRate::WHERE('client_id', $clientId)->first();
         
         return view('finance.invoice.invoice-template',
             array(
@@ -335,7 +335,14 @@ class invoiceController extends Controller
 
         $vatRate = completeInvoice::SELECT('vat_used', 'withholding_tax_used')->WHERE('completed_invoice_no', $invoiceNumber)->DISTINCT()->GET()->FIRST();
 
-        $invoiceList = $this->detailedInvoiceInformation();
+        //$invoiceList = $this->detailedInvoiceInformation();
+
+        $invoiceList = DB::SELECT(
+            DB::RAW(
+                'SELECT b.id, b.client_rate, b.transporter_rate, b.trip_id, b.client_id, b.customers_name, b.exact_location_id, c.truck_no, c.truck_type_id, d.product, b.gated_out, e.truck_type, e.tonnage, f.state FROM tbl_kaya_trip_waybill_statuses a JOIN tbl_kaya_trips b JOIN tbl_kaya_trucks c JOIN tbl_kaya_products d JOIN tbl_kaya_truck_types e JOIN tbl_regional_state f ON a.trip_id = b.id AND c.id = b.truck_id AND b.product_id = d.id AND c.truck_type_id = e.id AND b.destination_state_id = f.regional_state_id    WHERE waybill_status = TRUE AND comment = \'Recieved\' AND invoice_status = FALSE  AND client_id = "'.$completedInvoice[0]->client_id.'" ORDER BY a.trip_id ASC LIMIT 50'
+            )
+        );
+
         $clientList = client::ORDERBY('company_name', 'ASC')->GET();
 
         $invoiceSpecialRemark = invoiceSpecialRemark::WHERE('invoice_no', $invoiceNumber)->GET()->FIRST();
