@@ -40,8 +40,10 @@
 	<div class="navbar navbar-expand-md navbar-dark">
 		<p style="font-size:20px; margin:0; padding:0; margin-top:8px;">Káyá Africa Technology</p>
 		
+	
+
 		<div class="d-md-none">
-			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-mobile">
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-mobile" id="showMessageOnMobile">
 				<i class="icon-bell3"></i>
 				<span class="badge badge-pill badge-warning ml-1">{{ Session::get('paymentNotification') }}</span>
 			</button>
@@ -62,15 +64,15 @@
 			<span class="badge bg-success ml-md-3 mr-md-auto">V1.1.8</span>
 
 			<ul class="navbar-nav">
-				<li class="nav-item dropdown">
-					<a href="#" class="navbar-nav-link dropdown-toggle caret-0" data-toggle="dropdown" id="checkPaymentNotifications">
+				<li class="nav-item dropdown" id="navItemParentContainer"> 
+					<a href="#" class="navbar-nav-link dropdown-toggle caret-0 checkPaymentNotifications" data-toggle="dropdown">
 						<i class="icon-bubbles4"></i>
 						<span class="d-md-none ml-2">Messages</span>
 						<span class="badge badge-pill bg-warning-400 ml-auto ml-md-0 d-none d-sm-block" id="paymentLabel">
 						{{ Session::get('paymentNotification') }}</span>
 					</a>
 					
-					<div class="dropdown-menu dropdown-menu-right dropdown-content wmin-md-350">
+					<div class="dropdown-menu dropdown-menu-right dropdown-content wmin-md-350" id="navItemContentHolder">
 						<div class="dropdown-content-header">
 							<span class="font-weight-semibold">
 								Payment Notifications
@@ -635,7 +637,16 @@
 <script type="text/javascript" src="{{URL('/js/validator/refunds.js?v=').time()}}"></script>
 
 <script>
-	$('#checkPaymentNotifications').click(function() {
+	$('#showMessageOnMobile').click(function() {
+		$('#navItemParentContainer').addClass('show')
+		$('#navItemContentHolder').addClass('show')
+		$.get('payment-notification-history', function(data) {
+			$('#paymentNotificationDrops').html(data);
+		})
+	})
+
+
+	$('.checkPaymentNotifications').click(function() {
 		$.get('payment-notification-history', function(data) {
 			$('#paymentNotificationDrops').html(data);
 		})
