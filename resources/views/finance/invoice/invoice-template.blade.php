@@ -53,8 +53,14 @@
 		<!-- Content area -->
 		<div class="content">
 		<?php
-			$withholdingTaxValue = $vatRateInfos->withholding_tax;
-			$vatRateValue = $vatRateInfos->vat_rate;
+			if($vatRateInfos) {
+				$withholdingTaxValue = $vatRateInfos->withholding_tax;
+				$vatRateValue = $vatRateInfos->vat_rate;
+			}
+			else {
+				$withholdingTaxValue = 5;
+				$vatRateValue = 7.5;
+			}
 		?>
 
 			<!-- Invoice template -->
@@ -62,7 +68,7 @@
 				<div class="card">
 					<div class="card-header bg-transparent header-elements-inline">
 						<h6 class="card-title">{!! date('d-m-Y') !!}</h6>
-
+						<strong class="text-danger">Hey {{ ucwords(Auth::user()->first_name) }}, you are invoicing this client with: VAT: {{ $vatRateValue }}% & Withholding Tax: {{ $withholdingTaxValue }}%</strong>
 						<div>
 							<button type="button" class="btn btn-primary font-size-sm font-weight-semibold" data-toggle="modal" href="#salesOrderAndInvoiceNumber">CHANGE INVOICE NO, S.O NUMBER</button>
 						</div>
@@ -307,10 +313,10 @@
 												</tr>
 											</tbody>
 									</table>
-								</div>
+								</div> 
 
-								<input type="text" name="vat_used" value="{{ $vatRateInfos->vat_rate }}">
-								<input type="text" name="withholding_vat_used" value="{{ $vatRateInfos->withholding_tax }}">
+								<input type="text" name="vat_used" value="{{ $vatRateValue }}">
+								<input type="text" name="withholding_vat_used" value="{{ $withholdingTaxValue }}">
 
 								<div class="text-right mt-3">
 									<span id="loader"></span>

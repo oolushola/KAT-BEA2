@@ -33,24 +33,43 @@
             <div class="card-body">
                 <form action="" name="frmVatRate" id="frmVatRate">
                     @csrf
-                    @if(isset($recid)) {!! method_field('PATCH') !!} <input type="hidden" name="id" id="id" value="{{$recid->id}}"> @endif
+                    @if(isset($recid)) {!! method_field('PATCH') !!} <input type="hidden" name="id" id="id" value="{{$recid->id}}"> @endif 
+
+                    <div class="form-group">
+                        <label>Clients</label>
+                        <select class="form-control" name="client_id" id="clientId">
+                            <option value="0">Choose Client</option>
+                            @foreach($clients as $client)
+                            @if(isset($recid) && $recid->client_id == $client->id)
+                            <option value="{{ $client->id }}" selected>{{ strtoupper($client->company_name) }}</option>
+                            @else
+                            <option value="{{ $client->id }}">{{ strtoupper($client->company_name) }}</option>
+                            @endif
+                            @endforeach
+                        </select>
+                    </div>
 
                     <div class="form-group">
                         <label>Withholding Tax(%)</label>
-                        <input type="number" class="form-control" placeholder="Withholding Tax" name="withholding_tax" id="withholdingtax" value="{{ $vatRateRecord->withholding_tax }}" />
+                        <input type="number" class="form-control" placeholder="Withholding Tax" name="withholding_tax" id="withholdingtax" value="5"  />
                     </div>
 
                     <div class="form-group">
                         <label>Vat Rate(%)</label>
-                        <input type="number" class="form-control" placeholder="V.A.T" name="vat_rate" id="vat_rate" value="{{ $vatRateRecord->vat_rate }}">
+                        <input type="number" class="form-control" placeholder="V.A.T" name="vat_rate" id="vat_rate" value="7.5">
                     </div>
 
                     <div class="text-right">
                         <span id="loader"></span>
-                            <button type="submit" class="btn btn-primary" id="addVatRate" >@if($vatRateRecord->vat_rate != '') Update @else Save @endif Vat Rate 
-                        
-                            <i class="icon-paperplane ml-2"></i>
-                        </button>
+                            @if(!isset($recid))
+                            <button type="submit" class="btn btn-primary" id="addVatRate">Save
+                                <i class="icon-paperplane ml-2"></i>
+                            </button>
+                            @else
+                            <button type="submit" class="btn btn-primary" id="updateVatRate">Update
+                                <i class="icon-paperplane ml-2"></i>
+                            </button>
+                            @endif
                     </div>
                 </form>
             </div>
@@ -73,9 +92,10 @@
                     <thead class="table-info">
                         <tr style="font-size:11px;">
                             <th>#</th>
-                            <th>Withholding Tax</th>
-                            <th>Tax Rate</th>
-                            <th>Action</th>
+                            <th>Client Name</th>
+                            <th class="text-center">Withholding Tax</th>
+                            <th class="text-center">Tax Rate</th>
+                            <th class="text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -88,11 +108,12 @@
                     ?>
                     <tr class="{{$css}}" style="font-size:10px">
                         <td>{{$counter}}</td>
-                        <td>{{strtoupper($vatRate->withholding_tax)}}</td>
-                        <td>{{$vatRate->vat_rate}}</td>
-                        <td>
+                        <td>{{strtoupper($vatRate->company_name)}}</td>
+                        <td class="text-center">{{strtoupper($vatRate->withholding_tax)}}%</td>
+                        <td class="text-center">{{$vatRate->vat_rate}}%</td>
+                        <td class="text-center">
                             <div class="list-icons">
-                                <a href="#" class="list-icons-item text-danger-600"><i class="icon-trash"></i></a>
+                                <a href="{{URL('vat-rate/'.$vatRate->id.'/edit' )}}" class="list-icons-item text-primary-600"><i class="icon-pencil3"></i></a>
                             </div>
                         </td>
                     </tr>

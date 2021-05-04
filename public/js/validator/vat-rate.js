@@ -5,7 +5,7 @@ $(function(){
         validateVatRate('/vat-rate');
     });
 
-    $("#updateProduct").click(function(e) {
+    $("#updateVatRate").click(function(e) {
         e.preventDefault();
         $id = $("#id").val();
         validateVatRate(`/vat-rate/${$id}`);
@@ -28,7 +28,7 @@ $(function(){
         $('#loader').html('<i class="icon-spinner2 spinner mr-2"></i>Please Wait...');
         $.post(url, $("#frmVatRate").serializeArray(), function(data) {
             if(data === 'exists') {
-                $("#loader").html(`A vat rate "${$vat_rate}" already exists.`);
+                $("#loader").html(`Update client VAT criteria instead`);
                 return false;
             }
             else {
