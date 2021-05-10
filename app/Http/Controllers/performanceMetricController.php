@@ -179,6 +179,11 @@ class performanceMetricController extends Controller
                 )
             );
 
+            $accountOfficerTrucks = DB::SELECT(
+                DB::RAW('SELECT id, truck_no FROM tbl_kaya_trucks WHERE id IN (SELECT DISTINCT truck_id from tbl_kaya_trips WHERE account_officer_id = "'.$userId.'") ORDER BY truck_no ASC')
+            );
+
+            $waybillDetails = [];
             $waybillListings = [];
             foreach($currentMonthData as $trips) {
                 $waybillInfo = tripWaybill::SELECT('trip_id', 'sales_order_no', 'invoice_no')->WHERE('trip_id', $trips->id)->GET();
@@ -204,7 +209,8 @@ class performanceMetricController extends Controller
                     'yetTogateOut' => $yetTogateOutData,
                     'totalTripsData' => $totalTripsData,
                     'currentMonthData' => $currentMonthData,
-                    'waybillDetails' => $waybillDetails
+                    'waybillDetails' => $waybillDetails,
+                    'accountOfficerTrucks' => $accountOfficerTrucks
                 )
             );
         //}
@@ -923,5 +929,14 @@ class performanceMetricController extends Controller
         return $shortMonth;
     }
 
-    
+    public function truckNoUpdate(Request $request) {
+        $trips = $request->tripListings;
+        $trucks = $request->truckNos;
+        foreach($trips as $key=> $tripId) {
+            $tripInfo = trip::WHERE('trip_id', $tripId)->GET()->FIRST();
+            $tripInfo->truck_id = $trucks[$key];
+            $tripInfo->save();
+        }
+        return 'updated';
+    }
 }

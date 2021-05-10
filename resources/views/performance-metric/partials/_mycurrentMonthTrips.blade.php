@@ -21,7 +21,12 @@
                                 <tr class="font-weight-bold bg-success" style="font-size:10px;" >
                                     <td>SN</td>
                                     <td class="text-center">KAID</td>
-                                    <td class="text-center" width="10%">TRUCK NO.</td>
+                                    <td class="text-center" width="10%">
+                                        <button class="btn btn-sm btn-primary d-none hideTruckUpdate" id="updateTruckNo">Update</button>
+                                        <span class="defaultTruckDisplay">TRUCK NO</span>
+                                        <span><i class="icon-lock2 defaultTruckDisplay ml-2 pointer" id="showTrucks"></i></span>
+                                        <span><i class="icon-unlocked2 hideTruckUpdate d-none ml-2 pointer" id="hideTruck"></i></span>
+                                    </td>
                                     <td>LOADING SITE</td>
                                     <td>DESTINATION</td>
                                     <td>WAYBILL INFO</td>
@@ -48,7 +53,20 @@
                                         <tr style="font-size:11px;" class="font-weight-semibold">
                                             <td>({{ $count+=1 }})</td>
                                             <td style="padding:0;" class="text-center">{{ $specificRecord->trip_id }}</td>
-                                            <td class="text-center">{{ $specificRecord->truck_no }}</td>
+                                            <td class="text-center">
+                                                <span class="defaultTruckDisplay">{{ $specificRecord->truck_no }}</span>
+
+                                                <select name="truckNos[]" class="d-none hideTruckUpdate form-control">
+                                                    @foreach($accountOfficerTrucks as $truck)
+                                                    @if($truck->truck_no === $specificRecord->truck_no)
+                                                    <option value="{{ $truck->id }}" selected>{{ $truck->truck_no }}</option>
+                                                    @else
+                                                    <option value="{{ $truck->id }}">{{ $truck->truck_no }}</option>
+                                                    @endif
+                                                    @endforeach
+                                                </select>
+                                                
+                                            </td>
                                             <td>{{$specificRecord->loading_site}}</b></span></td>
                                             <td>{{$specificRecord->exact_location_id}}</td>
                                             <td>
