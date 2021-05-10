@@ -485,6 +485,33 @@
         })
     })
 
+    $('#showTrucks').click(function() {
+        $('.defaultTruckDisplay').addClass('d-none')
+        $('.hideTruckUpdate').removeClass('d-none')
+    })
+
+    $('#hideTruck').click(function() {
+        $('.defaultTruckDisplay').removeClass('d-none')
+        $('.hideTruckUpdate').addClass('d-none')  
+    })
+
+    $('#updateTruckNo').click(function($e) {
+        $e.preventDefault();
+        $(this).attr('disabled', 'disabled')
+        $(this).html('<i class="icon-spinner3 spinner"></i> Please wait...').addClass('font-size-xs')
+        $targetEvent = $(this)
+        $.post('/performancemetric-truckno-update', $('#frmUpdateClientRate').serializeArray(), function(data) {
+            if(data == 'updated') {
+                $targetEvent.html('<i class="icon-checkmark2"></i> Completed')
+                window.location = ''
+            }
+            else {
+                alert('Oops! something went wrong')
+                return false
+            }
+        })
+    })
+
 </script>
 
 

@@ -205,6 +205,7 @@ Route::group(['middleware' => 'auth'], function() {
         Route::get('performance-metrics/{userid}/{role_id}', 'performanceMetricController@businessUnitHead');
         Route::post('update-client-rate', 'performanceMetricController@updateClientRate');
         Route::post('update-transporter-rate', 'performanceMetricController@updateTransporterRate');
+        Route::post('performancemetric-truckno-update', 'performanceMetricController@truckNoUpdate');
     });
 
     Route::resource('buh-target', 'buhTargetMonthlyController');
