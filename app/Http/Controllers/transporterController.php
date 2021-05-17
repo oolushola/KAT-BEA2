@@ -203,6 +203,7 @@ class transporterController extends Controller
         $recid->advance_request = TRUE;
         $recid->advance_requested_by = $user_id;
         $recid->advance_requested_at = $advanceRequestedAt;
+        $recid->advance_comment = $request->advanceComment;
         
         $transporterChunkPayment = bulkPayment::WHERE('transporter_id', $recid->transporter_id)->GET();
         if(sizeof($transporterChunkPayment)>0) {

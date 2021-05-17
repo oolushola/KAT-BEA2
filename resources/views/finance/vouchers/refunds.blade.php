@@ -175,9 +175,20 @@
                                          else{
                                             $status = '<i class="icon-stamp text-primary"></i>';
                                          }
+
+                                         if($voucher->decline_status == TRUE) {
+                                             $bgColor = 'bg-warning-300';
+                                             $editStatus = "d-none";
+                                             $flagStatus = '<i class="icon-flag8" title="This request has been flagged"></i>';
+                                         }
+                                         else {
+                                             $bgColor = '';
+                                             $editStatus = '';
+                                             $flagStatus = '';
+                                         }
                                          
                                     ?>
-                                    <tr>
+                                    <tr class="{{$bgColor}}" id="closeVoucher{{$voucher->id}}">
                                         <td>{{ $count += 1 }}</td>
                                         <td>
                                             @foreach($voucherArray as $descriptions)
@@ -191,12 +202,20 @@
                                                 @endif
                                             @endforeach
                                         </td>
-                                        <td>{!! $status !!}</td>
+                                        <td>
+                                            @if($voucher->decline_status == TRUE)
+                                            {!! $flagStatus !!}
+                                            @else
+                                            {!! $status !!} 
+                                            @endif
+                                        </td>
                                         <td>
                                             <a href="{{URL('payment-voucher-request/'.$voucher->id.'/edit')}}" class="{{$editAndDeleteStatus}}">
+                                                @if($voucher->decline_status == FALSE)
                                                 <i class="icon-pen"></i>
+                                                @endif
                                             </a>
-                                            <i class="icon-trash {{ $editAndDeleteStatus }}"></i>
+                                            <i id="{{$voucher->id}}" class="trashVoucher icon-trash {{ $editAndDeleteStatus }} pointer"></i>
                                         </td>
                                     </tr>
                                 @endforeach

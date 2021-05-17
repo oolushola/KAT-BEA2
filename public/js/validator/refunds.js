@@ -244,5 +244,41 @@ $(function() {
             //frmApprovePaymentVoucher
         }
     })
+
+
+    //Decline a voucher!
+    $('.declinePayment').click(function() {
+        $id = $(this).attr('id')
+        $ask = confirm('Are you sure you want to delcine this voucher?')
+        if($ask){
+            $(this).html('<i class="icon-spinner2 spinner"></i>Declining...')
+            $.get('/flag-voucher', { id: $id }, function(data) {
+                if(data === 'cancelled') {
+                    $('#closeVoucher'+$id).addClass('d-none')
+                }
+                else {
+                    alert('Oops! something went wrong.')
+                }
+            })
+        }
+        else {
+            return false
+        }
+    })
+
+    //delete a voucher
+    $('.trashVoucher').click(function() {
+        $id = $(this).attr('id')
+        $('#closeVoucher'+$id).addClass('d-none')
+        $.get('/delete-voucher-request', { id: $id }, function(data) {
+            if(data == 'deleted') {
+                alert('Voucher Deleted.')
+                $('#closeVoucher'+$id).addClass('d-none')
+                return false;
+            }
+        })
+    })
+
+
 })
 

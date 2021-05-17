@@ -1,6 +1,6 @@
 @extends('layout')
 
-@section('title')Kaya ::. Drivers @stop
+@section('title')Kaya ::. Verify Payment Voucher @stop
 
 @section('main')
 <div class="page-header page-header-light">
@@ -40,7 +40,7 @@
                     <div class="row">
                         @if(count($getUnverifiedVouchers))
                             @foreach($getUnverifiedVouchers as $key => $voucher)
-                                <div class="col-md-3 col-sm-6 col-xs-12" style="max-height:400px; overflow:auto">
+                                <div class="col-md-3 col-sm-6 col-xs-12" style="max-height:400px; overflow:auto" id="closeVoucher{{$voucher->id}}">
                                     <div class="card">
                                         <div class="card-body">
                                             <p class="text-success font-weight-bold font-size-xs mb-3 pointer paymentBreakdown" id="{{$voucher->uniqueId}}" value="0">
@@ -64,7 +64,8 @@
                                                     @endif
                                                 @endforeach
                                             <h5 class="mt-2 font-weight-bold mb-0">Total: &#x20A6;{{ number_format($sumTotal, 2) }}
-                                                <input type="checkbox" name="voucherIds[]" value="{{$voucher->id}}" id="" class="ml-1 paymentVouchers"  >
+                                                <input type="checkbox" name="voucherIds[]" value="{{$voucher->id}}" id="" class="ml-1 paymentVouchers"  />
+                                                <span class="badge badge-danger font-size-xs ml-2 pointer declinePayment font-weight-bold" id="{{$voucher->id}}"><i class="icon-flag8 mr-1 "></i>Decline</span>
                                             </h5>
                                         </div>
                                     </div>

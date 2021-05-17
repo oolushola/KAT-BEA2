@@ -92,7 +92,14 @@ function getPaymentInitiator($arrayRecord, $master) {
                                         <table class="" width="100%">
                                             <tbody>
                                                 <tr>
-                                                    <td colspan="2">{{ $advancePayment->company_name }}</td>
+                                                    <td colspan="2">
+                                                        {{ $advancePayment->company_name }}
+                                                        @if($advancePayment->advance_comment)
+                                                        <span  data-popup="popover" data-placement="top" data-content="{{$advancePayment->advance_comment}}" aria-describedby="popover840918">
+                                                            <i class="icon-comment-discussion" style="float:right; font-size: 20px; margin-right: 8px; color: green; cursor: pointer" title="View Comment"></i>
+                                                        <span>
+                                                        @endif
+                                                    </td>
                                                 </tr>
                                                 <tr>
                                                     <td>

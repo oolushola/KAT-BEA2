@@ -113,7 +113,7 @@ class PaymentVoucherController extends Controller
 
     public function verifyPaymentVoucher() {
         $user = Auth::user()->verify_payment_access;
-        $getUnverifiedVouchers = PaymentVoucher::WHERE('check_status', FALSE)->WHERE('voucher_status', FALSE)->GET();
+        $getUnverifiedVouchers = PaymentVoucher::WHERE('check_status', FALSE)->WHERE('voucher_status', FALSE)->WHERE('decline_status', FALSE)->GET();
         $voucherListings = [];
         $users = [];
         foreach($getUnverifiedVouchers as $voucher) {
@@ -342,6 +342,28 @@ class PaymentVoucherController extends Controller
             }
             return 'uploaded';
         }
+    }
+
+    public function strikeOutVoucher(Request $request) {
+        $id = $request->id;
+        $voucher = PaymentVoucher::findOrFail($id);
+        $voucher->decline_status = TRUE;
+        $voucher->save();
+
+        return 'cancelled';
+    }
+
+    public function deleteVoucher(Request $request) {
+        $voucherId = $request->id;
+        $voucher = PaymentVoucher::findOrFail($voucherId);
+        $voucher->delete();
+        
+        $voucherDescs = PaymentVoucherDesc::WHERE('payment_voucher_id', $voucherId)->GET();
+        foreach ($voucherDescs as $key => $desc) {
+            $voucherDesc = PaymentVoucherDesc::findOrFail($desc->id);
+            $voucherDesc->delete();
+        }
+        return 'deleted';
     }
 
 

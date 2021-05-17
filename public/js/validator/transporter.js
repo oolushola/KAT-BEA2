@@ -241,7 +241,12 @@ $(function(){
          $specificTripId = $(this).attr('id')
          $title = $(this).attr("title")
          $requester = $("#userId").val();
-         $.get('/advance-request-payment', {trip_id:$specificTripId, user_id:$requester}, function(data){
+         $advanceRequestComment = $('#advanceRequestComment'+$specificTripId).val()
+         $.get('/advance-request-payment', {
+             trip_id:$specificTripId, 
+             user_id:$requester, 
+             advanceComment:$advanceRequestComment
+            }, function(data){
             if(data == 'noDocs') {
                 alert('Request Refused! No proof of financial document attached.')
                 return false
