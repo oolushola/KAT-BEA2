@@ -8,6 +8,7 @@ use App\completeInvoice;
 use App\client;
 use App\ExpensesBreakdown;
 use App\expenses;
+use App\VatRate;
 
 class trackerController extends Controller
 {
@@ -151,7 +152,7 @@ class trackerController extends Controller
             $companyNames[] = $clientListings->client_alias;
             $clientOutStandingPayment[] = DB::SELECT(
                 DB::RAW(
-                    'SELECT a.id, a.trip_id, a.client_id, a.client_rate, @amountPaid := IFNULL(a.amount_paid, 0) as amountPaid, a.client_rate - @amountPaid as diff, b.id AS invoiceTripId, b.invoice_no, b.completed_invoice_no, b.acknowledged_date FROM tbl_kaya_trips a JOIN `tbl_kaya_complete_invoices` b ON a.id = b.trip_id WHERE client_id = "'.$clientListings->id.'" AND tracker = 8 AND trip_status = 1 AND b.`payment_type` = FALSE'
+                    'SELECT a.id, a.trip_id, a.client_id, a.client_rate, @amountPaid := IFNULL(a.amount_paid, 0) as amountPaid, a.client_rate - @amountPaid as diff, b.id AS invoiceTripId, b.invoice_no, b.completed_invoice_no, b.acknowledged_date, b.created_at, b.vat_used, b.withholding_tax_used FROM tbl_kaya_trips a JOIN `tbl_kaya_complete_invoices` b ON a.id = b.trip_id WHERE client_id = "'.$clientListings->id.'" AND tracker >= 5 AND trip_status = 1 AND b.`payment_type` = FALSE'
                 )
             );
 
@@ -160,16 +161,27 @@ class trackerController extends Controller
                 $sumOfAllOutstandingTrips = 0;
                 $sumOfOverdueInvoices = 0;
                 foreach($clientOutStandingPayment[$key] as $specificTrip){
-                    $sumOfAllOutstandingTrips += $specificTrip->diff * 1.025;
+                    if($specificTrip->vat_used > 0) {
+                        $sumOfAllOutstandingTrips += $specificTrip->diff * 1.025;
+                    }
+                    else {
+                        $sumOfAllOutstandingTrips += $specificTrip->diff;
+                    }
 
                     //perform overdue invoices operation here
                     $now = time();
-                    $acknowledged = strtotime($specificTrip->acknowledged_date);
+                    $acknowledged = strtotime($specificTrip->created_at);
                     $datediff = $acknowledged - $now;
                     $numberofdays = (floor($datediff / (60 * 60 * 24)) * -1) -1;
 
                     if($numberofdays > 14) {
-                        $sumOfOverdueInvoices += $specificTrip->diff * 1.025;
+                        if($specificTrip->vat_used > 0) {
+                            $sumOfOverdueInvoices += $specificTrip->diff * 1.025;
+                        }
+                        else {
+                            $sumOfOverdueInvoices += $specificTrip->diff;
+                        }
+
                     }
                 }
 
