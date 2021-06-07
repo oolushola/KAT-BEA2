@@ -208,4 +208,63 @@ $(function() {
             }
         }
     });
+
+    $('.unlinkSignedWaybill').click(function() {
+        $signedWaybillId = $(this).attr('id')
+        $ask = confirm('Are you sure you want to remove this EIR? ')
+        if($ask) {
+            $('#waiter').html('<i class="spinner icon-spinner3"></i>Please wait...').addClass('font-size-xs')
+            $.get('/unlink-signed-eir', { eirId: $signedWaybillId }, function(data) {
+                if(data === 'unlinked') {
+                    $('#waiter').html('EIR Deleted')
+                    $url = ''
+                    window.location = $url
+                }
+                else{
+                    return false
+                }
+            })
+        }
+        else{
+            return false
+        }
+    })
+
+    $('.waybillType').click(function() { 
+        $value = $(this).attr('value')
+        $('#waybillType').val($value)
+    })
+
+    $('#addSignedWaybill').click(function($e) {
+        $e.preventDefault()
+        $waybillType = $('#waybillType').val()
+        if($waybillType === "") {
+            $('#waiter').html('Staus of waybill is required.').addClass('font-size-xs text-danger d-block')
+            return false;
+        }
+        $signedWaybill = $('#signedWaybill').val()
+        if(!$signedWaybill) {
+            $('#waiter').html('Upload a signed '+$waybillType).addClass('font-size-xs text-danger d-block')
+            $('#signedWaybill').focus()
+            return false
+        }
+        $waybillNo = $('#waybillNo').val()
+        if(!$waybillNo) {
+            $('#waiter').html('The waybill no or container no is required.').addClass('font-size-xs text-danger d-block')
+            $('#waybillNo').focus()
+            return false;
+        }
+        $('#waiter').html('<i class="spinner icon-spinner3"></i>Please wait...').addClass('font-size-xs')
+        $(this).attr('disabled', 'disabled')
+        $('#frmUploadEir').submit();
+    })
+
+    $('#frmUploadEir').ajaxForm(function(data) {
+        if(data === 'eirUploaded') {
+            $('#waiter').html('<i class="icon-checkmark2"></i> Waybill uploaded successfully.').addClass('d-block')
+            $url = ''
+            window.location.href = $url
+        }
+    })
+
 });
