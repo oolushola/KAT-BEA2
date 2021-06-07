@@ -1018,6 +1018,37 @@ class ordersController extends Controller
 
     }
 
+    public function unlinkSignedWaybill(Request $request) {
+        $offloadWaybillId = $request->eirId;
+        $waybillRemarkInfo = OffloadWaybillRemark::findOrFail($offloadWaybillId);
+        $imagePath = public_path('assets/img/signedwaybills/').$waybillRemarkInfo->received_waybill;
+        if(file_exists($imagePath)) {
+            unlink($imagePath);
+        }
+        $waybillRemarkInfo->delete();
+        return 'unlinked';
+
+    }
+
+    public function uploadSignedEir(Request $request) {
+        $tripId = $request->waybillTripId;
+        $tripInfo = trip::findOrFail($tripId);
+        $uploadedFor = $request->file('signedWaybill');
+        $waybillType = $request->waybillType;
+        $name = 'signed-waybill-'.$tripId.'.'.$uploadedFor->getClientOriginalExtension();
+        $destination_path = public_path('assets/img/signedwaybills/');
+        $waybillPath = $destination_path."/".$name;
+        $uploadedFor->move($destination_path, $name);
+        offloadWaybillRemark::CREATE([
+            'trip_id' => $tripId, 
+            'waybill_collected_status' => TRUE, 
+            'received_waybill' => $name, 
+            'waybill_remark' => $waybillType.' for: '.$tripInfo->trip_id,
+            'container_card_no' => $request->waybill_no
+        ]);
+        return 'eirUploaded';
+    }
+
     public function clientReport() {
         $clientlistings = client::SELECT('id', 'company_name')->GET();
         return view('orders.client-report', compact('clientlistings'));

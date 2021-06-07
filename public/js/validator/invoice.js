@@ -437,4 +437,17 @@ $(function() {
         })
     })
 
+    $(document).on('click', '.removePayment', function() {
+        $invoiceNo = $(this).attr('id')
+        $paymentDate = $(this).attr('name')
+        $(this).removeClass('removePayment')
+        $e = $(this)
+        $.get('/remove-invoice-payment-history', { invoice_no: $invoiceNo, paymentDate: $paymentDate }, function(data) {
+            if(data === 'updated') {
+                $url = '/all-invoiced-trips'
+                window.location = $url
+            }
+        })
+    })
+
 })

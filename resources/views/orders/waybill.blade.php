@@ -230,45 +230,71 @@ td{
                     </tbody>
                 </table>
             </div>
-
+            &nbsp;
             <div class="row">
                 <div class="col-md-12">
                     <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead class="table-info">
-                                <tr style="font-size:11px;" class="text-center">
-                                    <th>SN</th>
-                                    <th>Delivered Container</th>
-                                    <th>Container No.</th>
-                                    <th>Remark</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if(count($offloadWaybillLists))
-                                <?php $counter = 0; ?>
-                                    @foreach($offloadWaybillLists as $eir)
-                                        <?php 
-                                            $counter++;
-                                            $counter % 2 == 0 ? $css = '' : $css = 'table-success';
-                                        ?> 
-                                        <tr class="{{$css}} text-center" style="font-size:10px">
-                                            <td>{{$counter}}</td>
-                                            <td>
-                                                <a href="{{URL::asset('assets/img/signedwaybills/'.$eir->received_waybill.'')}}" target="_blank">
-                                                    <i class="icon-eye"></i>
-                                                </a>
-                                            </td>
-                                            <td>{{ $eir->container_card_no }}</td>
-                                            <td>{{ $eir->waybill_remark }}</td>
-                                        </tr>
-                                    @endforeach
-                                @else
+                        <form action="{{URL('upload-signed-waybill')}}" method="POST" id="frmUploadEir" enctype="multipart/form-data">
+                            @csrf
+                            <table class="table table-bordered">
+                                <thead class="table-info">
                                     <tr>
-                                        <td class="table-success" colspan="8">You have not uploaded any information as regards this waybill</td>
+                                        <th colspan="5">Waybill Collector</th>
+                                        <input type="hidden" value="{{$tripId}}" name="waybillTripId" />
+                                        <input type="hidden" value="" name="waybillType" id="waybillType" />
                                     </tr>
-                                @endif
-                            </tbody>
-                        </table>
+                                    <tr>
+                                        <th>
+                                            <span class="font-size-xs">EIR / Signed Waybill 
+                                                <input type="radio" name="waybillCategory" class="waybillType" value="Waybill">
+                                            </span>
+                                            <span class="font-size-xs ml-2">Pod
+                                                <input type="radio" name="waybillCategory" class="waybillType" value="POD">
+                                            </span>
+                                        </th>
+                                        <th colspan="4">
+                                            <input type="file" id="signedWaybill" name="signedWaybill" class="font-size-xs d-inline-block" style="width: 150px" />
+                                            <input type="text" placeholder="Waybill No" id="waybillNo" name="waybill_no" class="d-inline-block" style="border:1px solid #ccc;  outline: none" />
+                                            <button class="font-size-xs btn btn-primary" id="addSignedWaybill">ADD SIGNED WAYBILL</button>
+                                            <span id="waiter"></span>
+                                        </th>
+                                    <tr>
+                                    <tr style="font-size:11px;" class="text-center">
+                                        <th>SN</th>
+                                        <th>Preview Container No.</th>
+                                        <th>Remark</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if(count($offloadWaybillLists))
+                                    <?php $counter = 0; ?>
+                                        @foreach($offloadWaybillLists as $eir)
+                                            <?php 
+                                                $counter++;
+                                                $counter % 2 == 0 ? $css = '' : $css = 'table-success';
+                                            ?> 
+                                            <tr class="{{$css}} text-center" style="font-size:10px">
+                                                <td>{{$counter}}</td>
+                                                <td>
+                                                    <a href="{{URL::asset('assets/img/signedwaybills/'.$eir->received_waybill.'')}}" target="_blank">
+                                                        {{ $eir->container_card_no }}
+                                                    </a>
+                                                </td>
+                                                <td>{{ $eir->waybill_remark }}</td>
+                                                <td class="text-center">
+                                                    <i class="icon-trash pointer unlinkSignedWaybill" id={{$eir->id}}>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @else
+                                        <tr>
+                                            <td class="table-success" colspan="8">You have not uploaded any information as regards this waybill</td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </form>
                     </div>
                 </div>
                 
