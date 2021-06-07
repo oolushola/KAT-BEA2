@@ -380,6 +380,8 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('/delete-voucher-request', 'PaymentVoucherController@deleteVoucher');
     Route::get('/unlink-signed-eir', 'ordersController@unlinkSignedWaybill');
     Route::post('/upload-signed-waybill', 'ordersController@uploadSignedEir');
+    Route::get('remove-invoice-payment-history', 'invoiceController@deletePaymentBreakDown');
+
 
 });
 

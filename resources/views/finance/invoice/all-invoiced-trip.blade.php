@@ -51,11 +51,12 @@ td{
 
     <!-- Content area -->
     <div class="content">
-        
+
         <!-- Invoice archive -->
-        <div class="card">
+        <div class="card" style="z-index: 1; position: relative">
             <form method="POST" name="frmPaidInvoices" id="frmPaidInvoices" action="{{URL('paid-invoices')}}">
                 @csrf
+                <input type="hidden" value="" name="acknowledgeChecker" id="acknowledgeChecker">
                 @if(count($errors))
                     <ul class="alert alert-danger">
                         @foreach($errors->all() as $error)
@@ -130,10 +131,11 @@ td{
                                     </td>
                                     <td>
                                         @if($completeInvoice->invoice_status)
-                                        <a href="{{URL('invoice-trip/'.$completeInvoice->completed_invoice_no)}}" target="_blank">
-                                        {{strtoupper($completeInvoice->company_name)}}</a>
+                                            <a href="{{URL('invoice-trip/'.$completeInvoice->completed_invoice_no)}}" target="_blank">
+                                                {{strtoupper($completeInvoice->company_name)}}
+                                            </a>
                                         @else
-                                        <span class="text-danger-400">{{strtoupper($completeInvoice->company_name)}} <i class="icon-lock4"></i></span>
+                                            <span class="text-danger-400">{{strtoupper($completeInvoice->company_name)}} <i class="icon-lock4"></i></span>
                                         @endif
                                     </td>
                                     <td>
@@ -178,9 +180,10 @@ td{
 
                             @endif
                         </tbody>
+
                     </table>
                 </div>
-                <input type="hidden" value="" name="acknowledgeChecker" id="acknowledgeChecker">
+                
             </form>
         
         
@@ -190,16 +193,16 @@ td{
     </div>
     <!-- /content area -->
 
-
     @include('finance.invoice.partials._quick-view')
-    @include('finance.invoice.partials._receive-waybills')		
+    @include('finance.invoice.partials._receive-waybills')
+			
 
 </div>
 @stop
 
 @section('script')
 <script type="text/javascript" src="{{URL::asset('/js/validator/excelme.js')}}"></script>
-<script type="text/javascript" src="{{URL::asset('/js/validator/invoice.js')}}"></script>
+<script type="text/javascript" src="{{URL::asset('/js/validator/invoice.js?now='.time())}}"></script>
 <script type="text/javascript">
     $('#logOfReceiveWaybill').click(function() {
         $('#logOfWaybillsToReceive').html('<i class="icon-spinner3 spinner"></i>Loading...').addClass('font-weight-semibold')
@@ -241,7 +244,7 @@ td{
             }
         })
     })
-
+    
     $(document).on('click', '#changeInvoiceStatus', function(e) {
         e.preventDefault();
         $invoiceNo = $(this).attr('data-id')
@@ -257,7 +260,7 @@ td{
             }
         })
     })
-
+    
     $(document).on('click', '#exportUnreceivedWaybill', function() {
         $('#hideThisOnExport').addClass('d-none')
         var name = Math.random().toString().substring(7)
@@ -266,7 +269,6 @@ td{
         });
         $('#hideThisOnExport').removeClass('d-none')
     })
-
-   
 </script>
+
 @stop

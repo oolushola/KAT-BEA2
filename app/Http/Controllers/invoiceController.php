@@ -1171,7 +1171,6 @@ class invoiceController extends Controller
 
     public function getInvoicePaymentHistory(Request $request) {
         $invoiceNo = $request->invoice_no;
-
         $paymentDates = DB::SELECT(
             DB::RAW(
                 'SELECT DISTINCT date_paid FROM tbl_kaya_trip_payment_breakdowns WHERE invoice_no = "'.$invoiceNo.'"'
@@ -1180,11 +1179,31 @@ class invoiceController extends Controller
         $paymentHistory = '';
         foreach($paymentDates as $paymentDate) {
             $getAmountPaid = PaymentBreakdown::WHERE('invoice_no', $invoiceNo)->WHERE('date_paid', $paymentDate->date_paid)->GET()->SUM('amount');
-            $paymentHistory.='<span class="bg-primary p-2 font-weight-bold">'.$paymentDate->date_paid.'</span>
-                <span class="bg-success p-2 font-weight-bold mr-2" style="margin-left:-5px">&#x20a6;'.number_format($getAmountPaid, 2).'</span>
+            $paymentHistory.='
+                <span class="bg-primary p-2 font-weight-bold">'.$paymentDate->date_paid.'</span>
+                <span class="bg-success p-2 font-weight-bold" style="margin-left:-5px">
+                    &#x20a6;'.number_format($getAmountPaid, 2).'
+                </span>
+                <span title="DELETE payment made on '.$paymentDate->date_paid.'" id="'.$invoiceNo.'" class="removePayment" name="'.$paymentDate->date_paid.'">
+                    <i class="icon-cancel-circle2 p-1  mr-2 pointer text-danger"></i>
+                </span>
             ';
         }
-
         return $paymentHistory;
+    }
+
+    public function deletePaymentBreakDown(Request $request) {
+        $paymentDate = $request->paymentDate;
+        $invoiceNo = $request->invoice_no;
+
+        $payments = PaymentBreakdown::WHERE('date_paid', $paymentDate)->WHERE('invoice_no', $invoiceNo)->GET();
+        foreach($payments as $payment) {
+            $trip = trip::findOrFail($payment->trip_id);
+            $trip->amount_paid -= $payment->amount;
+            $trip->save();
+            $pay = PaymentBreakdown::findOrFail($payment->id);
+            $pay->delete();
+        }
+        return 'updated';
     }
 }
