@@ -101,6 +101,21 @@ input::placeholder{
                                   </td>
                                 </tr>
                                 <tr>
+                                    <td colspan="2">
+                                        <span>Waybill Details: </span>
+                                        @foreach($advanceWaybills as $advanceWaybill)
+                                            @if($advanceWaybill->trip_id == $advanceRequest->id)
+                                                <span class="badge badge-info pointer">
+                                                    <a href="{{URL::asset('assets/img/waybills/'.$advanceWaybill->photo)}}" style="color:#fff" target="_blank">
+                                                        {{ $advanceWaybill->sales_order_no }}
+                                                    </a>
+                                                    <i class="icon-file-check"></i>
+                                                </span>
+                                            @endif
+                                        @endforeach
+                                    </td>
+                                </tr>
+                                <tr>
                                   <td colspan="2" class="pt-2">
                                     <textarea class="d-block mb-2 form-control" placeholder="Additional Comment" id="advanceRequestComment{{$advanceRequest->id}}">{{$advanceRequest->advance_comment}}</textarea>
                                     @if($advanceRequest->advance_request == TRUE)
