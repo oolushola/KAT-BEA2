@@ -526,7 +526,7 @@
 
 								<ul class="nav nav-group-sub" data-submenu-title="Starter kit">
 									<li class="nav-item"><a href="{{URL('companies-profile')}}" class="nav-link active">Kaya Profile</a></li>
-									<li class="nav-item"><a href="{{URL('payment-request-master')}}" class="nav-link"><i class="icon-alarm"></i><span>All Pending Requests</span></a></li>
+									<li class="nav-item"><a href="{{URL('payment-request-master')}}" class="nav-link"><span>All Pending Requests</span></a></li>
 									<li class="nav-item"><a href="{{URL('product-category')}}" class="nav-link">Product Category</a></li>
 									<li class="nav-item">
 										<a href="{{URL('products')}}" class="nav-link">Products</a>
@@ -542,6 +542,9 @@
 									</li>
 									<li class="nav-item">
 										<a href="{{URL('invoice-subheading')}}" class="nav-link">Invoice Subheading</a>
+									</li>
+									<li class="nav-item">
+										<a href="{{ URL('pair-field-ops-loading-site') }}" class="nav-link">Loading Site & Field Ops Paring</a>
 									</li>
 								</ul>
 							</li>

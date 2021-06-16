@@ -381,7 +381,10 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('/unlink-signed-eir', 'ordersController@unlinkSignedWaybill');
     Route::post('/upload-signed-waybill', 'ordersController@uploadSignedEir');
     Route::get('remove-invoice-payment-history', 'invoiceController@deletePaymentBreakDown');
-
+    Route::get('pair-field-ops-loading-site', 'fieldOpsLoadingSiteController@pairfiedOpsLoadingSite');
+    Route::get('loading-site-person-pair', 'fieldOpsLoadingSiteController@fetchLoadingSitePersonPair');
+    Route::post('pair-person-loading-site', 'fieldOpsLoadingSiteController@pairPersonLoadingSite');
+    Route::post('remove-paired-loading-site', 'fieldOpsLoadingSiteController@removePairedLoadingSite');
 
 });
 

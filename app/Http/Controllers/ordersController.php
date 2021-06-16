@@ -595,13 +595,20 @@ class ordersController extends Controller
     }
 
     public function fieldOpsUpdate() {
-        $orders = DB::SELECT(
-            DB::RAW(
-                'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = \'1\' AND tracker < \'5\' ORDER BY a.trip_id ASC
-                '
-
-            )
-        );
+        $role = Auth::user()->role_id;
+        if($role <= 3) {
+            $orders = DB::SELECT(
+                DB::RAW(
+                    'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.trip_status = 1 AND tracker < 5 ORDER BY a.trip_id ASC'
+                )
+            );
+        } else {
+            $orders = DB::SELECT(
+                DB::RAW(
+                    'SELECT a.*, b.loading_site, c.driver_first_name, c.driver_last_name, c.driver_phone_number, c.motor_boy_first_name, c.motor_boy_last_name, c.motor_boy_phone_no, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id WHERE a.loading_site_id IN (SELECT loading_site_id FROM tbl_kaya_pair_ops_loading_site WHERE user_id = "'.Auth::user()->id.'") AND a.trip_status = 1 AND tracker < 5 ORDER BY a.trip_id ASC'
+                )
+            );
+        }
         $tripWaybills = tripWaybill::GET();
         $tripEvents = tripEvent::ORDERBY('current_date', 'DESC')->GET();
         $waybillstatuses = tripWaybillStatus::GET();
