@@ -385,6 +385,11 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('loading-site-person-pair', 'fieldOpsLoadingSiteController@fetchLoadingSitePersonPair');
     Route::post('pair-person-loading-site', 'fieldOpsLoadingSiteController@pairPersonLoadingSite');
     Route::post('remove-paired-loading-site', 'fieldOpsLoadingSiteController@removePairedLoadingSite');
+    Route::get('generate-transport-team-report', 'performanceReportGenerator@generateReport');
+
+    Route::get('invoice-more-incentives', 'invoiceController@addMoreIncentivesOnInvoice');
+    Route::post('add-more-incentive-on-invoice', 'invoiceController@addMoreIncentiveOnInvoice');
+    Route::get('remove-added-incentive-on-invoice', 'invoiceController@removeAddedIncentiveOnInvoice');
 
 });
 

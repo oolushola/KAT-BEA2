@@ -76,9 +76,10 @@
                     </span>
                     <span id="loader"></span>
                 </div>
-
                 <a href="#" class="header-elements-toggle text-default d-md-none"><i class="icon-more"></i></a>
             </div>
+            <span style="float:right" data-toggle="modal" href=".transportTeamGenerator" class="generateTransportTeamReport btn btn-info font-weight-bold pointer">GENERATE REPORT <i class="icon-books"></i></span>
+
         </div>
     </div>
     <!-- /page header -->
@@ -125,6 +126,7 @@
 @include('performance-metric.partials._specificNumberPerformance')
 @include('performance-metric.partials._transporter_gained')
 @include('performance-metric.partials._bonuses')
+@include('performance-metric.partials._transport_team_report')
 @stop
 
 
@@ -578,9 +580,34 @@
         window.location.href='';
     })
 
+    $('.generateTransportTeamReport').click(function() {
+        $startDate = $('#report_start_from').val()
+        $endTo = $('#report_end_to').val()
 
-    
+        if(new Date($startDate) > new Date($endTo)) {
+            $('#transportTeamReportCard').html('<span class="icon-x"></span> Your date filtering option is not accurate. Please, review.')
+            return false
+        }
 
+        $('#transportTeamReportCard').html('<span class="icon-spinner3 spinner"></span>Chill, sit comfortably while we generate the transport team report.')
+        $.ajax({
+            url: '/generate-transport-team-report',
+            data: { reportStartFrom: $startDate, reportEndTo: $endTo },
+            type: 'GET',
+            success: function(data) {
+                const result = data.split('`')
+                $('#transportTeamReportCard').html(result[0])
+                $('#grandTotalRevenue').html(result[1])
+                $('#grandTotalCost').html(result[2])
+                $('#grandTotalNetMargin').html(result[3])
+            },
+            error: function(request, status, error) {
+                if(request.status === 500 || 408) {
+                    $('#transportTeamReportCard').html('<span class="icon-x"></span>Oops! request cannot be processed.')
+                }
+            }
+        })
+    })
 
 </script>
 

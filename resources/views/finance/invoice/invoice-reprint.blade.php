@@ -87,6 +87,7 @@ input{
 								
 							@endif
 							<button type="button" class="hideOnPrint btn btn-danger deleteInvoice font-size-sm font-weight-semibold" value="{{$invoice_no}}">DELETE INVOICE</button>
+							<span class="icon-coins mr-2 ml-2 pointer" data-invoice="{{ $invoice_no }}" data-target="#addMoreIncentives" data-toggle="modal" id="moreIncentive" title="Add More Incentives"></span>
 						</div>
 					</div>
 
@@ -535,6 +536,7 @@ input{
 	
 @include('finance.invoice.partials._invoice-and-sales-update')
 @include('finance.invoice.partials._add-more-trip-to-invoice')
+@include('finance.invoice.partials._add-more-incentives')
 	
 </div>
 
@@ -545,202 +547,251 @@ input{
 <script type="text/javascript" src="{{URL::asset('js/validator/invoice.js')}}"></script>
   <script>
     $(function() {
-        $total = $("#sumtotalIncentive").val();
-        $("#totalDue").html($total);
+			$total = $("#sumtotalIncentive").val();
+			$("#totalDue").html($total);
 
-		$payables = <?php echo json_encode($payables);  ?>;
-		$withholdingTax = $payables[0];
-		$amountPayable = $payables[1];
+			$payables = <?php echo json_encode($payables);  ?>;
+			$withholdingTax = $payables[0];
+			$amountPayable = $payables[1];
 
-		$('#widthholdingTax').html($withholdingTax);
-		$('#amountPayable').html($amountPayable);
+			$('#widthholdingTax').html($withholdingTax);
+			$('#amountPayable').html($amountPayable);
 
-        $("#printInvoice").click(function() {
-			$(".hideOnPrint").addClass("hidden");
-             $.print("#printableArea");
-            window.setTimeout(() => {
-				$(".hideOnPrint").addClass("show").removeClass('hidden');
-            }, 3000);
-		});
-		
-		$('#editInvoice').click(function(){
-			$('#updateInvoice').css({display:'inline-block'});
-			$('#exitUpdateBtn').css({display:'inline-block'});
-			$('.editClientRatePlaceholder').css({display:'inline-table'});
-			$('.initialRatePlaceholder').css({display:'none'});
-			$('#printInvoice').css({display:'none'});
-			$('#saveInvoice').css({display:'none'});
-			$(this).css({display:'none'});
-		});
-
-		$('#exitUpdateBtn').click(function(){
-			$('#updateInvoice').css({display:'none'});
-			$('.editClientRatePlaceholder').css({display:'none'});
-			$('.initialRatePlaceholder').css({display:'inline-table'});
-			$('#printInvoice').css({display:'inline-block'});
-			$('#saveInvoice').css({display:'inline-block'});
-			$('#editInvoice').css({display:'inline-block'});
-			$(this).css({display:'none'});			
-		});
-
-		$('#updateInvoice').click(function(){
-			$invoiceNumber = $('#invoiceNumber').val();
-			$('#loader').html('<i class="icon-spinner spinner"></i> Please wait...');
-			$.post('/update-initial-invoice-price', $('#frmReprintInvoice').serializeArray(), function(response){
-				if(response == 'amountUpdated'){
-					$url = `/invoice-trip/${$invoiceNumber}`;
-					window.location.href=$url;
-				} else {
-
-				}
-			})
-		});
-
-		$('#editClientInformation').click(function() {
-			$(this).addClass('hidden');
-			$('#closeEditClientInformation').removeClass('hidden')
-			$('#defaultCompanyInfo').addClass("hidden");
-			$('#editClientContainer').addClass('show').removeClass('hidden');
-		});
-		
-		$('#closeEditClientInformation').click(function() {
-			$(this).addClass('hidden')
-			$('#editClientInformation').removeClass('hidden')
-			$('#defaultCompanyInfo').removeClass("hidden");
-			$('#editClientContainer').removeClass('show').addClass('hidden');
-		});
-
-		//change client name to get address
-		$('#clientName').change(function() {
-			$.get('/get-client-address', $('#frmReprintInvoice').serializeArray(), function(data) {
-				$("#clientAddress").val(data);
+			$("#printInvoice").click(function() {
+				$(".hideOnPrint").addClass("hidden");
+				$.print("#printableArea");
+				window.setTimeout(() => {
+					$(".hideOnPrint").addClass("show").removeClass('hidden');
+				}, 3000);
 			});
-		})
+		
+			$('#editInvoice').click(function(){
+				$('#updateInvoice').css({display:'inline-block'});
+				$('#exitUpdateBtn').css({display:'inline-block'});
+				$('.editClientRatePlaceholder').css({display:'inline-table'});
+				$('.initialRatePlaceholder').css({display:'none'});
+				$('#printInvoice').css({display:'none'});
+				$('#saveInvoice').css({display:'none'});
+				$(this).css({display:'none'});
+			});
 
-		$('#saveClientDetails').click(function(e) {
-			e.preventDefault();
-			$invoiceNo = $(this).attr('value');
-			$clientName = $("#clientName").val();
-			$clientAddress = $('#clientAddress').val();
-			$('#clientDetailsLoader').html('<i class="spinner icon-spinner mt-2"></i> please wait...')
-			$.post('/invoice-biller', $('#frmReprintInvoice').serializeArray(), function(data) {
-				if(data == 'changed') {
-					$('#clientDetailsLoader').html('The biller name changed successfully.');
-					window.location = '';
-				}
-				else{
-					$('#clientDetailsLoader').html('Oops! Something went wrong.');
-					return false;
-				}
+			$('#exitUpdateBtn').click(function(){
+				$('#updateInvoice').css({display:'none'});
+				$('.editClientRatePlaceholder').css({display:'none'});
+				$('.initialRatePlaceholder').css({display:'inline-table'});
+				$('#printInvoice').css({display:'inline-block'});
+				$('#saveInvoice').css({display:'inline-block'});
+				$('#editInvoice').css({display:'inline-block'});
+				$(this).css({display:'none'});			
+			});
+
+			$('#updateInvoice').click(function(){
+				$invoiceNumber = $('#invoiceNumber').val();
+				$('#loader').html('<i class="icon-spinner spinner"></i> Please wait...');
+				$.post('/update-initial-invoice-price', $('#frmReprintInvoice').serializeArray(), function(response){
+					if(response == 'amountUpdated'){
+						$url = `/invoice-trip/${$invoiceNumber}`;
+						window.location.href=$url;
+					} else {
+
+					}
+				})
+			});
+
+			$('#editClientInformation').click(function() {
+				$(this).addClass('hidden');
+				$('#closeEditClientInformation').removeClass('hidden')
+				$('#defaultCompanyInfo').addClass("hidden");
+				$('#editClientContainer').addClass('show').removeClass('hidden');
+			});
+			
+			$('#closeEditClientInformation').click(function() {
+				$(this).addClass('hidden')
+				$('#editClientInformation').removeClass('hidden')
+				$('#defaultCompanyInfo').removeClass("hidden");
+				$('#editClientContainer').removeClass('show').addClass('hidden');
+			});
+
+			//change client name to get address
+			$('#clientName').change(function() {
+				$.get('/get-client-address', $('#frmReprintInvoice').serializeArray(), function(data) {
+					$("#clientAddress").val(data);
+				});
 			})
-		}) 
+
+			$('#saveClientDetails').click(function(e) {
+				e.preventDefault();
+				$invoiceNo = $(this).attr('value');
+				$clientName = $("#clientName").val();
+				$clientAddress = $('#clientAddress').val();
+				$('#clientDetailsLoader').html('<i class="spinner icon-spinner mt-2"></i> please wait...')
+				$.post('/invoice-biller', $('#frmReprintInvoice').serializeArray(), function(data) {
+					if(data == 'changed') {
+						$('#clientDetailsLoader').html('The biller name changed successfully.');
+						window.location = '';
+					}
+					else{
+						$('#clientDetailsLoader').html('Oops! Something went wrong.');
+						return false;
+					}
+				})
+			}) 
 		
 
-		$('#alterInformation').click(function() {
-			//defaultInfo bulkyAlter
-			$('.bulkyAlter').removeClass('hidden')
-			$('.defaultInfo').addClass('hidden')
-			$(this).addClass('hidden')
-			$('#updateAlteredInformation').removeClass('hidden')
-		})
-
-		$('#updateAlteredInformation').click(function() {
-			$('.bulkyAlter').addClass('hidden')
-			$('.defaultInfo').removeClass('hidden')
-			$(this).addClass('hidden')
-			$('#alterInformation').removeClass('hidden');
-			$('#loader').html('<i class="spinner icon-spinner mt-2"></i> please wait...')
-			
-			$.post('/alter-trip-information', $('#frmReprintInvoice').serialize(), function(data) {
-				if(data === 'updated') {
-					$('#loader').html('Updated successfully.');
-					window.location='';
-				}
-				else {
-					$('#loader').html('<i class="spinner icon-spinner mt-2"></i>Something went wrong, please contact the administrator')
-					return false;
-				}
+			$('#alterInformation').click(function() {
+				//defaultInfo bulkyAlter
+				$('.bulkyAlter').removeClass('hidden')
+				$('.defaultInfo').addClass('hidden')
+				$(this).addClass('hidden')
+				$('#updateAlteredInformation').removeClass('hidden')
 			})
-		})
 
-		// Add specific incentive
-		$('.addSpecificIncentive').click(function($event) {
-			$event.preventDefault();
-			$incentiveId = $(this).attr('id')
-			$tripId = $(this).attr('value')
-			$(this).html('<i class="icon-spinner2 spinner"></i> Updating...')
-			$btn = $(this)
-			$.get('/update/invoice-incentive', { incentive_id: $incentiveId, trip_id: $tripId }, function(data) {
-				if(data === 'added') {
-					$btn.html('<i class="icon-checkmark2"></i> Updated')
-				}
-			})
-		})
-
-		// Make invoice no and date editable
-		$('#defaultInvoiceNoAndDate').dblclick(function(e) {
-			e.preventDefault()
-			$(this).addClass('hidden');
-			$('#alterInvoiceNoAndDate').removeClass('hidden')
-			$('#completeInvoiceNo').focus()
-		})
-
-		$('.changeInvNoDate').keypress(function(e) {			
-			$invoiceNo = $('#completeInvoiceNo').val();
-			$dateInvoice = $('#dateInvoicedCompleted').val();
-			$previousInvoiceNo = $('#previousInvoiceNo').val();
-			if(e.keyCode === 13) {
-				e.preventDefault();
-				$('#dateAndInvoicePlaceholder').html('<i class="icon-spinner2 spinner"></i> Please wait...')
-				$.get('/update-invoice-number-and-date', { complete_invoice_no: $invoiceNo, date_invoiced: $dateInvoice, previos_invoice_no: $previousInvoiceNo}, function(data) {
-					if(data === 'invoiceNoExists') {
-						$('#dateAndInvoicePlaceholder').html('<i class="icon-x"></i>Wrong!!! This invoice no is in use.')						
-						return false
+			$('#updateAlteredInformation').click(function() {
+				$('.bulkyAlter').addClass('hidden')
+				$('.defaultInfo').removeClass('hidden')
+				$(this).addClass('hidden')
+				$('#alterInformation').removeClass('hidden');
+				$('#loader').html('<i class="spinner icon-spinner mt-2"></i> please wait...')
+				
+				$.post('/alter-trip-information', $('#frmReprintInvoice').serialize(), function(data) {
+					if(data === 'updated') {
+						$('#loader').html('Updated successfully.');
+						window.location='';
 					}
 					else {
+						$('#loader').html('<i class="spinner icon-spinner mt-2"></i>Something went wrong, please contact the administrator')
+						return false;
+					}
+				})
+			})
+
+			// Add specific incentive
+			$('.addSpecificIncentive').click(function($event) {
+				$event.preventDefault();
+				$incentiveId = $(this).attr('id')
+				$tripId = $(this).attr('value')
+				$(this).html('<i class="icon-spinner2 spinner"></i> Updating...')
+				$btn = $(this)
+				$.get('/update/invoice-incentive', { incentive_id: $incentiveId, trip_id: $tripId }, function(data) {
+					if(data === 'added') {
+						$btn.html('<i class="icon-checkmark2"></i> Updated')
+					}
+				})
+			})
+
+			// Make invoice no and date editable
+			$('#defaultInvoiceNoAndDate').dblclick(function(e) {
+				e.preventDefault()
+				$(this).addClass('hidden');
+				$('#alterInvoiceNoAndDate').removeClass('hidden')
+				$('#completeInvoiceNo').focus()
+			})
+
+			$('.changeInvNoDate').keypress(function(e) {			
+				$invoiceNo = $('#completeInvoiceNo').val();
+				$dateInvoice = $('#dateInvoicedCompleted').val();
+				$previousInvoiceNo = $('#previousInvoiceNo').val();
+				if(e.keyCode === 13) {
+					e.preventDefault();
+					$('#dateAndInvoicePlaceholder').html('<i class="icon-spinner2 spinner"></i> Please wait...')
+					$.get('/update-invoice-number-and-date', { complete_invoice_no: $invoiceNo, date_invoiced: $dateInvoice, previos_invoice_no: $previousInvoiceNo}, function(data) {
+						if(data === 'invoiceNoExists') {
+							$('#dateAndInvoicePlaceholder').html('<i class="icon-x"></i>Wrong!!! This invoice no is in use.')						
+							return false
+						}
+						else {
+							if(data === 'updated') {
+								$url = '/invoice-trip/'+$invoiceNo;
+								window.location.href = $url;
+							}
+						}
+
+					})
+				}
+				else {
+					if (e.keyCode == 27) {
+						$('#defaultInvoiceNoAndDate').removeClass('hidden')
+						$('#alterInvoiceNoAndDate').addClass('hidden')
+					}
+				}
+				
+			})
+			
+			$('#updatePoNumber').keypress(function(e) {
+				$invoiceNo = $(this).attr('data-id')
+				$poNumber = $(this).val()
+				if(e.keyCode === 13) {
+					e.preventDefault()
+					$('#poLoader').html('<i class="spinner icon-spinner3"></i>Updating PO NUmber...')
+					$e = $(this)
+					$.get('/update-po-number', { invoice_no: $invoiceNo, po_number: $poNumber }, function(data) {
 						if(data === 'updated') {
-							$url = '/invoice-trip/'+$invoiceNo;
-							window.location.href = $url;
+							$('#poLoader').html('<i class="icon-checkmark2"></i>').fadeIn(1000).delay(2000).fadeOut(5000)
+							$e.addClass('d-none')
+							$('#displayPo').html('PO Number: '+$poNumber).removeClass('d-none')
+						}
+					})
+				}
+				else{
+					if(e.keyCode === 27) {
+						$(this).addClass('d-none')
+					}
+				}
+			})
+
+			$('.updatePoNumber').dblclick(function() {
+				$(this).addClass('d-none')
+				$('#updatePoNumber').removeClass('d-none')
+			})
+
+			$('#moreIncentive').click(function() {
+				$invoiceNo = $(this).attr('data-invoice')
+				$('#invoiceNoHolder').html($invoiceNo)
+				$('#completeInvoiceNo_').val($invoiceNo)
+				$.ajax({
+					type: 'GET',
+					url: '/invoice-more-incentives',
+					data: {
+						invoiceNo: $invoiceNo 
+					},
+					success: function(data) {
+						$('#addMoreIncentiveInvoice').html(data)
+					},
+					error: function(errorResponse, _, desc) {
+						if(errorResponse.status === 404) {
+							$('#addMoreIncentiveInvoice').html('Error: The requested url does not exists.')
+						}
+						else {
+							$('#addMoreIncentiveInvoice').html('Error:'+desc+' '+errorResponse.status)
 						}
 					}
-
 				})
-			}
-			else {
-				if (e.keyCode == 27) {
-					$('#defaultInvoiceNoAndDate').removeClass('hidden')
-					$('#alterInvoiceNoAndDate').addClass('hidden')
-				}
-			}
-			
-		})
-		
-		$('#updatePoNumber').keypress(function(e) {
-			$invoiceNo = $(this).attr('data-id')
-			$poNumber = $(this).val()
-			if(e.keyCode === 13) {
-				e.preventDefault()
-				$('#poLoader').html('<i class="spinner icon-spinner3"></i>Updating PO NUmber...')
-				$e = $(this)
-				$.get('/update-po-number', { invoice_no: $invoiceNo, po_number: $poNumber }, function(data) {
-					if(data === 'updated') {
-						$('#poLoader').html('<i class="icon-checkmark2"></i>').fadeIn(1000).delay(2000).fadeOut(5000)
-						$e.addClass('d-none')
-						$('#displayPo').html('PO Number: '+$poNumber).removeClass('d-none')
+			})
+
+			$(document).on('click', '.addMoreIncentives_', function($e) {
+				$e.preventDefault();
+				$('#responsePlaceholder').html('<span class="spinner icon-spinner2"></span>')
+				$.post('/add-more-incentive-on-invoice', $('#frmAddMoreIncentives').serializeArray(), function(data) {
+					$('#responsePlaceholder').html(data)
+				})
+			})
+
+			$(document).on('click', '.removeIncentive', function() {
+				$id = $(this).attr('id')
+				$invoiceNo = $('#completeInvoiceNo_').val()
+				$('#responsePlaceholder').html('<span class="spinner icon-spinner2"></span>')
+				$.ajax({
+					url: '/remove-added-incentive-on-invoice',
+					method: 'GET',
+					data: { id: $id, invoiceNo: $invoiceNo },
+					success: function(response) {
+						$('#responsePlaceholder').html(response)
+					},
+					error: function(status) {
+						alert('Oops! something went wrong.')
 					}
 				})
-			}
-			else{
-				if(e.keyCode === 27) {
-					$(this).addClass('d-none')
-				}
-			}
-		})
-
-		$('.updatePoNumber').dblclick(function() {
-			$(this).addClass('d-none')
-			$('#updatePoNumber').removeClass('d-none')
-		})
+			})
 	});
 
 	

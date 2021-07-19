@@ -1206,4 +1206,122 @@ class invoiceController extends Controller
         }
         return 'updated';
     }
+
+    public function addMoreIncentivesOnInvoice(Request $request) {
+        $invoiceNo = $request->invoiceNo;
+
+        $trips = DB::SELECT(
+            DB::RAW(
+                'SELECT b.id, b.trip_id, a.invoice_no, b.`exact_location_id`, c.incentive_description, c.amount FROM `tbl_kaya_complete_invoices` a JOIN tbl_kaya_trips b ON a.trip_id = b.id JOIN tbl_kaya_incentives c ON b.exact_location_id = c.exact_location WHERE completed_invoice_no = "'.$invoiceNo.'"'
+            )
+        );
+
+        
+        if(count($trips) > 0) {
+            $response = '
+            <div class="row">';
+            foreach($trips as $trip) {
+                $response.='
+                <input type="hidden" name="tripIds[]" value="'.$trip->id.'" />
+                <div class="col-md-4">
+                    <p class="mt-2 font">'.$trip->trip_id.' - '.$trip->exact_location_id.'</p>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control amounts" name="amount[]" placeholder="Amount">
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="description[]" placeholder="Description">
+                </div>';
+                
+            }
+            $response.='
+            <div class="col-md-12">
+                <button class="btn-primary addMoreIncentives_">Add Incentive</button>
+            </div>
+            <div class="col-md-12 mt-3 table-responsive" id="responsePlaceholder">
+                '.$this->allIncentiveOnInvoice($invoiceNo).'
+            </div>
+            </div>';
+        }
+        else {
+            $response = 'None of the destination on this invoice have incentive set up for.';
+        }
+        return $response;
+    }
+
+
+    public function allIncentiveOnInvoice($invoiceNo) {
+        $incentives = DB::SELECT(
+            DB::RAW(
+                'SELECT a.id, a.incentive_description AS dcp, b.trip_id, b.exact_location_id, a.amount FROM tbl_kaya_trip_incentives a JOIN tbl_kaya_trips b ON a.trip_id = b.id WHERE a.trip_id IN (SELECT trip_id FROM tbl_kaya_complete_invoices WHERE completed_invoice_no = "'.$invoiceNo.'") ORDER BY b.trip_id ASC'
+            )
+        );
+        $response ='
+            <table class="table table-condensed">
+                <tr>
+                    <th class="text-center">#</th>
+                    <th>Trip ID</th>
+                    <th class="text-center">Destination</th>
+                    <th class="text-center">Remark</th>
+                    <th class="text-center">Amount</th>
+                    <th class="text-center">Remove</th>
+                </tr>
+                <tbody>';
+                if(count($incentives) > 0) {
+                    $count = 1;
+                    foreach($incentives as $incentive) {
+                        $response.='
+                            <tr>
+                                <td class="text-center">'.$count++.'</td>
+                                <td>'.$incentive->trip_id.'</td>
+                                <td class="text-center">'.$incentive->exact_location_id.'</td>
+                                <td class="text-center">'.$incentive->dcp.'</td>
+                                <td class="text-center">'.number_format($incentive->amount, 2).'</td>
+                                <td class="text-center pointer">
+                                    <i class="icon-x removeIncentive" id="'.$incentive->id.'"></i>
+                                </td>
+                            </tr>
+                        ';
+                    }
+                }
+                else {
+                    $response.='
+                        <tr>
+                            <td colspan="5">No incentive as been added.</td>
+                        </tr>
+                    ';
+                }
+            
+        $response.='
+                </tbody>
+            </table>';
+
+        return $response;
+    }
+
+    public function addMoreIncentiveOnInvoice(Request $request) {
+        $tripIdListings = $request->tripIds;
+        $amountListings = $request->amount;
+        $descriptionListings = $request->description;
+
+        foreach($amountListings as $key => $amount) {
+            if( (isset($amount) && $amount != '')  && 
+                (isset($descriptionListings[$key]) && $descriptionListings[$key] !== '' ) 
+            ) {
+                tripIncentives::CREATE([
+                    'trip_id' => $tripIdListings[$key],
+                    'amount' => $amount,
+                    'incentive_description' => $descriptionListings[$key]
+                ]);
+            }
+        }
+        return $this->allIncentiveOnInvoice($request->completeInvoiceNo_);
+    }
+
+    public function removeAddedIncentiveOnInvoice(Request $request) {
+        $tripIncentiveId = $request->id;
+        $tripIncentive = tripIncentives::findOrFail($tripIncentiveId);
+        $tripIncentive->DELETE();
+        return $this->allIncentiveOnInvoice($request->invoiceNo);
+    }
 }
