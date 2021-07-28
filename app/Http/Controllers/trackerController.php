@@ -101,20 +101,34 @@ class trackerController extends Controller
             )  
         );
 
+        $divisior = 1000000;
         foreach($lastOneYearAndMonth as $key => $period) {
             $periods[] = date('M', mktime(0,0,0,$period->months, 1, date('Y'))).', '.$period->years;
+
             [$getRevenueResult[]] = DB::SELECT(
                 DB::RAW(
-                    'SELECT SUM(client_rate * 1.025) as clientRate,  SUM(amount * 1.025) as incentives FROM tbl_kaya_trips a  LEFT JOIN tbl_kaya_trip_incentives b ON a.id = b.trip_id WHERE YEAR(gated_out) = "'.$period->years.'" AND MONTH(gated_out) = "'.$period->months.'" AND trip_status = 1 '
+                    'SELECT SUM(client_rate) as clientRate FROM tbl_kaya_trips WHERE YEAR(gated_out) = "'.$period->years.'" AND MONTH(gated_out) = "'.$period->months.'" AND trip_status = 1 '
                 )
             );
-            $revenues[] = number_format(($getRevenueResult[$key]->clientRate + $getRevenueResult[$key]->incentives) / 1000000, 2);
 
+            //get incentives too;
+            [$incentives[]] = DB::SELECT(
+                DB::RAW(
+                    'SELECT SUM(IFNULL(amount, 0)) AS incentive FROM tbl_kaya_trip_incentives WHERE YEAR(updated_at) = "'.$period->years.'" AND MONTH(updated_at) = "'.$period->months.'" '
+                )
+            );
+
+            $incentive = $incentives[$key]->incentive;
+            $revenue = ($getRevenueResult[$key]->clientRate + $incentive) * 1.025;
+            $revenues[] = number_format($revenue / $divisior , 2);
+            
             [$tripmarginpermonth[]] = DB::SELECT(
                 DB::RAW(
-                    'SELECT SUM(client_rate * 1.025) AS revenue, SUM(transporter_rate) as cost, ROUND(SUM(((client_rate * 1.025) - transporter_rate)/1000000), 2) AS margin FROM tbl_kaya_trips WHERE YEAR(`gated_out`) = "'.$period->years.'" AND MONTH(gated_out) = "'.$period->months.'"'
+                    'SELECT SUM(client_rate / '.$divisior.') AS revenue, SUM(transporter_rate / '.$divisior.') as cost FROM tbl_kaya_trips WHERE YEAR(`gated_out`) = "'.$period->years.'" AND MONTH(gated_out) = "'.$period->months.'"'
                 )
             );
+
+            $margin[] = number_format(($revenue/ $divisior) - $tripmarginpermonth[$key]->cost, 2);
 
             $expenses[] = DB::SELECT(
                 DB::RAW(
@@ -123,15 +137,16 @@ class trackerController extends Controller
             );
 
             if($expenses[$key]){
-                $monthlyExpenses[] = number_format((float)$expenses[$key][0]->expenses / 1000000, 2, '.', '');                
+                $monthlyExpenses[] = number_format((float)$expenses[$key][0]->expenses / $divisior, 2, '.', '');                
             }
             else{ 
                 $monthlyExpenses[] = 0;
             }
 
-            $profitAndLoss[] = number_format((float)$tripmarginpermonth[$key]->margin - $monthlyExpenses[$key], 2);
+            $profitAndLoss[] = number_format((float)$margin[$key] - $monthlyExpenses[$key], 2);
         }
-        $margins = array_column($tripmarginpermonth, 'margin');
+        // return $tripmarginpermonth;
+        $margins = $margin;
         $sumOfTotalMargin = DB::SELECT(
             DB::RAW(
                 'SELECT SUM(client_rate * 1.025) AS totalRevenue, SUM(transporter_rate) AS totalCost, ROUND(SUM((client_rate * 1.025) - transporter_rate), 2) AS totalMargin FROM tbl_kaya_trips WHERE tracker >= 5 AND trip_status = TRUE'
