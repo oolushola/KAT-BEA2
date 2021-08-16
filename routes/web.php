@@ -390,6 +390,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('invoice-more-incentives', 'invoiceController@addMoreIncentivesOnInvoice');
     Route::post('add-more-incentive-on-invoice', 'invoiceController@addMoreIncentiveOnInvoice');
     Route::get('remove-added-incentive-on-invoice', 'invoiceController@removeAddedIncentiveOnInvoice');
+    Route::get('send-payment-notification', 'overviewController@sendPaymentNotification');
 
 });
 
