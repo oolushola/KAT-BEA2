@@ -264,7 +264,6 @@ class paymentExceptionController extends Controller
             $truckType->tonnage/1000 .'T, '.$getTrip->exact_location_id.' has been processed.';
 
             $this->initiateSms($transporterPhoneNo, $messageContent);
-
         }
         return 'approved';
     }

@@ -40,6 +40,9 @@ function getPaymentInitiator($arrayRecord, $master) {
     @csrf
 
     <h6 class="font-weight-semibold text-primary" id="smsLedgerAcct"></h6>
+    <div class="d-block">
+        <button class="btn btn-primary btn-sm font-weight-bold" id="sendNotification">SEND NOTIFICATION</button>
+    </div>
     <div class="page-header page-header-light">
         <div class="page-header-content header-elements-md-inline">
             <div class="page-title d-flex text-primary" id="advanceRequestLog">
@@ -1055,7 +1058,28 @@ function getPaymentInitiator($arrayRecord, $master) {
             const response = JSON.parse(data);
             $('#smsLedgerAcct').html(`SMS BALANCE: &#x20A6;${response.balance}`)
         })
-        
+
+        $('#sendNotification').click(function(e) {
+            e.preventDefault()
+            $(this).html("<i class='spinner icon-spinner2'></i> Notifing...")
+            const el = $(this)
+            el.attr("disabled", "disabled")
+            $.ajax({
+                type: 'GET',
+                url: '/send-payment-notification',
+                success:function(data) {
+                    console.log(data)
+                    if(data.error === 0) {
+                        el.removeAttr("disabled")
+                        el.html("Notification Sent.")
+                    }
+                },
+                error: function(err) {
+                    console.log(err.statusText)
+                }
+            })
+
+        })
     })
 </script>
 @stop

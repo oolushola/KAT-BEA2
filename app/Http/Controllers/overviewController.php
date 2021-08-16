@@ -344,6 +344,12 @@ class overviewController extends Controller
         }
     }
 
+    public function sendPaymentNotification() {
+        $requests = $this->initiateSms('+2348099453540', 'Hi Timi, there are some payments awaiting your approval.');
+        return $requests;
+
+    }
+
    
     function transactQuery($paymentRequestId) {
         $answer = DB::SELECT(

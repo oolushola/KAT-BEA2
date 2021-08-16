@@ -8,6 +8,7 @@ use App\trip;
 use App\tripWaybill;
 use App\client;
 use App\transporter;
+use App\tripIncentives;
 
 class FinancialReportController extends Controller
 {
@@ -36,14 +37,14 @@ class FinancialReportController extends Controller
         if($client_id == 'all') {
             $trips = DB::SELECT(
                 DB::RAW(
-                    'SELECT a.id, a.trip_id, truck_no, loading_site, exact_location_id, client_rate, amount_paid, transporter_rate, invoice_no, d.created_at, d.date_paid, company_name, IFNULL(f.amount, 0) as incentive FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_complete_invoices d JOIN tbl_kaya_clients e ON a.truck_id = b.id AND a.loading_site_id = c.id AND a.id = d.trip_id AND e.id = a.client_id LEFT JOIN tbl_kaya_trip_incentives f ON a.id = f.trip_id WHERE date_paid IS NULL AND tracker >= 5 AND trip_status = TRUE ORDER BY invoice_no ASC' 
+                    'SELECT a.id, a.trip_id, truck_no, loading_site, exact_location_id, client_rate, amount_paid, transporter_rate, invoice_no, d.created_at, d.date_paid, company_name FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_complete_invoices d JOIN tbl_kaya_clients e ON a.truck_id = b.id AND a.loading_site_id = c.id AND a.id = d.trip_id AND e.id = a.client_id AND tracker >= 5 AND trip_status = TRUE ORDER BY invoice_no ASC' 
                 )
             ); 
         }
         else {
             $trips = DB::SELECT(
                 DB::RAW(
-                    'SELECT a.id, a.trip_id, truck_no, loading_site, exact_location_id, client_rate, amount_paid, transporter_rate, invoice_no, d.created_at, d.date_paid, company_name, IFNULL(f.amount, 0) as incentive FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_complete_invoices d JOIN tbl_kaya_clients e ON a.truck_id = b.id AND a.loading_site_id = c.id AND a.id = d.trip_id AND e.id = a.client_id LEFT JOIN tbl_kaya_trip_incentives f ON a.id = f.trip_id WHERE date_paid IS NULL AND tracker >= 5 AND trip_status = TRUE AND client_id = "'.$client_id.'" ORDER BY invoice_no ASC' 
+                    'SELECT a.id, a.trip_id, truck_no, loading_site, exact_location_id, client_rate, amount_paid, transporter_rate, invoice_no, d.created_at, d.date_paid, company_name FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_complete_invoices d JOIN tbl_kaya_clients e ON a.truck_id = b.id AND a.loading_site_id = c.id AND a.id = d.trip_id AND e.id = a.client_id WHERE date_paid IS NULL AND tracker >= 5 AND trip_status = TRUE AND client_id = "'.$client_id.'" ORDER BY invoice_no ASC' 
                 )
             );
         }
@@ -64,7 +65,7 @@ class FinancialReportController extends Controller
         $type = strtoupper($request->v);
         $trips = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, a.trip_id, truck_no, loading_site, exact_location_id, client_rate, amount_paid, transporter_rate, invoice_no, d.created_at, d.date_paid, company_name, IFNULL(f.amount, 0) as incentive FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_complete_invoices d JOIN tbl_kaya_clients e ON a.truck_id = b.id AND a.loading_site_id = c.id AND a.id = d.trip_id AND e.id = a.client_id LEFT JOIN tbl_kaya_trip_incentives f ON a.id = f.trip_id WHERE date_paid AND tracker >= 5 AND trip_status = TRUE AND date_paid BETWEEN "'.$date_from.'" AND "'.$date_to.'" '.$qExtension.' ORDER BY invoice_no ASC' 
+                'SELECT a.id, a.trip_id, truck_no, loading_site, exact_location_id, client_rate, amount_paid, transporter_rate, invoice_no, d.created_at, d.date_paid, company_name FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_complete_invoices d JOIN tbl_kaya_clients e ON a.truck_id = b.id AND a.loading_site_id = c.id AND a.id = d.trip_id AND e.id = a.client_id WHERE date_paid AND tracker >= 5 AND trip_status = TRUE AND date_paid BETWEEN "'.$date_from.'" AND "'.$date_to.'" '.$qExtension.' ORDER BY invoice_no ASC' 
             )
         );
         return $this->secondResponseLogger($trips, $type);
@@ -89,7 +90,7 @@ class FinancialReportController extends Controller
         $type = strtoupper($request->v);
         $trips = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, a.trip_id, truck_no, loading_site, transporter_name, exact_location_id, invoice_status, gated_out, DATEDIFF("'.$currentDate.'", a.gated_out) as gated_out_since, client_rate, transporter_rate, IFNULL(f.amount, 0) as incentive FROM tbl_kaya_trips a JOIN tbl_kaya_trip_waybill_statuses b JOIN tbl_kaya_trucks c JOIN tbl_kaya_loading_sites d JOIN tbl_kaya_transporters e ON a.id = b.trip_id AND a.truck_id = c.id AND a.loading_site_id = d.id AND a.transporter_id = e.id LEFT JOIN tbl_kaya_trip_incentives f ON a.id = f.trip_id WHERE a.tracker BETWEEN '.$tracker.' AND b.invoice_status = FALSE '.$qExtension.'' 
+                'SELECT a.id, a.trip_id, truck_no, loading_site, transporter_name, exact_location_id, invoice_status, gated_out, DATEDIFF("'.$currentDate.'", a.gated_out) as gated_out_since, client_rate, transporter_rate FROM tbl_kaya_trips a JOIN tbl_kaya_trip_waybill_statuses b JOIN tbl_kaya_trucks c JOIN tbl_kaya_loading_sites d JOIN tbl_kaya_transporters e ON a.id = b.trip_id AND a.truck_id = c.id AND a.loading_site_id = d.id AND a.transporter_id = e.id WHERE a.tracker BETWEEN '.$tracker.' AND b.invoice_status = FALSE '.$qExtension.'' 
             )
         );
         return $this->responseLogger($trips, $type);
@@ -109,7 +110,7 @@ class FinancialReportController extends Controller
         $type = strtoupper($request->v);
         $trips = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, a.trip_id, truck_no, loading_site, exact_location_id, client_rate, amount_paid, transporter_rate, invoice_no, d.created_at, d.date_paid, company_name, IFNULL(f.amount, 0) as incentive FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_complete_invoices d JOIN tbl_kaya_clients e ON a.truck_id = b.id AND a.loading_site_id = c.id AND a.id = d.trip_id AND e.id = a.client_id LEFT JOIN tbl_kaya_trip_incentives f ON a.id = f.trip_id WHERE tracker >= 5 AND trip_status = TRUE AND d.created_at '.$clause.' ORDER BY invoice_no ASC' 
+                'SELECT a.id, a.trip_id, truck_no, loading_site, exact_location_id, client_rate, amount_paid, transporter_rate, invoice_no, d.created_at, d.date_paid, company_name FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_complete_invoices d JOIN tbl_kaya_clients e ON a.truck_id = b.id AND a.loading_site_id = c.id AND a.id = d.trip_id AND e.id = a.client_id WHERE tracker >= 5 AND trip_status = TRUE AND d.created_at '.$clause.' ORDER BY invoice_no ASC' 
             )
         );
         return $this->secondResponseLogger($trips, $type);
@@ -143,7 +144,7 @@ class FinancialReportController extends Controller
         $from = $payloads->from;
         $to = $payloads->to;
         if($from != '' && $to != '') {
-            $qExtension = 'a.gated_out BETWEEN "'.$from.'" AND "'.$to.'"';
+            $qExtension = 'DATE(a.gated_out) BETWEEN "'.$from.'" AND "'.$to.'"';
         }
         else {
             $qExtension = 'a.trip_id LIKE "'.$search.'%"';
@@ -156,7 +157,7 @@ class FinancialReportController extends Controller
     function paymentDetails($clause) {
         $query = DB::SELECT(
             DB::RAW(
-                'SELECT a.id, e.advance_paid, e.balance_paid, a.trip_id, truck_no, loading_site, exact_location_id, gated_out, client_rate, transporter_rate, transporter_name, e.advance, e.balance, e.outstanding_balance, e.remark, IFNULL(f.amount, 0) as incentive FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_transporters d ON a.truck_id = b.id AND a.loading_site_id = c.id AND a.`transporter_id` = d.id LEFT JOIN `tbl_kaya_trip_payments` e ON e.trip_id = a.id LEFT JOIN tbl_kaya_trip_incentives f ON a.id = f.trip_id '.$clause.' '
+                'SELECT a.id, e.advance_paid, e.balance_paid, a.trip_id, truck_no, loading_site, exact_location_id, gated_out, client_rate, transporter_rate, transporter_name, e.advance, e.balance, e.outstanding_balance, e.remark FROM tbl_kaya_trips a JOIN tbl_kaya_trucks b JOIN tbl_kaya_loading_sites c JOIN tbl_kaya_transporters d ON a.truck_id = b.id AND a.loading_site_id = c.id AND a.`transporter_id` = d.id LEFT JOIN `tbl_kaya_trip_payments` e ON e.trip_id = a.id '.$clause.' '
             )
         );
         return $query;
@@ -191,6 +192,7 @@ class FinancialReportController extends Controller
             <tbody class="font-size-xs">';
                 if(count($trips)) {
                     foreach($trips as $trip) {
+                        $incentive = $this->getIncentives($trip->id);
                         $response.='
                             <tr style="white-space: nowrap;margin:0;">
                                 <td class="text-center">'.$trip->trip_id.'</td>
@@ -216,9 +218,9 @@ class FinancialReportController extends Controller
                                 <td class="bg-danger-400 text-center">'.$trip->gated_out_since.' Days</td>
                                 <td>'.$trip->transporter_name.'</td>
                                 <td class="text-center">'.number_format($trip->client_rate, 2).'</td>
-                                <td class="text-center">'.number_format($trip->incentive, 2).'</td>
+                                <td class="text-center">'.number_format($incentive, 2).'</td>
                                 <td class="text-center">'.number_format($trip->transporter_rate, 2).'</td>
-                                <td class="text-center">'.number_format(($trip->client_rate + $trip->incentive ) - $trip->transporter_rate, 2).'</td>
+                                <td class="text-center">'.number_format(($trip->client_rate + $incentive ) - $trip->transporter_rate, 2).'</td>
                             </tr>
                         ';
                     }
@@ -265,6 +267,7 @@ class FinancialReportController extends Controller
             <tbody class="font-size-xs">';
                 if(count($trips)) {
                     foreach($trips as $trip) {
+                        $incentive = $this->getIncentives($trip->id);
                         $response.='
                             <tr style="white-space: nowrap;margin:0;">
                                 <td class="text-center">'.$trip->trip_id.'</td>
@@ -288,14 +291,14 @@ class FinancialReportController extends Controller
                                 $response.='</td>';
                                 $response.='<td class="text-center">'.$trip->loading_site.'</td>
                                 <td class="text-center">'.number_format($trip->client_rate, 2).'</td>
-                                <td class="text-center">'.number_format($trip->incentive, 2).'</td>
+                                <td class="text-center">'.number_format($incentive, 2).'</td>
                                 <td class="text-center">'.number_format($trip->amount_paid, 2).'</td>
                                 <td class="text-center">'.number_format($trip->transporter_rate, 2).'</td>';
                                 if($trip->amount_paid) {
                                     $margin = $trip->amount_paid - $trip->transporter_rate;
                                 }
                                 else {
-                                    $margin = ($trip->client_rate + $trip->incentive) - $trip->transporter_rate;
+                                    $margin = ($trip->client_rate + $incentive) - $trip->transporter_rate;
                                 }
                                 $response.='<td class="text-center">'.number_format($margin, 2).'</td>
                                 <td class="text-center bg-danger-400">'.$trip->invoice_no.'</td>
@@ -321,6 +324,11 @@ class FinancialReportController extends Controller
             </tbody>
         </table>';
         return $response;
+    }
+
+    function getIncentives($tripId) {
+        $sumOfIncentives = tripIncentives::WHERE('trip_id', $tripId)->GET()->SUM('amount');
+        return $sumOfIncentives;
     }
 
     function paymentDetailsResponse($trips, $selectedModule) {
@@ -355,6 +363,7 @@ class FinancialReportController extends Controller
              <tbody class="font-size-xs">';
                  if(count($trips)) {
                      foreach($trips as $trip) {
+                         $incentive = $this->getIncentives($trip->id);
                          $response.='
                              <tr style="white-space: nowrap;margin:0;">
                                  <td class="text-center">'.$trip->trip_id.'</td>
@@ -397,8 +406,8 @@ class FinancialReportController extends Controller
 
                                  
                                 $outstandingIndicator = $outstanding > 0  ? "bg-danger-300" : "";
-                                $incentiveIndicator = $trip->incentive > 0  ? "bg-primary-300" : "";
-                                $margin = ($trip->client_rate + $trip->incentive) - $trip->transporter_rate;
+                                $incentiveIndicator = $incentive > 0  ? "bg-primary-300" : "";
+                                $margin = ($trip->client_rate + $incentive) - $trip->transporter_rate;
                                 $marginIndicator = $margin > 0 ? "bg-success-300" : "bg-danger-400";
                                  
 
@@ -407,7 +416,7 @@ class FinancialReportController extends Controller
                                  <td class="text-center">'.date('d-m-Y', strtotime($trip->gated_out)).'</td>
                                  <td>'.$trip->transporter_name.'</td>
                                  <td class="text-center bg-primary-300">'.number_format($trip->client_rate, 2).'</td>
-                                 <td class="text-center '.$incentiveIndicator.'">'.number_format($trip->incentive, 2).'</td>
+                                 <td class="text-center '.$incentiveIndicator.'">'.number_format($incentive, 2).'</td>
                                  <td class="text-center bg-danger-400">'.number_format($trip->transporter_rate, 2).'</td>
                                  <td class="text-center  '.$marginIndicator.'">'.number_format($margin, 2).'</td>
                                  <td class="text-center">'.number_format($advance, 2).'</td>
