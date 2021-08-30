@@ -329,8 +329,9 @@
 
             <div class="col-md-3">
                 <div class="form-group">
-                    <label class="font-weight-semibold">Locations</label>
-                    <input type="text" class="form-control" name="exact_location_id" id="exactLocationIds" value="<?php if(isset($recid)) { echo $recid[0]->exact_location_id; } else { echo ''; } ?>">
+                    <label class="font-weight-semibold">Locations </label>
+                    <span style="float:right; color: red; cursor: pointer; text-decoration: underline" id="clearAllLocations">Clear All</span>
+                    <input type="text" class="form-control" name="exact_location_id" id="exactLocationIds" value="<?php if(isset($recid)){echo $recid[0]->exact_location_id;}?>">
                 </div>
             </div>
         </div>

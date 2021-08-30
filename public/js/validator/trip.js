@@ -63,14 +63,26 @@ $(function() {
     });
 
     $(document).on("change", '#exactLocation', function() {
-        $selectedLocation = $(this).val()
-        $exactLocations = $('#exactLocationIds').val()
+        $selectedLocation = $(this).val().trim()
+        $exactLocations = $('#exactLocationIds').val().trim()
         $myLocations = $exactLocations+' '+$selectedLocation
         $exactLocations = $('#exactLocationIds').val($myLocations)
     })
 
+    $('#clearAllLocations').click(function() {
+        const ask = confirm("Are you sure you want to clear this locations?")
+        if(ask) {
+            $('#exactLocationIds').val("")
+            $('#exactLocation').val("")
+            $('#destinationState').val("")
+        }
+        else{
+            return false
+        }
+    })
+
     $('#exactLocationIds').blur(function(data) {
-        const value = $(this).val().replace(',', ' ')
+        const value = $(this).val().replace(',', '')
         $(this).val(value)
     })
 
@@ -112,8 +124,8 @@ $(function() {
 
     $("#registerTrip").click(function(e) {
          e.preventDefault();
-         if(validateGatedIn()===false) {return};
-         $(this).attr('disabled', 'disabled')
+        //  if(validateGatedIn()===false) {return};
+        //  $(this).attr('disabled', 'disabled')
          submitTrip('/trips', '#frmTrips', '/update-trip');
     });
 
