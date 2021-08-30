@@ -391,6 +391,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::post('add-more-incentive-on-invoice', 'invoiceController@addMoreIncentiveOnInvoice');
     Route::get('remove-added-incentive-on-invoice', 'invoiceController@removeAddedIncentiveOnInvoice');
     Route::get('send-payment-notification', 'overviewController@sendPaymentNotification');
+    Route::resource('expense-type', 'ExpenseTypeController');
 
 });
 
