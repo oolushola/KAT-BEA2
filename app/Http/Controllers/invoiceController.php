@@ -318,7 +318,7 @@ class invoiceController extends Controller
         
         
         foreach($getTripById as $key => $tripsById) {
-            $waybills[] = tripWaybill::SELECT('id', 'sales_order_no', 'invoice_no', 'tons', 'trip_id')->WHERE('trip_id', $tripsById->trip_id)->ORDERBY('trip_id', 'ASC')->GET();
+            $waybills[] = tripWaybill::SELECT('id', 'sales_order_no', 'invoice_no', 'tons', 'trip_id', 'photo')->WHERE('trip_id', $tripsById->trip_id)->ORDERBY('trip_id', 'ASC')->GET();
         }
 
         foreach($waybills as $key => $waybillListings) {

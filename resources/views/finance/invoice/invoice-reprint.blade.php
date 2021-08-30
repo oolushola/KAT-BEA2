@@ -313,14 +313,14 @@ input{
 										<td>
 											@foreach($waybillinfos as $waybilldetails)
 												@if($waybilldetails->trip_id == $invoiceParams->id)
-													{!! $waybilldetails->sales_order_no !!}<br>
+													<a href="{{URL('assets/img/waybills/'.$waybilldetails->photo)}}" target="_blank">{!! $waybilldetails->sales_order_no !!}</a><br>
 												@endif
 											@endforeach
 										</td>
 										<td>
 											@foreach($waybillinfos as $waybilldetails)
 												@if($waybilldetails->trip_id == $invoiceParams->id)
-													{!! $waybilldetails->invoice_no !!}<br>
+													<a href="{{URL('assets/img/waybills/'.$waybilldetails->photo)}}" target="_blank">{!! $waybilldetails->invoice_no !!}</a><br>
 												@endif
 											@endforeach
 										</td>
