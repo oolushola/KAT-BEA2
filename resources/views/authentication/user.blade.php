@@ -76,6 +76,20 @@
                         <span id="phoneNumberError"></span>
                     </div>
 
+                    <div class="form-group">
+                        <select name="department_id" id="department" class="form-control">
+                            <option value="0">Choose Department</option>
+                            @foreach($departments as $department)
+                            @if(isset($recid) && $recid->department_id === $department->id)
+                                <option value="{{$department->id}}" selected>{{$department->department}}</option>
+                            @else
+                                <option value="{{$department->id}}">{{$department->department}}</option>
+                            @endif
+                            @endforeach
+                        </select>
+                        <span id="departmentError"></span>
+                    </div>
+
                     <div class="form-group text-center text-muted content-divider">
                         <span class="px-2 font-weight-semibold">Role Specification</span>
                     </div>
