@@ -392,6 +392,10 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('remove-added-incentive-on-invoice', 'invoiceController@removeAddedIncentiveOnInvoice');
     Route::get('send-payment-notification', 'overviewController@sendPaymentNotification');
     Route::resource('expense-type', 'ExpenseTypeController');
+    Route::get('department-expense-type', 'ExpenseTypeController@departmentExpenseType');
+    Route::post('assign-department-expense-type', 'ExpenseTypeController@assignDepartmentExpenseType');
+    Route::post('remove-assigned-department-expense-type', 'ExpenseTypeController@removeDepartmentExpenseType');
+    Route::resource('department', 'DepartmentController');
 
 });
 

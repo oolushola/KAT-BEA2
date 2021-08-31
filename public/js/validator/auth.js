@@ -55,6 +55,13 @@ $(function() {
             )
             return false;
         }
+        $department = $("#department").val();
+        if($department == "0") {
+            errorResponse(
+                '#department', '#departmentError', '<i class="icon-x"></i>Department is required.', 'error'
+            )
+            return false;
+        }
         $roleId = $("#roleId").val();
         if($roleId == 0) {
             errorResponse(

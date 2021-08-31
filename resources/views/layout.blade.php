@@ -544,7 +544,7 @@
 										<a href="{{URL('invoice-subheading')}}" class="nav-link">Invoice Subheading</a>
 									</li>
 									<li class="nav-item">
-										<a href="{{URL('departments')}}" class="nav-link">Departments</a>
+										<a href="{{URL('department')}}" class="nav-link">Department</a>
 									</li>
 									<li class="nav-item">
 										<a href="{{ URL('pair-field-ops-loading-site') }}" class="nav-link">Loading Site & Field Ops Paring</a>

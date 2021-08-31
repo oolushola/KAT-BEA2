@@ -17,7 +17,7 @@
             <div class="header-elements d-none">
                 <div class="d-flex justify-content-center">
                     <a href=".opex" data-toggle="modal"  class="btn btn-link btn-float text-default showOpex"><i class="icon-coins text-primary"></i><span>Opex</span></a>
-                    <a href="{{URL('all-invoiced-trips')}}" class="btn btn-link btn-float text-default"><i class="icon-git-branch text-primary"></i> <span>Pair Expense to Department</span></a>
+                    <a href="#assignDepartmentExpense" data-toggle="modal" class="btn btn-link btn-float text-default"><i class="icon-git-branch text-primary"></i> <span>Pair Expense to Department</span></a>
                 </div>
             </div>
         </div>
@@ -122,12 +122,11 @@
                 </div>
             </div>
             <!-- /contextual classes -->
-
-
         </div>
     </div>
-
 </div>
+
+@include('finance.financials._assign_department_expense')
 
 @stop
 

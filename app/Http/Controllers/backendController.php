@@ -29,6 +29,7 @@ use Session;
 use App\PrsSession;
 use App\truckAvailability;
 use App\PaymentVoucher;
+use App\Department;
 
 class backendController extends Controller
 {
@@ -279,7 +280,8 @@ class backendController extends Controller
 
     public function userRegistration(Request $request) {
         $users = User::GET();
-        return view('authentication.user', compact('users'));
+        $departments = Department::GET();
+        return view('authentication.user', compact('users', 'departments'));
     }
 
     public function registerUser(Request $request) {
@@ -302,6 +304,7 @@ class backendController extends Controller
                 'email' => $request->email,
                 'phone_no' => $request->phone_no,
                 'role_id' => $request->role_id,
+                'department_id' => $request->department_id,
                 'password' => Hash::make($request->last_name)
             ]);
             $user->save();
@@ -312,10 +315,12 @@ class backendController extends Controller
     public function editUserRegistration($id) {
         $users = User::GET();
         $recid = User::findOrFail($id);
+        $departments = Department::GET();
         return view('authentication.user', 
             compact(
                 'recid',
-                'users'
+                'users',
+                'departments'
             )
         );
     }
