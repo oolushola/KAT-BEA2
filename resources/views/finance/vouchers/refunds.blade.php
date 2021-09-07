@@ -1,11 +1,12 @@
 @extends('layout')
 
-@section('title')Kaya::.Add Incentives @stop
+@section('title')Kaya::.Request Refunds @stop
 
 @section('main')
 
-<div class="content-wrapper">
+@include('finance.vouchers._beneficiary')
 
+<div class="content-wrapper">
     <!-- Page header -->
     <div class="page-header page-header-light">
         <div class="page-header-content header-elements-md-inline">
@@ -21,7 +22,7 @@
                 <div class="breadcrumb">
                     <a href="{{URL('dashboard')}}" class="breadcrumb-item"><i class="icon-home2 mr-2"></i> Home</a>
                     <a href="#" class="breadcrumb-item">Refund Log</a>
-                    <span class="breadcrumb-item active">Outstanding (2)</span>
+                    <span class="breadcrumb-item active">Outstanding Payments</span>
                 </div>
                 <a href="#" class="header-elements-toggle text-default d-md-none"><i class="icon-more"></i></a>
             </div>
@@ -50,48 +51,92 @@
                         @if(isset($recid))
                             {!! method_field('PATCH') !!} <input type="hidden" name="id" id="id" value="{{$recid->id}}">
                         @endif
-                        
-                        <p class="mb-3 font-weight-bold text-right pointer text-success" style="text-decoration:underline" id="addMoreExpensesCategory">Add More</p>
+                        <div class="row">
+                            <div class="col-md-6 text-danger font-weight-bold" style="text-decoration:underline; cursor: pointer">
+                                <a href=".beneficiary" data-toggle="modal" >Add Beneficiary</a>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-3 font-weight-bold text-right pointer text-success" style="text-decoration:underline" id="addMoreExpensesCategory">Add More</p>
+                            </div>
+                        </div>
 
                         @if(isset($recid) && count($recidDesc) > 0)
-                            <div class="row mb-3 mb-md-2" id="moreExpenses">
+                            <div class="row mb-4 mb-md-2" id="moreExpenses">
                                 @foreach($recidDesc as $voucherDesc)
                                     <input type="hidden" name="voucherDescIds[]" value="{{ $voucherDesc->id }}">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-group">
-                                            <input type="text" class="form-control" name="description[]" placeholder="Description" value="{{ $voucherDesc->description }}"> 
+                                            <select type="text" class="form-control" name="expenseType[]">
+                                                <option value="">Choose an Expense Type</option>
+                                                @foreach($expenseTypes as $expenseType)
+                                                @if(isset($recid) && $voucherDesc->expense_type_id == $expenseType->id)
+                                                <option value="{{$expenseType->id}}" selected>{{$expenseType->expense_type}}</option>
+                                                @else
+                                                <option value="{{$expenseType->id}}">{{$expenseType->expense_type}}</option>
+                                                @endif
+                                                @endforeach
+                                            </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-group">
-                                            <input type="text" class="form-control" name="owner[]" placeholder="Owner" value="{{ $voucherDesc->owner }}">
+                                            <textarea class="form-control" name="description[]" value="" placeholder="Description" rows="1" column="10">{{ $voucherDesc->description }}</textarea>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <select name="owner[]" id="owner" class="form-control">
+                                                <option value="0">Pay to?</option>
+                                                @foreach($possibleOwners as $owner)
+                                                @if(isset($recid) && $voucherDesc->owner == $owner->first_name.' '.$owner->last_name )
+                                                <option value="{{$owner->first_name}} {{ $owner->last_name}}" selected>{{$owner->first_name}} {{ $owner->last_name}}</option>
+                                                @else
+                                                <option value="{{$owner->first_name}} {{ $owner->last_name}}">{{$owner->first_name}} {{ $owner->last_name}}</option>
+                                                @endif
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
                                         <div class="form-group" style="margin:0; padding:0">
-                                            <input type="number" class="form-control" placeholder="Amount" name="amount[]" id="amount"  value="{{ $voucherDesc->amount }}" style="margin:0; border-radius:0" value="">
+                                            <input type="number" step="0.01" class="form-control" placeholder="Amount" name="amount[]" id="amount" value="{{ $voucherDesc->amount }}" style="margin:0; border-radius:0">
                                         </div>
                                     </div>                            
                                 @endforeach
                             </div>
                         @else
                         <div class="row mb-3 mb-md-2" id="moreExpenses">
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="form-group">
-                                    <textarea class="form-control" name="description[]" value="" placeholder="Description"></textarea>
+                                    <select type="text" class="form-control" name="expenseType[]">
+                                        <option value="">Choose an Expense Type</option>
+                                        @foreach($expenseTypes as $expenseType)
+                                        <option value="{{$expenseType->id}}">{{$expenseType->expense_type}}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="form-group">
-                                    <input type="text" class="form-control" name="owner[]" placeholder="Owner">
+                                    <textarea class="form-control" name="description[]" value="" placeholder="Description" rows="1" column="10"></textarea>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <select name="owner[]" id="owner" class="form-control">
+                                        <option value="0">Pay to?</option>
+                                        @foreach($possibleOwners as $owner)
+                                        <option value="{{$owner->first_name}} {{ $owner->last_name}}">{{$owner->first_name}} {{ $owner->last_name}}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
                                 <div class="form-group" style="margin:0; padding:0">
                                     <input type="number" step="0.01" class="form-control" placeholder="Amount" name="amount[]" id="amount" value="" style="margin:0; border-radius:0">
                                 </div>
                             </div> 
-                            <div class="col-md-3">
+                            <div class="col-md-6">
                                 <div class="form-group" style="margin:0; padding:0">
                                     <input type="file" class="mt-2" name="attachment[]" value="" style="font-size:10px">
                                 </div>
@@ -194,7 +239,7 @@
                                             @foreach($voucherArray as $descriptions)
                                                 @if($descriptions->payment_voucher_id == $voucher->id)
                                                     <span class="d-block p-0 font-weight-semibold">
-                                                        -
+                                                        {{ $descriptions->expense_type }}:
                                                         {{ $descriptions->description}} 
                                                         ({{ $descriptions->owner}}): 
                                                         {{ number_format($descriptions->amount, 2) }} 

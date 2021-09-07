@@ -29,27 +29,10 @@ $(function() {
     })
 
 
-    $('#addMoreExpensesCategory').click(function(event) {
-        $addMoreExpenses = '<div class="col-md-3"><div class="form-group mt-2">';
-        $addMoreExpenses += '<textarea name="description[]" class="form-control" placeholder="Description"></textarea>';
-        $addMoreExpenses += '</div></div>';
-
-        $addMoreExpenses += '<div class="col-md-3 mt-1"><div class="form-group" style="margin:0; padding:0">';
-        $addMoreExpenses += '<input type="text" class="form-control" placeholder="Owner" name="owner[]">';
-        $addMoreExpenses += '</div></div>';
-
-        $addMoreExpenses += '<div class="col-md-3"><div class="form-group mt-1" style="margin:0; padding:0">';
-        $addMoreExpenses += '<input type="text"  class="form-control" placeholder="Amount" name="amount[]">';
-        $addMoreExpenses += '</div></div>';
-
-        $addMoreExpenses += '<div class="col-md-3"><div class="form-group mb-1" style="margin:0; padding:0">';
-        $addMoreExpenses += '<input type="file" placeholder="Amount" class="mt-2" name="attachment[]" style="font-size:10px">';
-        $addMoreExpenses += '</div></div>';
-        
-        
-        $('#moreExpenses').append($addMoreExpenses)
+    $("#addMoreExpensesCategory").click(function(e) {
+        var test = $("#moreExpenses").first().clone()
+        $("#moreExpenses").last().after(test)
     })
-
 
     $(document).on('click', '.removeMoreExpenses', function() {
         $(this).parent('row').remove()
@@ -280,5 +263,58 @@ $(function() {
     })
 
 
+    //add beneficiary
+    $(".addBeneficiary").click(function() {
+        $firstName = $("#firstName").val();
+        if(!$firstName) {
+            $("#firstName").focus();
+            $("#dataDropper").html("Beneficiary first name is required")
+            return false
+        }
+        $lastName = $("#lastName").val();
+        $bankName = $("#bankName").val();
+        if(!$bankName) {
+            $("#bankName").focus();
+            $("#dataDropper").html("Beneficiary bank name is required")
+            return false
+        }
+        $accountName = $("#accountName").val();
+        if(!$accountName) {
+            $("#accountName").focus();
+            $("#dataDropper").html("Beneficiary account name is required")
+            return false
+        }
+        $accountNo = $("#accountNo").val();
+        if(!$accountNo) {
+            $("#accountNo").focus();
+            $("#dataDropper").html("Beneficiary account number is required")
+            return false
+        }
+        $(this).attr("disabled", "disabled").html('<i class="spinner icon-spinner2"></i> Please wait...') 
+        $el = $(this)
+        $.post("/add-refund-beneficiary", $("#frmBeneficiary").serializeArray(), function(data) {
+            if(data === "saved") {
+                window.location = '';
+            }
+            else {
+                if(data === "recordExists") {
+                    alert('Aborted! A user with the account number already exists!')
+                    $el.removeAttr("disabled").html('Add New Beneficiary') 
+                }
+            }
+        })
+
+    });
+
+    $('.useFirstAndLastName').click(function() {
+        const checked = $(this).is(":checked");
+        if(checked) {
+            const accountName = $("#firstName").val()+' '+$('#lastName').val()
+            $("#accountName").val(accountName)
+        }
+        else{
+            $("#accountName").val("")
+        }
+    })
 })
 
