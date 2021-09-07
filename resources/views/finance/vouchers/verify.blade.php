@@ -58,7 +58,7 @@
                                                             @if($desc->attachment)
                                                                 <a target="_blank" href="{{URL::asset('assets/img/vouchers/'.$desc->attachment.'')}}"><i class="icon-attachment ml-4"></i></a>
                                                             @endif
-                                                            ({{ $count += 1 }}) {{$desc->description}} &#x20A6;{{ number_format($desc->amount, 2) }}
+                                                            ({{ $count += 1 }}) {{ $desc->expense_type }}: {{$desc->description}} &#x20A6;{{ number_format($desc->amount, 2) }}
                                                         </pre>
                                                     </span>
                                                     @endif

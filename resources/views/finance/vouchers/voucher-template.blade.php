@@ -115,7 +115,7 @@ input{
 												<?php $sum += $desc->amount; ?>
 												<tr>
 														<td>{{ $count += 1 }}</td>
-														<td class="font-weight-bold"><pre style="border:none; padding: 0; margin:0">{{ strtoupper($desc->description) }}</pre></td>
+														<td class="font-weight-bold"><pre style="border:none; padding: 0; margin:0">{{ $desc->expense_type }}:{{ strtoupper($desc->description) }}</pre></td>
 														<td>{{ $desc->owner }}</td>
 														<td class="font-weight-bold">&#x20a6;{{ number_format($desc->amount, 2) }}</td>
 												</tr>

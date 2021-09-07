@@ -396,6 +396,8 @@ Route::group(['middleware' => 'auth'], function() {
     Route::post('assign-department-expense-type', 'ExpenseTypeController@assignDepartmentExpenseType');
     Route::post('remove-assigned-department-expense-type', 'ExpenseTypeController@removeDepartmentExpenseType');
     Route::resource('department', 'DepartmentController');
+    Route::get('expenses-category-breakdown', 'trackerController@expenseCategoryBreakdown');
+    Route::post('add-refund-beneficiary', 'PaymentVoucherController@newBeneficiary');
 
 });
 

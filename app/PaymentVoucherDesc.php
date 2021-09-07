@@ -11,6 +11,8 @@ class PaymentVoucherDesc extends Model
         'payment_voucher_id',
         'description',
         'owner',
-        'amount'
+        'amount',
+        'expense_type_id',
+        'expense_type'
     ];
 }

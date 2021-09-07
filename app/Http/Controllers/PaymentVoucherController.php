@@ -9,10 +9,22 @@ use App\PaymentVoucherDesc;
 use Illuminate\Support\Facades\DB;
 use App\user;
 use App\companyProfile;
+use App\ExpenseType;
+use App\Department;
+use App\expenses;
+use App\ExpensesBreakdown;
+use Hash;
 
 class PaymentVoucherController extends Controller
 {
     public function index() {
+        $userDepartment = Auth::user()->department_id;
+        $expenseTypes = DB::SELECT(
+            DB::RAW(
+                'SELECT * FROM tbl_kaya_expense_types WHERE id IN (SELECT expense_type_id FROM tbl_kaya_department_expense_types WHERE department_id = "'.$userDepartment.'") ORDER BY expense_type ASC'
+            )
+        );
+        $possibleOwners = User::SELECT('first_name', 'last_name', 'id')->WHERE('department_id', $userDepartment)->WHERE('status', TRUE)->GET();
         $paymentVoucher = PaymentVoucher::WHERE('voucher_status', FALSE)->WHERE('requested_by', Auth::user()->id)->GET();
         $voucherListings = [];
         $voucherArray = [];
@@ -24,15 +36,21 @@ class PaymentVoucherController extends Controller
                 $voucherArray[] = $voucher;
             }
         }
-        return view('finance.vouchers.refunds', compact('paymentVoucher', 'voucherArray'));
+        return view('finance.vouchers.refunds', compact('paymentVoucher', 'voucherArray', 'expenseTypes', 'possibleOwners'));
     }
 
     public function store(Request $request) {
         $userId = Auth::user()->id;
+        $myDepartmentHod = DB::SELECT(
+            DB::RAW(
+                'SELECT head_of_department FROM tbl_kaya_departments WHERE id IN (SELECT department_id FROM users WHERE id = 1)'
+            )
+        );
         if($request->description[0] != '') {
             $paymentVoucher = PaymentVoucher::CREATE([
                 'requested_by' => $userId,
                 'request_timestamps' => Date('Y-m-d H:i:s A'),
+                'hod' => $myDepartmentHod[0]->head_of_department
             ]);
             $uniqueId = 'payvou'.base64_encode($paymentVoucher->id);
             $uniqueIdValue = explode('=', $uniqueId)[0];
@@ -42,8 +60,11 @@ class PaymentVoucherController extends Controller
             foreach ($request->description as $key => $paymentDescription) {
                 $count++;
                 if(isset($paymentDescription) && $request->description[$key] != '') {
+                    $expenseType = ExpenseType::findOrFail($request->expenseType[$key]);
                     $paymentVoucherdescription = PaymentVoucherDesc::firstOrNew([
                         'payment_voucher_id' => $paymentVoucher->id,
+                        'expense_type' => $expenseType->expense_type,
+                        'expense_type_id' => $request->expenseType[$key],
                         'description' => $paymentDescription,
                         'owner' => $request->owner[$key],
                         'amount' => $request->amount[$key]
@@ -67,6 +88,13 @@ class PaymentVoucherController extends Controller
     }
 
     public function edit($id) {
+        $userDepartment = Auth::user()->department_id;
+        $expenseTypes = DB::SELECT(
+            DB::RAW(
+                'SELECT * FROM tbl_kaya_expense_types WHERE id IN (SELECT expense_type_id FROM tbl_kaya_department_expense_types WHERE department_id = "'.$userDepartment.'") ORDER BY expense_type ASC'
+            )
+        );
+        $possibleOwners = User::SELECT('first_name', 'last_name', 'id')->WHERE('department_id', $userDepartment)->WHERE('status', TRUE)->GET();
         $paymentVoucher = PaymentVoucher::WHERE('voucher_status', FALSE)->WHERE('requested_by', Auth::user()->id)->GET();
         $recid = PaymentVoucher::findOrFail($id);
         $recidDesc = PaymentVoucherDesc::WHERE('payment_voucher_id', $id)->GET();
@@ -82,7 +110,10 @@ class PaymentVoucherController extends Controller
             'paymentVoucher', 
             'voucherArray',
             'recid',
-            'recidDesc'
+            'recidDesc',
+            'expenseTypes',
+            'possibleOwners',
+            'userDepartment'
             )
         );
     }
@@ -90,16 +121,26 @@ class PaymentVoucherController extends Controller
     public function update(Request $request, $id) {
         $payment_voucher_id = $request->id;
         if($request->description[0] != '') {
+            $myDepartmentHod = DB::SELECT(
+                DB::RAW(
+                    'SELECT head_of_department FROM tbl_kaya_departments WHERE id IN (SELECT department_id FROM users WHERE id = 1)'
+                )
+            );
+            $voucher = PaymentVoucher::findOrFail($id);
+            $voucher->hod = $myDepartmentHod[0]->head_of_department;
+            $voucher->save();
             $collections = PaymentVoucherDesc::WHERE('payment_voucher_id', $request->id)->GET(['id']);
             PaymentVoucherDesc::destroy($collections->toArray());
-
             foreach ($request->description as $key => $desc) {
                 if(isset($request->description) && $request->description[$key] != '') {
+                    $expenseType = ExpenseType::findOrFail($request->expenseType[$key]);
                     $paymentVoucherUpdate = PaymentVoucherDesc::firstOrNew([
                         'payment_voucher_id' => $request->id,
                         'description' => $desc,
                         'owner' => $request->owner[$key],
-                        'amount' => $request->amount[$key]
+                        'amount' => $request->amount[$key],
+                        'expense_type' => $expenseType->expense_type,
+                        'expense_type_id' => $request->expenseType[$key],
                     ]);
                     $paymentVoucherUpdate->save();
                 }
@@ -113,7 +154,12 @@ class PaymentVoucherController extends Controller
 
     public function verifyPaymentVoucher() {
         $user = Auth::user()->verify_payment_access;
-        $getUnverifiedVouchers = PaymentVoucher::WHERE('check_status', FALSE)->WHERE('voucher_status', FALSE)->WHERE('decline_status', FALSE)->GET();
+        if(Auth::user()->role_id == 1) {
+            $getUnverifiedVouchers = PaymentVoucher::WHERE('check_status', FALSE)->WHERE('voucher_status', FALSE)->WHERE('decline_status', FALSE)->GET();
+        }
+        else {
+            $getUnverifiedVouchers = PaymentVoucher::WHERE('hod', Auth::user()->id)->WHERE('check_status', FALSE)->WHERE('voucher_status', FALSE)->WHERE('decline_status', FALSE)->GET();
+        }
         $voucherListings = [];
         $users = [];
         foreach($getUnverifiedVouchers as $voucher) {
@@ -134,8 +180,8 @@ class PaymentVoucherController extends Controller
     }
 
     public function verifyPayments(Request $request) {
-        $paymentAccess = Auth::user()->verify_payment_access;
-        if($paymentAccess != TRUE) {
+        $myDepartments = Department::WHERE('head_of_department', Auth::user()->id)->GET();
+        if(count($myDepartments) == 0) {
             return 'accessDenied';
         }
         else {
@@ -281,6 +327,7 @@ class PaymentVoucherController extends Controller
         $unpaidVouchers = PaymentVoucher::WHERE('check_status', TRUE)->WHERE('approved_status', TRUE)->WHERE('upload_status', FALSE)->GET();
         $voucherListings = [];
         $users = [];
+        $voucherDescriptions = [];
         foreach($paymentVouchers as $voucher) {
             $voucherListings[] = PaymentVoucherDesc::WHERE('payment_voucher_id', $voucher->id)->GET(); 
             $users[] = User::findOrFail($voucher->requested_by); 
@@ -333,13 +380,30 @@ class PaymentVoucherController extends Controller
         }
         else{
             foreach($voucherIdLists as $voucherId) {
+                $voucherDesc = PaymentVoucherDesc::WHERE('payment_voucher_id', $voucherId)->GET();
+                foreach($voucherDesc as $breakdown) {
+                    $expenseBreakDown = ExpensesBreakdown::firstOrNew([
+                        'current_year' => date('Y'),
+                        'current_month' => date('m'),
+                        'category' => $breakdown->expense_type,
+                    ]);
+                    $expenseBreakDown->amount += $breakdown->amount;
+
+                    $expenses = expenses::firstOrNew([
+                        'year' => date('Y'),
+                        'month' => date('n'),
+                    ]);
+                    $expenses->expenses += $breakdown->amount;
+                    $expenses->save();
+                    $expenseBreakDown->save();
+                }
                 $paymentVoucher = PaymentVoucher::findOrFail($voucherId);
                 $paymentVoucher->upload_status = TRUE;
                 $paymentVoucher->upload_by = Auth::user()->id;
                 $paymentVoucher->upload_timestamps = Date('Y-m-d H:i:s A');
                 $paymentVoucher->voucher_status = TRUE;
-                $paymentVoucher->save();
             }
+            $paymentVoucher->save();
             return 'uploaded';
         }
     }
@@ -364,6 +428,33 @@ class PaymentVoucherController extends Controller
             $voucherDesc->delete();
         }
         return 'deleted';
+    }
+
+    public function newBeneficiary(Request $request) {
+        $department_id = Auth::user()->department_id;
+        $password = Hash::make(trim($request->first_name));
+        $email = trim($request->first_name.'.'.$request->last_name.'@kaya-world.com');
+        $user = user::WHERE('account_no', $request->account_no)->exists();
+
+        if($user) {
+            return 'recordExists';
+        }
+        else{
+            user::CREATE([
+                'first_name' => trim($request->first_name),
+                'last_name' => trim($request->last_name),
+                'email' => $email,
+                'phone_no' => "2347034106000",
+                'role_id' => 0,
+                'status' =>TRUE,
+                'password' => $password,
+                'bank_name' => $request->bank_name,
+                'account_no' => $request->account_no,
+                'account_name' => $request->account_name,
+                'department_id' => $department_id
+            ]);
+        }
+        return 'saved';
     }
 
 

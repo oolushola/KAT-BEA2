@@ -19,6 +19,7 @@ class PaymentVoucher extends Model
         'upload_status',
         'upload_timestamps',
         'uploaded_by',
-        'voucher_status'
+        'voucher_status',
+        'hod'
     ];
 }

@@ -97,7 +97,7 @@ class trackerController extends Controller
         
         $lastOneYearAndMonth = DB::SELECT(
             DB::RAW(
-                'SELECT DISTINCT YEAR(gated_out) AS "years", MONTH(gated_out) AS "months" FROM tbl_kaya_trips WHERE gated_out <> "" LIMIT '.$opsStarted.', 13'
+                'SELECT DISTINCT YEAR(gated_out) AS "years", MONTH(gated_out) AS "months" FROM tbl_kaya_trips WHERE gated_out <> "" LIMIT 14, 15'
             )  
         );
 
@@ -485,7 +485,7 @@ class trackerController extends Controller
         }
         else{
             foreach($expenseList as $key => $expenses) {
-                $expensesAmount[] = $expenses->amount;
+                $expensesAmount[] = $expenses->amount / 1000000;
                 $expensesCategory[] = ucfirst($expenses->category); 
                 $percentageOccupied[] = round(($expensesAmount[$key] / $expense->expenses) * 100, 2);
             }
@@ -493,13 +493,62 @@ class trackerController extends Controller
             return array(
                 'percentage' => $percentageOccupied, 
                 'categories' => $expensesCategory, 
-                'allExpenses' => $expense
+                'allExpenses' => $expense,
+                'expensesAmount' => $expensesAmount
             );
-
-            
         }
+    }
 
+    public function expenseCategoryBreakdown(Request $request) {
+        $currentMonth = $this->numericalMonthDetector($request->month);
+        $currentYear = $request->year;
+        $expenseCategory = $request->expenseCategory;
+        $sumTotal = DB::SELECT(DB::RAW(
+            'SELECT SUM(b.amount) AS total_amount FROM tbl_kaya_expenses_breakdowns a JOIN tbl_kaya_payment_voucher_descs b JOIN tbl_kaya_payment_vouchers c  ON a.category = b.expense_type AND b.payment_voucher_id = c.id  WHERE current_month = "'.$currentMonth.'" AND current_year = "'.$currentYear.'" AND expense_type="'.$expenseCategory.'" AND upload_status = TRUE AND voucher_status = TRUE AND decline_status = FALSE'
+        ));
+        $response = '<table class="table table-condensed">
+            <thead>
+                <tr>
+                    <th colspan="5" class="font-weight-bold text-danger">'.$expenseCategory.'</th>
+                </tr>
+                <tr>
+                    <td colspan="4">&nbsp;</td>
+                    <td class="font-weight-bold bg-danger text-center">Total: &#x20A6;'.number_format($sumTotal[0]->total_amount, 2).'</td>
+                </tr>
+                <tr class="text-center">
+                    <th>SN</th>
+                    <th>VOUCHER ID</th>
+                    <th>PAID TO</th>
+                    <th>DESCRIPTION</th>
+                    <th>AMOUNT</th>
+                </tr>
+            </thead>';
+            $expensesBreakdown = DB::SELECT(
+                DB::RAW(
+                    'SELECT expense_type, description, payment_voucher_id, b.amount, b.owner, uniqueId FROM tbl_kaya_expenses_breakdowns a JOIN tbl_kaya_payment_voucher_descs b JOIN tbl_kaya_payment_vouchers c ON a.category = b.expense_type AND b.payment_voucher_id = c.id WHERE current_month = "'.$currentMonth.'" AND current_year = "'.$currentYear.'" AND expense_type="'.$expenseCategory.'"'
+                )
+            );
         
-        
+        $response.="<tbody>";
+        if(count($expensesBreakdown) > 0) {
+            $counter = 1;
+            foreach ($expensesBreakdown as $key => $expense) {
+                $response.='
+                <tr class="text-center">
+                    <td>'.$counter++ .'</td>
+                    <td>'.strtoupper($expense->uniqueId).'</td>
+                    <td>'.$expense->owner.'</td>
+                    <td>'.$expense->description.'</td>
+                    <td>'.number_format($expense->amount, 2).'</td>
+                </tr>';
+            }
+        }
+        else{
+            $response.='<tr>
+                <td colspan="5">No expenses found for this expense category</td>
+            </tr>';
+        }
+        $response.="</table>";
+        return $response;
     }
 }

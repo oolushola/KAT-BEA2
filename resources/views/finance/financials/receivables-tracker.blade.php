@@ -134,30 +134,30 @@
         var expenses = <?php echo json_encode($monthlyExpenses); ?>;
         var profitAndLoss = <?php echo json_encode($profitAndLoss); ?>;
         var marginExpensesProfitAndLossData = {
-                labels: periods,
-                datasets: [
-                    
-                    {
-                        label: 'Margin',
-                        data: margins,
-                        backgroundColor: '#150e06',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Other Expenses',
-                        data: expenses,
-                        backgroundColor: 'red',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Profit/Loss',
-                        data: profitAndLoss,
-                        backgroundColor: '#ccc',
-                        borderWidth: 1
-                    }
-                    
-                ]
-            }
+            labels: periods,
+            datasets: [
+                
+                {
+                    label: 'Margin',
+                    data: margins,
+                    backgroundColor: '#150e06',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Other Expenses',
+                    data: expenses,
+                    backgroundColor: 'red',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Profit/Loss',
+                    data: profitAndLoss,
+                    backgroundColor: '#ccc',
+                    borderWidth: 1
+                }
+                
+            ]
+        }
 
 
         var marginExpenseProfitAndLossChart = new Chart(ctx, {
@@ -182,12 +182,12 @@
                         var yValue = this.data.datasets[0].data[e._index];
                         const date = new Date();
                         const fullYear = date.getFullYear();
-
                         if(fullYear === Number(xValue.split(',')[1])) {
                             $.get('/expenses-breakdown', { time_inview: xValue }, function(data) {
                                 $('#expensesModelInfo').html('Expenses for '+xValue)
+                                $('.expensesModelInfo').val(xValue);
                                 expensesChart.data.labels = data.categories;
-                                expensesChart.data.datasets[0].data = data.percentage
+                                expensesChart.data.datasets[0].data = data.expensesAmount
                                 expensesChart.update()
                             })
                         }
@@ -420,30 +420,62 @@
 
         var expensesCtx = document.getElementById('expensesModel');
         var expensesChart = new Chart(expensesCtx, {
-            type: 'doughnut',
+            type: 'bar',
             data: {
-                labels: ['Staff Cost', 'Finance', 'Frieght Charges', 'Service Charge'],
+                labels: ['Costs'],
                 datasets: [{
-                    label: '# of Votes',
-                    data: [10, 5, 6, 7],
-                    backgroundColor: [
-                        '#ff7675', 
-                        '#e17055',
-                        '#fd79a8',
-                        '#636e72',
-                        '#2d3436',
-                        '#00b894',
-                        '#a29bfe'
-                    ],
+                    label: 'Expenses Chart',
+                    data: [0],
+                    backgroundColor: '#ff7675',
                     borderColor: '#fff',
                     borderWidth: 1
                 }]
             },
-            
+            options: {
+                scales: {
+                    xAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                },
+                "hover": {
+                    "animationDuration": 0
+                },
+                "animation": {
+                    "duration": 1,
+                    "onComplete": function() {
+                        var chartInstance = this.chart,
+                        ctx = chartInstance.ctx
+
+                        ctx.font = Chart.helpers.fontString(Chart.defaults.global.defaultFontSize, Chart.defaults.global.defaultFontStyle, Chart.defaults.global.defaultFontFamily);
+                        ctx.textAlign = 'center'
+                        ctx.textBaseline = 'center'
+
+                        this.data.datasets.forEach(function(dataset, i) {
+                            var meta = chartInstance.controller.getDatasetMeta(i)
+                            meta.data.forEach(function (bar, index) {
+                                var data = '₦'+dataset.data[index]
+                                ctx.fillText(data, bar._model.x, bar._model.y, 35)
+                            })
+                        })
+                    }
+                },
+                onClick:function(c, i) {
+                    $('#detailedBreakdown').removeClass('d-none');
+                    e = i[0];
+                    if(e) {
+                        var xValue = this.data.labels[e._index];
+                        var periodInView = $('.expensesModelInfo').val().split(',')
+                        var currentMonth = periodInView[0];
+                        var currentYear = periodInView[1];
+                        $.get('/expenses-category-breakdown', { month: currentMonth, year: currentYear, expenseCategory:xValue }, function(data) {
+                            $("#detailedBreakdown").html(data)
+                        })
+                    }
+                }
+            }
         });
-
-
-
     });
 </script>
 @stop
