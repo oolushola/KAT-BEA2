@@ -400,6 +400,9 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('expenses-category-breakdown', 'trackerController@expenseCategoryBreakdown');
     Route::post('add-refund-beneficiary', 'PaymentVoucherController@newBeneficiary');
 
+    // Kaya Pay
+    Route::resource('kaya-pay-agreements', 'ClientArrangementController');
+
 });
 
 
