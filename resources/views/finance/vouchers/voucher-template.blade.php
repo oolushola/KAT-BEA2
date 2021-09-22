@@ -111,12 +111,15 @@ input{
 							<tbody style="font-size:13px; font-family:tahoma">
 									<?php $count = 0; $sum = 0; ?>
 									@if(count($voucherDesc))
-											@foreach($voucherDesc as $desc)
+											@foreach($voucherDesc as $key => $desc)
 												<?php $sum += $desc->amount; ?>
 												<tr>
 														<td>{{ $count += 1 }}</td>
 														<td class="font-weight-bold"><pre style="border:none; padding: 0; margin:0">{{ $desc->expense_type }}:{{ strtoupper($desc->description) }}</pre></td>
-														<td>{{ $desc->owner }}</td>
+														<td>
+															{{ $desc->owner }} 
+															<span class="icon-bubble-notification text-info pointer" data-popup="popover" data-placement="left" data-html="true" title="Account Details" data-content="<strong>{{ ucwords($bankDetails[$key]->bank_name) }}</strong><br> {{ $bankDetails[$key]->account_no }}"></span>
+														</td>
 														<td class="font-weight-bold">&#x20a6;{{ number_format($desc->amount, 2) }}</td>
 												</tr>
 											@endforeach

@@ -912,10 +912,19 @@ class performanceMetricController extends Controller
         </div>';
 
         return $log;
-        
-        
+    }
 
-
+    public function exactLocationUpdate(Request $request) {
+        $exactLocations = $request->destinations;
+        $tripIds = $request->tripListings;
+        foreach($tripIds as $key => $trip_id) {
+            if(isset($exactLocations[$key]) && $exactLocations[$key] != '') {
+                $trip = trip::WHERE('trip_id', $trip_id)->FIRST();
+                $trip->exact_location_id = $exactLocations[$key];
+                $trip->save();
+            }
+        }
+        return 'saved';
     }
 
     function monthGetter($month) {

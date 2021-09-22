@@ -28,7 +28,12 @@
                                         <span><i class="icon-unlocked2 hideTruckUpdate d-none ml-2 pointer" id="hideTruck"></i></span>
                                     </td>
                                     <td>LOADING SITE</td>
-                                    <td>DESTINATION</td>
+                                    <td>
+                                        <span id="destinationTitle">DESTINATION</span>
+                                        <button class="btn btn-primary hidden" id="submitExactLocation">Save Changes</button>
+                                        <span><i class="icon-lock2 ml-2 pointer" id="unlockDestination"></i></span>
+                                        <span><i class="icon-unlocked2 hidden ml-2 pointer" id="lockDestination"></i></span>
+                                    </td>
                                     <td>WAYBILL INFO</td>
                                     <td>
                                         <span id="clientRateTitle">CLIENT RATE</span>
@@ -68,7 +73,10 @@
                                                 
                                             </td>
                                             <td>{{$specificRecord->loading_site}}</b></span></td>
-                                            <td>{{$specificRecord->exact_location_id}}</td>
+                                            <td>
+                                                <span class="defaultDestination">{{ $specificRecord->exact_location_id }}</span>
+                                                <input type="text" name="destinations[]" class="hidden destination" value="{{$specificRecord->exact_location_id}}">
+                                            </td>
                                             <td>
                                                 @foreach($waybillDetails as $waybill)
                                                     @if($waybill->trip_id == $specificRecord->id)

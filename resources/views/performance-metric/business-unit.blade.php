@@ -512,6 +512,43 @@
         })
     })
 
+
+    $('#unlockDestination').click(function(){
+        $(this).addClass("hidden");
+        $('#lockDestination').removeClass('hidden');
+        $('#submitExactLocation').removeClass('hidden');
+        $('.defaultDestination').addClass('hidden');
+        $('.destination').removeClass('hidden');
+        $('#destinationTitle').addClass('hidden');
+    });
+   
+    $('#lockDestination').click(function(){
+        $(this).addClass("hidden");
+        $('#unlockDestination').removeClass('hidden');
+        $('#submitExactLocation').addClass('hidden');
+        $('.defaultDestination').removeClass('hidden');
+        $('.destination').addClass('hidden');
+        $('#destinationTitle').removeClass('hidden');
+    });
+
+    $('#submitExactLocation').click(function(e) {
+        e.preventDefault();
+        $(this).html('<i class="spinner icon-spinner2"></i> Please wait...').attr('disabled', 'disabled');
+        $event = $(this);
+        $.post('/update-exact-location', $('#frmUpdateClientRate').serializeArray(), function(data) {
+            if(data == "saved") {
+                $event.html('<i class="icon-checkmark2"></i> Saved Successfully');
+                setTimeout(() => {
+                    window.location.href='';
+                }, 2000);
+            }
+            else{
+                alert('Oops! Something went wrong. Try again later.');
+                return false;
+            }
+        })
+    })
+
 </script>
 
 

@@ -270,132 +270,148 @@ input{
 												</div>
 											</td>
 											<td>
-											<h6 class="mb-0">
-											<span class="defaultInfo">
-												<span class="text-primary">{!! ucwords($invoiceParams->customers_name) !!}</span>
-												<span class="d-block font-size-sm ">Destination: 
-													{!! trim($invoiceParams->state) !!}, {!! $invoiceParams->exact_location_id !!}
-												</span>
-											</span>
-											<div class="bulkyAlter hidden">
-												<input type="text" value="{!! $invoiceParams->customers_name  !!}" name="customersName[]" style="font-size:10px; width:150px">
-												<input type="text" value="{!! $invoiceParams->exact_location_id  !!}" name="exactLocation[]" style="font-size:10px; width:100px">
-											</div>
-											</h6>
-											<input type="hidden" name="trip_id[]" value="{!! $invoiceParams->id !!}">
+												<h6 class="mb-0">
+													<span class="defaultInfo">
+														<span class="text-primary">{!! ucwords($invoiceParams->customers_name) !!}</span>
+														<span class="d-block font-size-sm ">Destination: 
+															{!! trim($invoiceParams->state) !!}, {!! $invoiceParams->exact_location_id !!}
+														</span>
+													</span>
+													<div class="bulkyAlter hidden">
+														<input type="text" value="{!! $invoiceParams->customers_name  !!}" name="customersName[]" style="font-size:10px; width:150px">
+														<input type="text" value="{!! $invoiceParams->exact_location_id  !!}" name="exactLocation[]" style="font-size:10px; width:100px">
+													</div>
+												</h6>
+												<input type="hidden" name="trip_id[]" value="{!! $invoiceParams->id !!}">
 
-											@foreach($incentives as $key => $availableIncentive)
-												@if($invoiceParams->exact_location_id == $availableIncentive->exact_location)
-												<span class="font-size-sm hideOnPrint">
-													<button id="{{$availableIncentive->id}}" value="{{ $invoiceParams->id }}" class="addSpecificIncentive" style="font-size:10px; border:1px solid #000; border-radius:5px; cursor:pointer; padding:5px;">Incentive of <strong>&#x20a6;{{number_format($availableIncentive->amount,2)}}</button>
-												</span>
-												@endif
-												
-											@endforeach
-										</td>
-										<td>
-											<span class="defaultInfo">{!! $invoiceParams->product !!}</span>
-											<div class="bulkyAlter hidden">
-												<select style="font-size:10px; width:100px" name="product[]">
-													<!-- <option value="">{!! $invoiceParams->product !!}</option> -->
-													@foreach($products as $product)
-														@if($product->product == $invoiceParams->product)
-															<option selected value="{{$product->id}}" name="product_id[]">{{$product->product}}</option>
-														@else
-															<option value="{{$product->id}}">{{$product->product}}</option>
+												@foreach($incentives as $key => $availableIncentive)
+													@if($invoiceParams->exact_location_id == $availableIncentive->exact_location)
+													<span class="font-size-sm hideOnPrint">
+														<button id="{{$availableIncentive->id}}" value="{{ $invoiceParams->id }}" class="addSpecificIncentive" style="font-size:10px; border:1px solid #000; border-radius:5px; cursor:pointer; padding:5px;">Incentive of <strong>&#x20a6;{{number_format($availableIncentive->amount,2)}}</button>
+													</span>
+													@endif
+												@endforeach
+											</td>
+											<td>
+												<span class="defaultInfo">{!! $invoiceParams->product !!}</span>
+												<div class="bulkyAlter hidden">
+													<select style="font-size:10px; width:100px" name="product[]">
+														<!-- <option value="">{!! $invoiceParams->product !!}</option> -->
+														@foreach($products as $product)
+															@if($product->product == $invoiceParams->product)
+																<option selected value="{{$product->id}}" name="product_id[]">{{$product->product}}</option>
+															@else
+																<option value="{{$product->id}}">{{$product->product}}</option>
+															@endif
+														@endforeach
+													</select>
+												</div>
+											</td>
+										
+											<td>{!! str_replace(' ', '', $invoiceParams->truck_no) !!}</td>
+											<td>
+												@foreach($waybillinfos as $waybilldetails)
+													@if($waybilldetails->trip_id == $invoiceParams->id)
+														<a href="{{URL('assets/img/waybills/'.$waybilldetails->photo)}}" target="_blank">{!! $waybilldetails->sales_order_no !!}</a><br>
+													@endif
+												@endforeach
+											</td>
+											<td>
+												@foreach($waybillinfos as $waybilldetails)
+													@if($waybilldetails->trip_id == $invoiceParams->id)
+														<a href="{{URL('assets/img/waybills/'.$waybilldetails->photo)}}" target="_blank">{!! $waybilldetails->invoice_no !!}</a><br>
+													@endif
+												@endforeach
+											</td>
+										
+											<td>
+												@foreach($waybillinfos as $waybilldetails)
+													@if($waybilldetails->trip_id == $invoiceParams->id)
+														
+														@if(isset($waybilldetails->tons))
+															{!! $waybilldetails->tons !!}<br>
+																											@else
+														{!! $invoiceParams->tonnage /1000 !!}<br>
+														@break
 														@endif
-													@endforeach
-												</select>
-											</div>
-										</td>
-										
-										<td>{!! str_replace(' ', '', $invoiceParams->truck_no) !!}</td>
-										<td>
-											@foreach($waybillinfos as $waybilldetails)
-												@if($waybilldetails->trip_id == $invoiceParams->id)
-													<a href="{{URL('assets/img/waybills/'.$waybilldetails->photo)}}" target="_blank">{!! $waybilldetails->sales_order_no !!}</a><br>
-												@endif
-											@endforeach
-										</td>
-										<td>
-											@foreach($waybillinfos as $waybilldetails)
-												@if($waybilldetails->trip_id == $invoiceParams->id)
-													<a href="{{URL('assets/img/waybills/'.$waybilldetails->photo)}}" target="_blank">{!! $waybilldetails->invoice_no !!}</a><br>
-												@endif
-											@endforeach
-										</td>
-										
-										<td>
-											@foreach($waybillinfos as $waybilldetails)
-												@if($waybilldetails->trip_id == $invoiceParams->id)
-													
-													@if(isset($waybilldetails->tons))
-														{!! $waybilldetails->tons !!}<br>
-                                                    @else
-													{!! $invoiceParams->tonnage /1000 !!}<br>
-													@break
+														
 													@endif
-													
-												@endif
-										
-											@endforeach
+											
+												@endforeach
 
-											@foreach($incentive as $incentivedesc)
-												@if($incentivedesc->trip_id == $invoiceParams->id)
-													<span style="font-size:10px; text-decoration:title">{{$incentivedesc->incentive_description}}</span>
-												@endif
-											@endforeach
-										</td>
-										<td>
-											<span class="initialRatePlaceholder">&#x20a6;{!! number_format($invoiceParams->client_rate, 2) !!}<br>
-											@foreach($incentive as $incentivedesc)
-												@if($incentivedesc->trip_id == $invoiceParams->id)
-												&#x20a6;{{number_format($incentivedesc->amount, 2)}} 
-												
-													@if(!$payment_status)
-													<i class="icon-trash hideOnPrint text-danger-400 removeIncentive" title="Remove Incentive" style="font-size:10px; cursor:pointer" id="{{$incentivedesc->id}}"></i>
+												@foreach($incentive as $incentivedesc)
+													@if($incentivedesc->trip_id == $invoiceParams->id)
+														<span style="font-size:10px; text-decoration:title">{{$incentivedesc->incentive_description}}</span>
 													@endif
+												@endforeach
+											</td>
+											<td>
+												<span class="initialRatePlaceholder">&#x20a6;{!! number_format($invoiceParams->client_rate, 2) !!}<br>
+												@foreach($incentive as $incentivedesc)
+													@if($incentivedesc->trip_id == $invoiceParams->id)
+													&#x20a6;{{number_format($incentivedesc->amount, 2)}} 
+													
+														@if(!$payment_status)
+														<i class="icon-trash hideOnPrint text-danger-400 removeIncentive" title="Remove Incentive" style="font-size:10px; cursor:pointer" id="{{$incentivedesc->id}}"></i>
+														@endif
 
+													@endif
+												@endforeach
+												</span> 
+
+												<span class="editClientRatePlaceholder" style="display:none">
+													<input type="text" value="{{$invoiceParams->client_rate}}" name="initialAmount[]">
+													<input type="hidden" value="{{$invoiceParams->id}}" name="tripIdListings[]">
+													<input type="hidden" value="{{$invoice_no}}" id="invoiceNumber">
+												</span>
+											</td>
+											@if(!$payment_status && count($completedInvoice) > 1)
+										
+											<td class="specificTripRemove hideOnPrint">
+												<i class="icon icon-minus-circle2 removeSpecificTrip text-danger" title="Remove this trip with ID: {{ $invoiceParams->trip_id  }}" id="{{$invoiceParams->id}}" style="cursor:pointer"></i>
+											</td>
+										
+											@endif
+
+
+											</tr>
+												@foreach($incentive as $totalIncentive)
+													@if($totalIncentive->trip_id == $invoiceParams->id)
+													<?php $sumtotalIncentive += $totalIncentive->amount;
+													//change!!!
+													$incentiveVatRate =  $vatRateValue /100 * $sumtotalIncentive; 
+													
+													?>
+													
+													@endif
+												@endforeach
+												<!-- start here  -->
+												@if(count($offloadedWaybills) > 0)
+												<tr class="hideOnPrint">
+													<td colspan="10">
+														Preview Signed Waybill / EIR: 
+														@foreach($offloadedWaybills as $offloadedWaybill)
+															<a href="{{URL::asset('/assets/img/signedwaybills/'.$offloadedWaybill->received_waybill)}}" target="_blank" class="text-success">
+																<span class="icon-attachment ml-2 pointer"></span>
+															</a>
+														@endforeach
+													</td>
+												</tr>
+												@else 
+													<tr>
+														<td>No offload waybill found for this trip.</td>
+													</tr>
 												@endif
-											@endforeach
-											</span> 
-
-											<span class="editClientRatePlaceholder" style="display:none">
-												<input type="text" value="{{$invoiceParams->client_rate}}" name="initialAmount[]">
-												<input type="hidden" value="{{$invoiceParams->id}}" name="tripIdListings[]">
-												<input type="hidden" value="{{$invoice_no}}" id="invoiceNumber">
-											</span>
-										</td>
-										@if(!$payment_status && count($completedInvoice) > 1)
-									
-										<td class="specificTripRemove hideOnPrint">
-											<i class="icon icon-minus-circle2 removeSpecificTrip text-danger" title="Remove this trip with ID: {{ $invoiceParams->trip_id  }}" id="{{$invoiceParams->id}}" style="cursor:pointer"></i>
-										</td>
-									
-										@endif
-
-
-										</tr>
-											@foreach($incentive as $totalIncentive)
-												@if($totalIncentive->trip_id == $invoiceParams->id)
-												<?php $sumtotalIncentive += $totalIncentive->amount;
-												//change!!!
-												$incentiveVatRate =  $vatRateValue /100 * $sumtotalIncentive; 
-												
+										@endforeach
+											@if(isset($invoiceSpecialRemark))
+											<?php $invoiceSpecialRemark->condition == '+' ? $class = 'text-primary' : $class = 'text-danger'; ?>
+											<tr class="font-weight-bold {{$class}} ">
+												<td colspan="3"></td>
+												<td colspan="4">{{ $invoiceSpecialRemark->description }}</td>
+												<td>&#x20a6;{{ number_format($invoiceSpecialRemark->amount, 2) }}</td>
+												<?php $sumTotalSpecialRemark = $invoiceSpecialRemark->amount;
+													$specialRemarkCondition = $invoiceSpecialRemark->condition;
 												?>
-												
-												@endif
-											@endforeach
-									@endforeach
-										@if(isset($invoiceSpecialRemark))
-										<?php $invoiceSpecialRemark->condition == '+' ? $class = 'text-primary' : $class = 'text-danger'; ?>
-										<tr class="font-weight-bold {{$class}} ">
-											<td colspan="3"></td>
-											<td colspan="4">{{ $invoiceSpecialRemark->description }}</td>
-											<td>&#x20a6;{{ number_format($invoiceSpecialRemark->amount, 2) }}</td>
-											<?php $sumTotalSpecialRemark = $invoiceSpecialRemark->amount;
-												$specialRemarkCondition = $invoiceSpecialRemark->condition;
-											?>
 										</tr>
 										@endif
 								@else

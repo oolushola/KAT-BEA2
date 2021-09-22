@@ -21,6 +21,7 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use App\PaymentBreakdown;
+use App\offloadWaybillRemark;
 
 class invoiceController extends Controller
 {
@@ -319,6 +320,8 @@ class invoiceController extends Controller
         
         foreach($getTripById as $key => $tripsById) {
             $waybills[] = tripWaybill::SELECT('id', 'sales_order_no', 'invoice_no', 'tons', 'trip_id', 'photo')->WHERE('trip_id', $tripsById->trip_id)->ORDERBY('trip_id', 'ASC')->GET();
+
+            [$offloadedWaybills[]] = offloadWaybillRemark::SELECT('trip_id', 'received_waybill', 'waybill_remark')->WHERE('trip_id', $tripsById->trip_id)->WHERE('waybill_collected_status', TRUE)->GET();
         }
 
         foreach($waybills as $key => $waybillListings) {
@@ -371,8 +374,8 @@ class invoiceController extends Controller
                 'invoiceSpecialRemark' => $invoiceSpecialRemark,
                 'incentives' => $incentives,
                 'preferedBankDetails' => $preferedBankDetails,
-                'po_number' => $poNumber
-               
+                'po_number' => $poNumber,
+                'offloadedWaybills' => $offloadedWaybills
             )
         );
     }

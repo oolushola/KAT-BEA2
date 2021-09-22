@@ -359,6 +359,17 @@ class PaymentVoucherController extends Controller
         $companyProfile = companyProfile::GET();
         $voucher = PaymentVoucher::WHERE('uniqueId', $voucherId)->GET()->FIRST();
         $voucherDesc = PaymentVoucherDesc::WHERE('payment_voucher_id', $voucher->id)->GET();
+
+        $bankDetails = [];
+
+        foreach($voucherDesc as $desc) {
+            $bankDetails = DB::SELECT(
+                DB::RAW(
+                    'SELECT * FROM users WHERE CONCAT(first_name, \' \', last_name) = "'.$desc->owner.'"'
+                )
+            );
+        }
+
         $requester = User::findOrFail($voucher->requested_by);
         $approval = User::findOrFail($voucher->approved_by);
         $checker = User::findOrFail($voucher->checked_by);
@@ -370,7 +381,7 @@ class PaymentVoucherController extends Controller
         }
         $amountInWords = $this->convert_number_to_words($sum).' naira only';
 
-        return view('finance.vouchers.voucher-template', compact('companyProfile', 'voucher', 'voucherDesc', 'requester', 'approval', 'checker', 'amountInWords', 'sum'));
+        return view('finance.vouchers.voucher-template', compact('companyProfile', 'voucher', 'voucherDesc', 'requester', 'approval', 'checker', 'amountInWords', 'sum', 'bankDetails'));
     }
 
     public function uploadPaymentVoucher(Request $request) {
