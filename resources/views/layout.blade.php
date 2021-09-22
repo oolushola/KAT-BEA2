@@ -199,6 +199,44 @@
 						</li>
 						@endif
 
+						@if($auth == 1 || $auth == 3)
+						
+						<li class="nav-item nav-item-submenu">
+							<a href="#" class="nav-link"><i class="icon-steam2"></i> <span>Kaya Pay</span></a>
+							<ul class="nav nav-group-sub" data-submenu-title="Finance Aspect">
+								<li class="nav-item">
+									<a href="{{URL('financials/overview')}}" class="nav-link font-weight-semibold">
+										<i class="icon-meter2"></i>
+										<span>Overview</span>
+									</a>
+								</li>
+								<li class="nav-item">
+									<a href="{{URL('financials/dashboard')}}" class="nav-link font-weight-semibold">
+										<i class="icon-eye"></i>
+										<span>Database</span>
+									</a>
+								</li>
+								<li class="nav-item">
+									<a href="{{URL('financials/dashboard')}}" class="nav-link font-weight-semibold">
+										<i class="icon-list3"></i>
+										<span>Payment Breakdown</span>
+									</a>
+								</li>
+								<li class="nav-item nav-item-submenu">
+									<a href="#" class="nav-link font-weight-semibold"><i class="icon-alert"></i>T & C</a>
+									<ul class="nav nav-group-sub" style="display: none;">
+										<li class="nav-item">
+											<a href="{{URL('kaya-pay-agreements')}}" class="nav-link">
+												<i class="icon-collaboration"></i>
+												<span>Agreements</span>
+											</a>
+										</li>
+									</ul>
+								</li>
+							</ul>
+						</li>
+						@endif
+
 						
 						<!--<li class="nav-item">-->
 						<!--	<a href="{{URL('performance-metrics/'.$userRole.'/'.$usertIdentity)}}" class="nav-link">-->
