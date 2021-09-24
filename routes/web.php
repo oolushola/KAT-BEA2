@@ -402,6 +402,9 @@ Route::group(['middleware' => 'auth'], function() {
 
     // Kaya Pay
     Route::resource('kaya-pay-agreements', 'ClientArrangementController');
+    Route::resource('kaya-pay/payment-breakdown', 'KayaPayPaymentBreakdownController');
+    Route::post('kaya-pay/bulkpayment-breakdown', 'KayaPayPaymentBreakdownController@uploadBulkPaymentBreakdown');
+    Route::get('kaya-pay/breakdown/all', 'KayaPayPaymentBreakdownController@allPaymentBreakdown');
 
 });
 
