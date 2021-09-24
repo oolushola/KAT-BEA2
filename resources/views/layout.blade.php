@@ -211,13 +211,13 @@
 									</a>
 								</li>
 								<li class="nav-item">
-									<a href="{{URL('financials/dashboard')}}" class="nav-link font-weight-semibold">
+									<a href="{{URL('kaya-pay/breakdown/all')}}" class="nav-link font-weight-semibold">
 										<i class="icon-eye"></i>
 										<span>Database</span>
 									</a>
 								</li>
 								<li class="nav-item">
-									<a href="{{URL('financials/dashboard')}}" class="nav-link font-weight-semibold">
+									<a href="{{URL('kaya-pay/payment-breakdown')}}" class="nav-link font-weight-semibold">
 										<i class="icon-list3"></i>
 										<span>Payment Breakdown</span>
 									</a>
