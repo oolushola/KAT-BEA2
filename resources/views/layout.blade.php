@@ -203,9 +203,9 @@
 						
 						<li class="nav-item nav-item-submenu">
 							<a href="#" class="nav-link"><i class="icon-steam2"></i> <span>Kaya Pay</span></a>
-							<ul class="nav nav-group-sub" data-submenu-title="Finance Aspect">
+							<ul class="nav nav-group-sub" data-submenu-title="Kaya Pay">
 								<li class="nav-item">
-									<a href="{{URL('financials/overview')}}" class="nav-link font-weight-semibold">
+									<a href="{{URL('kaya-pay/dashboard')}}" class="nav-link font-weight-semibold">
 										<i class="icon-meter2"></i>
 										<span>Overview</span>
 									</a>

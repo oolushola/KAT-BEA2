@@ -405,6 +405,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::resource('kaya-pay/payment-breakdown', 'KayaPayPaymentBreakdownController');
     Route::post('kaya-pay/bulkpayment-breakdown', 'KayaPayPaymentBreakdownController@uploadBulkPaymentBreakdown');
     Route::get('kaya-pay/breakdown/all', 'KayaPayPaymentBreakdownController@allPaymentBreakdown');
+    Route::get('kaya-pay/dashboard', 'kayaPayController@dashboard');
 
 });
 
