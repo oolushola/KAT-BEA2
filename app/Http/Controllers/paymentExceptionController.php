@@ -405,7 +405,17 @@ class paymentExceptionController extends Controller
         $newBalance = $specificTripPayment->amount - $newAdvance;
         $specificTripPayment->advance = $newAdvance;
         $specificTripPayment->balance = $newBalance;
+
+        //return $tripInfo->trip_id;
+
+        $payment = PaymentNotification::CREATE(['trip_id' => $specificTripPayment->trip_id, 'payment_for' => 'Container Payment Top up.']);
+        $payment->amount = $request->advance;
+        $payment->uploaded_at = DATE('Y-m-d H:i:s');
+        $payment->uploaded_by = Auth::user()->id;
+
         $specificTripPayment->save();
+        $payment->save();
+
         return 'updated';
     }
 

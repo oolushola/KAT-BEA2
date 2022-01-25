@@ -517,6 +517,19 @@
 						</li>
 						@endif
 
+						@if($auth >= 1 && $auth <= 4)
+							<li class="nav-item-header"><div class="text-uppercase font-size-xs line-height-xs">Kaya Chase</div> <i class="icon-menu" title="Follow Up"></i></li>
+
+							<li class="nav-item nav-item-submenu">
+								<a href="#" class="nav-link"><i class="icon-chopper"></i> <span>Kaya Chase</span></a>
+
+								<ul class="nav nav-group-sub" data-submenu-title="Starter kit">
+									<li class="nav-item"><a href="{{URL('companies-profile')}}" class="nav-link active">Dashboard</a></li>
+									<li class="nav-item"><a href="{{URL('payment-request-master')}}" class="nav-link"><span>Chases</span></a></li>
+								</ul>
+							</li>
+						@endif
+
 
 						@if($auth == 1 || $auth == 2)
 						<li class="nav-item-header">
@@ -590,7 +603,6 @@
 								</ul>
 							</li>
 						@endif
-
 						
 						@if($auth == 1 || $auth == 2)
 						<li class="nav-item-header"><div class="text-uppercase font-size-xs line-height-xs">TRANSPORTATION</div> <i class="icon-menu" title="Components"></i></li>

@@ -1,5 +1,5 @@
 $(function() {
-
+    let selectedTripId;
     $selectedCriteria = localStorage.getItem('filtered')
     if($selectedCriteria) {
         $(`#uncompletedTrips tr`).filter(function() {
@@ -34,6 +34,7 @@ $(function() {
         $('#loadingSite').val($loadingSite);
         $('#productCarried').val($product)
         $('#eventLogListings').html('<i class="spinner icon-spinner3"></i>')
+        selectedTripId = $tripId;
         $.get('/event-log/', {tripId: $tripId, kaid: $kaid, loadingSite: $loadingSite, tracker: $tracker, }, function(data) {
             $('#eventLogListings').html(data)
         })
@@ -254,6 +255,7 @@ $(function() {
                 }
                 $ask = confirm('Are you sure about the offload issue type status?');
                 if($ask) {
+
                     $('#frmTripEvent').submit() 
                 }
                 else{
@@ -268,13 +270,11 @@ $(function() {
         $.post(url, $("#frmTripEvent").serializeArray(), function(data) {
             if(data === 'cant_add') {
                 errorMessage('#loaderEvent', '<i class="icon-x mr-2"></i>Sorry, you can only add a trip event per day, click on the edit icon to modify.', 'error');
-                return
+                return false
             }
-            else {
-                $resultArray = data.split('`')
-                $('#loaderEvent').html('<i class="icon-checkmark2></i> Event added successfully').addClass('text-success');
-                $('#eventLogListings').html($resultArray[1])
-            }
+            $resultArray = data.split('`')
+            $('#loaderEvent').html('<i class="icon-checkmark2></i> Event added successfully').addClass('text-success');
+            $('#eventLogListings').html($resultArray[1])
         })
     }
     
@@ -319,7 +319,14 @@ $(function() {
         }
         else {
             if($dataResult[0] == 'saved' || $dataResult[0] == 'updated') {
-                window.location = '';
+                $ask = confirm("Want to follow up on this truck?");
+                if($ask) {
+                    $url = `/kaya-chase/follow-up/${selectedTripId}`;
+                    window.location = $url
+                }
+                else{
+                    window.location = '';
+                }
             }
         }
     });

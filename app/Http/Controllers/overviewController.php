@@ -29,9 +29,21 @@ use Auth;
 use App\PaymentNotification;
 use App\incentives;
 use App\tripIncentives;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
+
 
 class overviewController extends Controller
 {
+    public function paginate($items, $url, $perPage = 5, $page = null, $options = []) {
+        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
+        $items = $items instanceof Collection ? $items : Collection::make($items);
+        $pagination = new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
+        $path = url('/').$url.'?page='.$page;
+        return $pagination->withPath($path);
+    }
+
     public function displaytripoverview($kayaid) {
         $trip_id = trip::SELECT('id', 'transporter_rate')->WHERE('trip_id', $kayaid)->GET();
         $client_id = trip::SELECT('client_id')->WHERE('trip_id', $kayaid)->GET();
@@ -497,5 +509,56 @@ class overviewController extends Controller
 
         return $response;
         
+    }
+
+    public function allBalancePaymentRequest() {
+        $distinctBalanceClients = DB::SELECT(
+            DB::RAW(
+                'SELECT DISTINCT a.client_id, company_name, COUNT(a.client_id) AS pending_balance FROM tbl_kaya_trips a JOIN tbl_kaya_trip_payments b JOIN tbl_kaya_clients c ON a.id = b.trip_id and a.client_id = c.id  WHERE a.advance_paid = TRUE and a.balance_request = TRUE AND b.balance_paid = FALSE GROUP BY client_id, company_name'
+            )
+        );
+
+        $allpendingbalanceRequests_ = DB::SELECT(
+            DB::RAW(
+                'SELECT a.id, b.id AS tripid, a.advance, a.balance, a.amount, a.advance_paid, a.balance_paid, a.remark, b.trip_id, b.transporter_id, b.truck_id, b.product_id, b.destination_state_id, b.exact_location_id, b.customers_name, b.transporter_rate, b.balance_requested_at, c.company_name, d.state, f.account_number, f.transporter_name, f.bank_name, f.account_name, g.truck_no, g.truck_type_id, h.truck_type, h.tonnage, i.product, j.first_name, j.last_name, k.loading_site FROM tbl_kaya_trip_payments a JOIN tbl_kaya_trips b JOIN tbl_kaya_clients c JOIN tbl_regional_state d JOIN tbl_kaya_transporters f JOIN tbl_kaya_trucks g JOIN tbl_kaya_truck_types h JOIN tbl_kaya_products i JOIN users j JOIN tbl_kaya_loading_sites k ON a.trip_id = b.id and b.client_id = c.id AND b.destination_state_id = d.regional_state_id and b.transporter_id = f.id and b.truck_id = g.id and g.truck_type_id = h.id and b.product_id = i.id AND k.id = b.loading_site_id WHERE b.balance_requested_by = j.id AND b.advance_paid = TRUE and b.balance_request = TRUE AND a.balance_paid = FALSE AND b.trip_status = TRUE ORDER BY b.trip_id DESC LIMIT 10'
+            )
+        );
+        $tripWaybills = [];
+        $advanceWaybillInfos = [];
+
+        $myCollectionObj = collect($allpendingbalanceRequests_);
+        $allpendingbalanceRequests = $this->paginate($myCollectionObj, '/all-balance-payment-request');
+        
+        if(count($allpendingbalanceRequests)){
+            foreach($allpendingbalanceRequests as $balance) {
+                [$waybillStatuses[]] = tripWaybillStatus::WHERE('trip_id', $balance->tripid)->GET();
+            }
+        }
+        else{
+            $waybillStatuses = [];
+        }
+        
+        $incentives = incentives::GET();
+        $waybillInfos = tripWaybill::GET();
+        $chunkPayments = bulkPayment::GET();
+        $statesQuery = 'SELECT * FROM tbl_regional_state WHERE regional_country_id  = \'94\' ORDER BY state ASC ';
+        $states = DB::SELECT(DB::RAW($statesQuery));
+        $waybillStatus = tripWaybillStatus::GET();
+        $offloadedWaybill = offloadWaybillRemark::GET();
+
+        return view('finance.all-balance-payment', 
+            compact(
+                'allpendingbalanceRequests',
+                'waybillInfos',
+                'chunkPayments',
+                'states',
+                'waybillStatus',
+                'offloadedWaybill',
+                'advanceWaybillInfos',
+                'waybillStatuses',
+                'incentives',
+                'distinctBalanceClients'
+            )
+        );   
     }
 }
