@@ -41,7 +41,7 @@ td:first-child, .headcol {
 
     <form method="POST" id="frmCancelTrip">
     @csrf {!! method_field('PATCH') !!}
-    <div class="table-responsive" id="contentPlaceholder">
+    <div class="table-responsive" id="contentPlaceholder" style="position:relative; z-index: 0">
         <table class="table table-bordered">
             <thead class="table-info" style="font-size:11px; background:#000; color:#eee;">
                 <tr class="font-weigth-semibold">

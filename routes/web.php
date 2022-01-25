@@ -96,6 +96,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('trip-overview/{kayaid}', 'overviewController@displaytripoverview');
     Route::post('trip-overview-payment-request', 'overviewController@requestPayment');
     Route::get('payment-request', 'overviewController@paymentRequest');
+    Route::get('all-balance-payment-request', 'overviewController@allBalancePaymentRequest');
     Route::get('delete-specific-waybill', 'ordersController@deleteSpecificWaybill');
 
     Route::post('approve-advance-payment', 'overviewController@approveAdvancePayment');
@@ -406,6 +407,12 @@ Route::group(['middleware' => 'auth'], function() {
     Route::post('kaya-pay/bulkpayment-breakdown', 'KayaPayPaymentBreakdownController@uploadBulkPaymentBreakdown');
     Route::get('kaya-pay/breakdown/all', 'KayaPayPaymentBreakdownController@allPaymentBreakdown');
     Route::get('kaya-pay/dashboard', 'kayaPayController@dashboard');
+
+    //Kaya Chase
+    Route::get('kaya-chase/follow-up/{tripId}', 'KayaChaseController@displayFollowUpDetails');
+    Route::post('kaya-chase/follow-up', 'KayaChaseController@displayFollowUpDetails');
+
+    
 
 });
 
