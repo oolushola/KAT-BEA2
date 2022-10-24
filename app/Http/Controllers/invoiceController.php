@@ -22,6 +22,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use App\PaymentBreakdown;
 use App\offloadWaybillRemark;
+use App\Ago;
 
 class invoiceController extends Controller
 {
@@ -322,6 +323,15 @@ class invoiceController extends Controller
             $waybills[] = tripWaybill::SELECT('id', 'sales_order_no', 'invoice_no', 'tons', 'trip_id', 'photo')->WHERE('trip_id', $tripsById->trip_id)->ORDERBY('trip_id', 'ASC')->GET();
 
             [$offloadedWaybills[]] = offloadWaybillRemark::SELECT('trip_id', 'received_waybill', 'waybill_remark')->WHERE('trip_id', $tripsById->trip_id)->WHERE('waybill_collected_status', TRUE)->GET();
+
+            $agos[] = Ago::SELECT('trip_id', 'amount')->WHERE('trip_id', $tripsById->trip_id)->GET()->FIRST();
+        }
+
+        $myAgos = [];
+        foreach($agos as $kero) {
+            if(isset($kero->trip_id)) {
+                $myAgos[] = $kero;
+            }
         }
 
         foreach($waybills as $key => $waybillListings) {
@@ -375,7 +385,8 @@ class invoiceController extends Controller
                 'incentives' => $incentives,
                 'preferedBankDetails' => $preferedBankDetails,
                 'po_number' => $poNumber,
-                'offloadedWaybills' => $offloadedWaybills
+                'offloadedWaybills' => $offloadedWaybills,
+                'agos' => $myAgos
             )
         );
     }
@@ -1326,5 +1337,83 @@ class invoiceController extends Controller
         $tripIncentive = tripIncentives::findOrFail($tripIncentiveId);
         $tripIncentive->DELETE();
         return $this->allIncentiveOnInvoice($request->invoiceNo);
+    }
+
+    function agoLog($invoiceNo) {
+        $query = DB::SELECT(
+            DB::RAW(
+                'SELECT a.id, a.trip_id, c.id AS ago_id, exact_location_id, c.amount FROM tbl_kaya_trips a JOIN tbl_kaya_complete_invoices b ON a.id = b.trip_id LEFT JOIN tbl_kaya_agos c ON a.id = c.trip_id WHERE b.completed_invoice_no = "'.$invoiceNo.'"'
+            )
+        );
+        $response ='
+            <table class="table table-condensed">
+                <tr>
+                    <th class="text-center">#</th>
+                    <th>Trip ID</th>
+                    <th class="text-center">Destination</th>
+                    <th class="text-center">Amount</th>
+                    <th class="text-center">Remove</th>
+                </tr>
+                <tbody>';
+                if(count($query) > 0) {
+                    $count = 1;
+                    foreach($query as $ago) {
+                        $response.='
+                            <tr>
+                                <td class="text-center">'.$count++.'</td>
+                                <td>'.$ago->trip_id.' <input type="hidden" name="trips[]" value="'.$ago->id.'" /></td>
+                                <td class="text-center">'.$ago->exact_location_id.'</td>
+                                <td class="text-center">
+                                <input type="number" value="'.$ago->amount.'" name="agos[]" />
+                                
+                                </td>
+                                <td class="text-center pointer">
+                                    <i class="icon-trash-alt removeAgo" id="'.$ago->ago_id.'"></i>
+                                </td>
+                            </tr>
+                        ';
+                    }
+                    $response.='<tr>
+                        <td colspan="3">&nbsp;</td>
+                        <td colspan="2">
+                            &nbsp; <button class="btn btn-primary" id="reverseAgoRequest">Submit</button>
+                        </td>
+                    </tr>';
+                }
+            
+        $response.='
+                </tbody>
+            </table>';
+
+        return $response;
+    }
+
+    public function reverseInvoiceAgo(Request $request) {
+        $invoice_no = $request->invoiceNo;
+        return $this->agoLog($invoice_no);
+    }
+
+    public function createAgoRecords(Request $request) {
+        $agos = $request->agos;
+        $trips = $request->trips;
+        foreach($trips as $key => $trip) {
+            if(isset($agos[$key]) && $agos[$key] != '') {
+                $ago = Ago::FirstOrNew([
+                    'trip_id' => $trip
+                ]);
+                $ago->amount = $agos[$key];
+                $ago->save();
+            }
+        }
+        return $this->agoLog($request->agoInvoiceNo);
+    }
+
+    public function removeReversedAgo(Request $request) {
+        $agoId = $request->ago_id;
+        $invoiceNo = $request->invoiceNo;
+        $agoInfo = Ago::findOrFail($agoId);
+        $agoInfo->DELETE();
+        return $this->agoLog($invoiceNo);
+        
     }
 }

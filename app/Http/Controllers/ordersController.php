@@ -245,7 +245,7 @@ class ordersController extends Controller
         }
         else {
             
-            $getLastTripId = trip::SELECT('trip_id')->LATEST()->FIRST();
+            $getLastTripId = trip::SELECT('trip_id')->LATEST('trip_id')->FIRST();
             $lastTripId = str_replace('KAID', '', $getLastTripId->trip_id);
             $counter = intval('0000') + intval($lastTripId) + 1;
             $kaya_id = 'KAID'.sprintf('%04d', $counter);
@@ -255,7 +255,7 @@ class ordersController extends Controller
             else{
                 $trip_category = 1;
             }
-
+            
             $trip = trip::CREATE($request->all());
 
             $id = $trip->id;
@@ -269,7 +269,13 @@ class ordersController extends Controller
             }
             else {
                 $transporterRecord = ClientAccountManager::WHERE('client_id', $request->client_id)->FIRST();
-                $userIdentity = $transporterRecord->user_id;
+                if($transporterRecord) {
+                    $userIdentity = $transporterRecord->user_id;
+                }
+                else {
+                    $userIdentity = 37;
+                }
+                
             }
 
             // $transporterRecord = transporter::findOrFail($recid->transporter_id);
@@ -339,7 +345,7 @@ class ordersController extends Controller
         }
         else {
 
-            $getLastTripId = trip::SELECT('trip_id')->LATEST()->FIRST();
+            $getLastTripId = trip::SELECT('trip_id')->LATEST('trip_id')->FIRST();
             $lastTripId = str_replace('KAID', '', $getLastTripId->trip_id);
             $counter = intval('0000') + intval($lastTripId) + 1;
             $kaya_id = sprintf('%04d', $counter);
@@ -419,7 +425,7 @@ class ordersController extends Controller
         $driver = drivers::findOrFail($recid[0]->driver_id);
         $truckTypes = truckType::SELECT('truck_type')->ORDERBY('truck_type', 'ASC')->DISTINCT()->GET();
         
-        $waybillUploadCount = tripWaybill::WHERE('trip_id', $id)->GET()->COUNT();
+        $waybillUploadCount = tripWaybill::WHERE('trip_id', $id)->GET();
 
         return view('orders.create-trip',
             compact('loadingsites',
@@ -917,7 +923,7 @@ class ordersController extends Controller
             if($request->hasFile('photo')){
                 $recid = tripWaybill::findOrFail($id);
                 $photo = $request->file('photo');
-                $name = $recid->sales_order_no.'.'.$photo[$key]->getClientOriginalExtension();
+                $name = $recid->sales_order_no.'-'.$id.'.'.$photo[$key]->getClientOriginalExtension();
                 $destination_path = public_path('assets/img/waybills/');
                 $waybillPath = $destination_path."/".$name;
                 $photo[$key]->move($destination_path, $name);
@@ -982,7 +988,7 @@ class ordersController extends Controller
             
             if($request->hasFile('photo')){
                 $photo = $request->file('photo');
-                $name = $recid->sales_order_no.'.'.$photo[$key]->getClientOriginalExtension();
+                $name = $recid->sales_order_no.'-'.$id.'.'.$photo[$key]->getClientOriginalExtension();
                 $destination_path = public_path('assets/img/waybills/');
                 $waybillPath = $destination_path."/".$name;
                 $photo[$key]->move($destination_path, $name);
@@ -1022,9 +1028,8 @@ class ordersController extends Controller
         $changes = tripChanges::CREATE(['trip_id' => $request->trip_id, 'user_id' => $request->user_id, 'changed_keys' => 12, 'changed_values' => 'Waybill Remark Updated']);
 
         return 'saved';
-
     }
-
+    
     public function unlinkSignedWaybill(Request $request) {
         $offloadWaybillId = $request->eirId;
         $waybillRemarkInfo = OffloadWaybillRemark::findOrFail($offloadWaybillId);
@@ -1034,7 +1039,6 @@ class ordersController extends Controller
         }
         $waybillRemarkInfo->delete();
         return 'unlinked';
-
     }
 
     public function uploadSignedEir(Request $request) {
@@ -1042,6 +1046,12 @@ class ordersController extends Controller
         $tripInfo = trip::findOrFail($tripId);
         $uploadedFor = $request->file('signedWaybill');
         $waybillType = $request->waybillType;
+        if($request->comment) {
+            $remark = $request->comment;
+        }
+        else {
+            $remark = $waybillType.' for: '.$tripInfo->trip_id;
+        }
         $name = 'signed-waybill-'.$tripId.'.'.$uploadedFor->getClientOriginalExtension();
         $destination_path = public_path('assets/img/signedwaybills/');
         $waybillPath = $destination_path."/".$name;
@@ -1050,7 +1060,7 @@ class ordersController extends Controller
             'trip_id' => $tripId, 
             'waybill_collected_status' => TRUE, 
             'received_waybill' => $name, 
-            'waybill_remark' => $waybillType.' for: '.$tripInfo->trip_id,
+            'waybill_remark' => $remark,
             'container_card_no' => $request->waybill_no
         ]);
         return 'eirUploaded';

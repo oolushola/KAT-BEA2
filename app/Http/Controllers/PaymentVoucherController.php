@@ -14,9 +14,21 @@ use App\Department;
 use App\expenses;
 use App\ExpensesBreakdown;
 use Hash;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
+
 
 class PaymentVoucherController extends Controller
 {
+    public function paginate($items, $perPage = 100, $page = null, $options = []) {
+        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
+        $items = $items instanceof Collection ? $items : Collection::make($items);
+        $pagination = new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
+        $path = url('/').'/payment-vouchers?page='.$page;
+        return $pagination->withPath($path);
+    }
+
     public function index() {
         $userDepartment = Auth::user()->department_id;
         $expenseTypes = DB::SELECT(
@@ -323,19 +335,22 @@ class PaymentVoucherController extends Controller
     }
 
     public function vouchers() {
-        $paymentVouchers = PaymentVoucher::WHERE('check_status', TRUE)->WHERE('approved_status', TRUE)->WHERE('upload_status', TRUE)->GET();
+        $paymentVouchers_ = PaymentVoucher::WHERE('check_status', TRUE)->WHERE('approved_status', TRUE)->WHERE('upload_status', TRUE)->GET();
         $unpaidVouchers = PaymentVoucher::WHERE('check_status', TRUE)->WHERE('approved_status', TRUE)->WHERE('upload_status', FALSE)->GET();
         $voucherListings = [];
         $users = [];
         $voucherDescriptions = [];
-        foreach($paymentVouchers as $voucher) {
+        foreach($paymentVouchers_ as $voucher) {
             $voucherListings[] = PaymentVoucherDesc::WHERE('payment_voucher_id', $voucher->id)->GET(); 
             $users[] = User::findOrFail($voucher->requested_by); 
             [$voucherDescriptions[]] = PaymentVoucherDesc::WHERE('payment_voucher_id', $voucher->id)->GET(); 
+            $sumTotal[] = PaymentVoucherDesc::WHERE('payment_voucher_id', $voucher->id)->GET()->SUM('amount'); 
         }
-        foreach($voucherListings as $vouchers) {
+        
+        foreach($voucherListings as $key=> $vouchers) {
             foreach($vouchers as $voucher) {
                 $voucherArray[] = $voucher;
+                
             }
         }
 
@@ -352,7 +367,10 @@ class PaymentVoucherController extends Controller
             }
         }
 
-        return view('finance.vouchers.voucher', compact('paymentVouchers', 'users', 'unpaidVouchers', 'unpaidVouchersDesc', 'people', 'voucherDescriptions'));
+         $myCollectionObj = collect($paymentVouchers_);
+         $paymentVouchers = $this->paginate($myCollectionObj);
+
+        return view('finance.vouchers.voucher', compact('paymentVouchers', 'users', 'unpaidVouchers', 'unpaidVouchersDesc', 'people', 'voucherDescriptions', 'sumTotal'));
     }
 
     public function showPaymentVoucher($voucherId) {
@@ -363,13 +381,12 @@ class PaymentVoucherController extends Controller
         $bankDetails = [];
 
         foreach($voucherDesc as $desc) {
-            $bankDetails = DB::SELECT(
+            [$bankDetails[]] = DB::SELECT(
                 DB::RAW(
                     'SELECT * FROM users WHERE CONCAT(first_name, \' \', last_name) = "'.$desc->owner.'"'
                 )
             );
         }
-
         $requester = User::findOrFail($voucher->requested_by);
         $approval = User::findOrFail($voucher->approved_by);
         $checker = User::findOrFail($voucher->checked_by);

@@ -109,7 +109,8 @@ input{
 								</tr>
 							</thead>
 							<tbody style="font-size:13px; font-family:tahoma">
-									<?php $count = 0; $sum = 0; ?>
+									<?php $count = 0; $sum = 0;  ?>
+									
 									@if(count($voucherDesc))
 											@foreach($voucherDesc as $key => $desc)
 												<?php $sum += $desc->amount; ?>

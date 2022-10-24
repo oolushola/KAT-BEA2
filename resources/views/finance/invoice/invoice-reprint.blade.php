@@ -63,15 +63,16 @@ input{
 			<!-- Invoice template -->
 			<div id="printableArea">
 				<div class="card">
-					<div class="card-header bg-transparent header-elements-inline">
-                        <h6 class="card-title"><?php 
-                            $array = explode(" ", $dateInvoiced[0]->created_at);
-						?>
-						<button type="button" data-toggle="modal" href="#addMoreTrips" class="btn btn-primary font-size-sm font-weight-semibold hideOnPrint" >ADD MORE</button>&nbsp;
+					<div class="card-header bg-transparent header-elements-inline hideOnPrint">
+              <h6 class="card-title">
+								<?php 
+               		$array = explode(" ", $dateInvoiced[0]->created_at);
+								?>
+								<button type="button" data-toggle="modal" href="#addMoreTrips" class="btn btn-primary font-size-sm font-weight-semibold hideOnPrint" >ADD MORE</button>&nbsp;
 
-						<button type="button" class="btn btn-primary font-size-sm font-weight-semibold hideOnPrint" data-toggle="modal" href="#salesOrderAndInvoiceNumber">CHANGE INVOICE NO, S.O NUMBER</button>
-						
-					</h6>
+								<button type="button" class="btn btn-primary font-size-sm font-weight-semibold hideOnPrint" data-toggle="modal" href="#salesOrderAndInvoiceNumber">CHANGE INVOICE NO, S.O NUMBER</button>
+								
+							</h6>
 						
 						<div class="deleteInvAndTonsplitter">
 							@if($completedInvoice[0]->company_name == 'Olam International')
@@ -87,7 +88,9 @@ input{
 								
 							@endif
 							<button type="button" class="hideOnPrint btn btn-danger deleteInvoice font-size-sm font-weight-semibold" value="{{$invoice_no}}">DELETE INVOICE</button>
-							<span class="icon-coins mr-2 ml-2 pointer" data-invoice="{{ $invoice_no }}" data-target="#addMoreIncentives" data-toggle="modal" id="moreIncentive" title="Add More Incentives"></span>
+							<span class="icon-coins mr-2 ml-2 pointer hideOnPrint" data-invoice="{{ $invoice_no }}" data-target="#addMoreIncentives" data-toggle="modal" id="moreIncentive" title="Add More Incentives"></span>
+
+							<span class="icon-gas mr-2 ml-2 pointer hideOnPrint" data-invoice="{{ $invoice_no }}" data-target="#addAgo" data-toggle="modal" id="reverseAgo" title="Add A.G.O"></span>
 						</div>
 					</div>
 
@@ -344,6 +347,12 @@ input{
 														<span style="font-size:10px; text-decoration:title">{{$incentivedesc->incentive_description}}</span>
 													@endif
 												@endforeach
+
+												@foreach($agos as $ago)
+													@if($ago->trip_id == $invoiceParams->id)
+													A.G.O. 
+													@endif
+												@endforeach
 											</td>
 											<td>
 												<span class="initialRatePlaceholder">&#x20a6;{!! number_format($invoiceParams->client_rate, 2) !!}<br>
@@ -352,9 +361,17 @@ input{
 													&#x20a6;{{number_format($incentivedesc->amount, 2)}} 
 													
 														@if(!$payment_status)
-														<i class="icon-trash hideOnPrint text-danger-400 removeIncentive" title="Remove Incentive" style="font-size:10px; cursor:pointer" id="{{$incentivedesc->id}}"></i>
+														<i class="icon-trash hideOnPrint text-danger-400 removeIncentive" title="Remove Incentive" style="font-size:10px; cursor:pointer" id="{{$incentivedesc->id}}"></i> <br>
 														@endif
 
+													@endif
+												@endforeach
+
+												<?php $totalAgos = 0; ?>
+												@foreach($agos as $ago)
+													<?php $totalAgos += $ago->amount; ?>
+													@if($ago->trip_id == $invoiceParams->id)
+													&#x20a6;{{number_format($ago->amount, 2)}} 
 													@endif
 												@endforeach
 												</span> 
@@ -484,10 +501,16 @@ input{
 												<th><b>VAT:</b> <span class="font-weight-normal">({{$vatRateValue}}%)</span></th>
 												<td class="text-right">&#x20a6;{!! number_format($totalVatRate, 2) !!}</td>
 											</tr>
+											@if(count($agos) > 0)
+											<tr>
+												<th><b>A.G.O.</b></th>
+												<td class="text-right">&#x20a6;{!! number_format($totalAgos, 2) !!}</td>
+											</tr>
+											@endif
 											<tr>
 												<th><b>TOTAL:</b></th>
-												<td class="text-right text-primary"><h5 class="font-weight-semibold">&#x20a6;{!! number_format($subtotal + $totalVatRate, 2) !!}</h5></td>
-												<input id="sumtotalIncentive" type="hidden" value="{!! number_format($subtotal + $totalVatRate, 2) !!}">
+												<td class="text-right text-primary"><h5 class="font-weight-semibold">&#x20a6;{!! number_format($subtotal + $totalVatRate + $totalAgos, 2) !!}</h5></td>
+												<input id="sumtotalIncentive" type="hidden" value="{!! number_format($subtotal + $totalVatRate + $totalAgos, 2) !!}">
 
 											</tr>
 										</tbody>
@@ -553,6 +576,7 @@ input{
 @include('finance.invoice.partials._invoice-and-sales-update')
 @include('finance.invoice.partials._add-more-trip-to-invoice')
 @include('finance.invoice.partials._add-more-incentives')
+@include('finance.invoice.partials._ago')
 	
 </div>
 
@@ -784,6 +808,30 @@ input{
 				})
 			})
 
+			$('#reverseAgo').click(function() {
+				$invoiceNo = $(this).attr('data-invoice')
+				$('#agoInvoiceNoHolder').html($invoiceNo)
+				$('#agoInvoiceNo').val($invoiceNo)
+				$.ajax({
+					type: 'GET',
+					url: '/reversed-invoice-ago',
+					data: {
+						invoiceNo: $invoiceNo 
+					},
+					success: function(data) {
+						$('#addAgoForm').html(data)
+					},
+					error: function(errorResponse, _, desc) {
+						if(errorResponse.status === 404) {
+							$('#addAgoForm').html('Error: The requested url does not exists.')
+						}
+						else {
+							$('#addAgoForm').html('Error:'+desc+' '+errorResponse.status)
+						}
+					}
+				})
+			})
+
 			$(document).on('click', '.addMoreIncentives_', function($e) {
 				$e.preventDefault();
 				$('#responsePlaceholder').html('<span class="spinner icon-spinner2"></span>')
@@ -805,6 +853,33 @@ input{
 					},
 					error: function(status) {
 						alert('Oops! something went wrong.')
+					}
+				})
+			})
+
+			$(document).on("click", "#reverseAgoRequest", function($e) {
+				$e.preventDefault()
+				$(this).html("<i class='icon-spinner3 spinner'></i>Please wait...")
+				$.post('/create-ago-records', $('#frmReverseAgo').serialize(), function(data) {
+					$("#addAgoForm").html(data)
+				})
+			})
+
+			$(document).on("click", ".removeAgo", function($e) {
+				$e.preventDefault()
+				$agoId = $(this).attr("id")
+				$invoiceNo = $('#agoInvoiceNo').val()
+				
+				$(this).parent().html('<i class="icon-spinner3 spinner"></i>')
+				$.ajax({
+					type: 'POST',
+					url: '/remove-ago-record',
+					data:{ _token: $("input[name='_token']").val(), ago_id: $agoId, invoiceNo: $invoiceNo },
+					success: function(data) {
+						$("#addAgoForm").html(data)
+					},
+					error: function(data) {
+						console.log(data)
 					}
 				})
 			})

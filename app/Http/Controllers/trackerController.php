@@ -10,6 +10,7 @@ use App\ExpensesBreakdown;
 use App\expenses;
 use App\VatRate;
 
+
 class trackerController extends Controller
 {
     public function receivables() {
@@ -74,12 +75,15 @@ class trackerController extends Controller
         );
 
         $lastMonthMargin = $lastMonthTrip[0]->totalClientRate - $lastMonthTrip[0]->transporterRate;
+        //$avgMarginForLastMonth = number_format(($lastMonthMargin / $lastMonthTrip[0]->totalGateOut), 2);
         if($lastMonthTrip[0]->totalGateOut != 0){
             $avgMarginForLastMonth = number_format(($lastMonthMargin / $lastMonthTrip[0]->totalGateOut), 2);
         }
         else{
             $avgMarginForLastMonth = 0;
         }
+
+
         
         if(date('m') == 7) { $opsStarted = 0; }
         if(date('m') == 8) { $opsStarted = 1; }
@@ -97,7 +101,7 @@ class trackerController extends Controller
         
         $lastOneYearAndMonth = DB::SELECT(
             DB::RAW(
-                'SELECT DISTINCT YEAR(gated_out) AS "years", MONTH(gated_out) AS "months" FROM tbl_kaya_trips WHERE gated_out <> "" LIMIT 14, 15'
+                'SELECT DISTINCT YEAR(gated_out) AS "years", MONTH(gated_out) AS "months" FROM tbl_kaya_trips WHERE gated_out <> "" LIMIT 16, 27'
             )  
         );
 
@@ -118,8 +122,16 @@ class trackerController extends Controller
                 )
             );
 
+            //get ago values too
+            [$agos[]] = DB::SELECT(
+                DB::RAW(
+                    'SELECT SUM(IFNULL(amount, 0)) AS agos FROM tbl_kaya_agos WHERE YEAR(updated_at) = "'.$period->years.'" AND MONTH(updated_at) = "'.$period->months.'" '
+                )
+            );
+
             $incentive = $incentives[$key]->incentive;
-            $revenue = ($getRevenueResult[$key]->clientRate + $incentive) * 1.025;
+            $agos_ = $agos[$key]->agos;
+            $revenue = (($getRevenueResult[$key]->clientRate + $incentive) * 1.025) + $agos_;
             $revenues[] = number_format($revenue / $divisior , 2);
             
             [$tripmarginpermonth[]] = DB::SELECT(
@@ -147,6 +159,8 @@ class trackerController extends Controller
         }
         // return $tripmarginpermonth;
         $margins = $margin;
+        //$revenues = array_column($getRevenueResult, 'revenuePerMonth');
+
         $sumOfTotalMargin = DB::SELECT(
             DB::RAW(
                 'SELECT SUM(client_rate * 1.025) AS totalRevenue, SUM(transporter_rate) AS totalCost, ROUND(SUM((client_rate * 1.025) - transporter_rate), 2) AS totalMargin FROM tbl_kaya_trips WHERE tracker >= 5 AND trip_status = TRUE'
@@ -196,7 +210,6 @@ class trackerController extends Controller
                         else {
                             $sumOfOverdueInvoices += $specificTrip->diff;
                         }
-
                     }
                 }
 
@@ -210,6 +223,8 @@ class trackerController extends Controller
                 $yetToDueDifference[] = $sumTotal[$key] - $sumOverdue[$key];
             }
         }
+        
+       //return $clientOutStandingPayment;
 
         return view('finance.financials.receivables-tracker',
             compact(
@@ -258,7 +273,7 @@ class trackerController extends Controller
             $periods[] = date('M', mktime(0,0,0,$period->months, 1, date('Y'))).', '.$period->years;
             [$getRevenueResult[]] = DB::SELECT(
                 DB::RAW(
-                    'SELECT ROUND(SUM((client_rate * 1.025)  / 1000000), 2) AS revenuePerMonth FROM tbl_kaya_trips WHERE year(gated_out) = "'.$period->years.'" AND MONTH(gated_out) = "'.$period->months.'" AND client_id = "'.$request->client.'" AND trip_status = 1 '
+                    'SELECT ROUND(SUM((client_rate * 1.025)  / 1000000), 2) AS revenuePerMonth FROM tbl_kaya_trips WHERE year(gated_out) = "'.$period->years.'" AND MONTH(gated_out) = "'.$period->months.'" AND client_id = "'.$request->client.'" AND trip_status = 1 AND tracker >=5'
                 )
             );
         }
@@ -433,6 +448,8 @@ class trackerController extends Controller
                                     <p class="font-weight-semibold text-danger">There are no pending invoice for this client</p>
                                 </div>';
                             }
+                            
+                            
 
                         $response.='</div>
                     </div>
@@ -450,9 +467,8 @@ class trackerController extends Controller
             'avg_payment_days' => $avgDayToPayment
         );
     }
-
-
-    function numericalMonthDetector($selectedMonth) {
+    
+        function numericalMonthDetector($selectedMonth) {
         if($selectedMonth == 'Jan') { $month = 1; }
         if($selectedMonth == 'Feb') { $month = 2; }
         if($selectedMonth == 'Mar') { $month = 3; }
@@ -485,7 +501,7 @@ class trackerController extends Controller
         }
         else{
             foreach($expenseList as $key => $expenses) {
-                $expensesAmount[] = $expenses->amount / 1000000;
+                $expensesAmount[] = number_format($expenses->amount / 1000000, 3);
                 $expensesCategory[] = ucfirst($expenses->category); 
                 $percentageOccupied[] = round(($expensesAmount[$key] / $expense->expenses) * 100, 2);
             }
@@ -498,7 +514,7 @@ class trackerController extends Controller
             );
         }
     }
-
+    
     public function expenseCategoryBreakdown(Request $request) {
         $currentMonth = $this->numericalMonthDetector($request->month);
         $currentYear = $request->year;
@@ -506,6 +522,7 @@ class trackerController extends Controller
         $sumTotal = DB::SELECT(DB::RAW(
             'SELECT SUM(b.amount) AS total_amount FROM tbl_kaya_expenses_breakdowns a JOIN tbl_kaya_payment_voucher_descs b JOIN tbl_kaya_payment_vouchers c  ON a.category = b.expense_type AND b.payment_voucher_id = c.id  WHERE current_month = "'.$currentMonth.'" AND current_year = "'.$currentYear.'" AND expense_type="'.$expenseCategory.'" AND upload_status = TRUE AND voucher_status = TRUE AND decline_status = FALSE'
         ));
+
         $response = '<table class="table table-condensed">
             <thead>
                 <tr>
@@ -525,7 +542,7 @@ class trackerController extends Controller
             </thead>';
             $expensesBreakdown = DB::SELECT(
                 DB::RAW(
-                    'SELECT expense_type, description, payment_voucher_id, b.amount, b.owner, uniqueId FROM tbl_kaya_expenses_breakdowns a JOIN tbl_kaya_payment_voucher_descs b JOIN tbl_kaya_payment_vouchers c ON a.category = b.expense_type AND b.payment_voucher_id = c.id WHERE current_month = "'.$currentMonth.'" AND current_year = "'.$currentYear.'" AND expense_type="'.$expenseCategory.'"'
+                    'SELECT expense_type, description, payment_voucher_id, b.amount, b.owner, uniqueId FROM tbl_kaya_expenses_breakdowns a JOIN tbl_kaya_payment_voucher_descs b JOIN tbl_kaya_payment_vouchers c ON a.category = b.expense_type AND b.payment_voucher_id = c.id WHERE current_month = "'.$currentMonth.'" AND current_year = "'.$currentYear.'" AND expense_type="'.$expenseCategory.'" AND c.upload_status = TRUE AND voucher_status = TRUE AND decline_status = FALSE'
                 )
             );
         

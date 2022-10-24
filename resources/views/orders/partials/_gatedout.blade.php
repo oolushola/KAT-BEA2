@@ -12,10 +12,7 @@
 
     </div>
     <div class="row ml-3 mr-3 mt-3">
-        @if($waybillUploadCount <= 0)
-             <a href="{{URL('/way-bill/'.$recid[0]->trip_id.'/'.$recid[0]->trip_id )}}" class="btn btn-danger text-white mb-3" style="font-size:10px; font-weight:bold;">Upload Waybill Details Now!!!</a>
-             <span class="text-danger font-weight-bold mt-2"><i class="icon-x"></i>Sorry, you cannot gate out  this truck without uploading the waybill</span> &nbsp; 
-        @else
+        
         <div class="col-md-4">
             <div class="form-group">
                 <label class="font-weight-semibold">Customer's Name</label>
@@ -68,5 +65,5 @@
         <button type="submit" class="btn btn-primary" id="updateGatedOut">Update</button>
         @endif
     </div>
-    @endif
+    
 </div>

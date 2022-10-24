@@ -14,6 +14,7 @@ class drivers extends Model
         'driver_phone_number',
         'motor_boy_first_name',
         'motor_boy_last_name',
-        'motor_boy_phone_no'
+        'motor_boy_phone_no',
+        'license_expiry'
     ];
 }
