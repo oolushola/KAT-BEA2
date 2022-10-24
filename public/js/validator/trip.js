@@ -1,8 +1,8 @@
-$(function() {
-       
-    $("#clientId").change(function() {
+$(function () {
+
+    $("#clientId").change(function () {
         $client_id = $("#clientId").val();
-        $.get('/client-loading-site', {client_id:$client_id}, function(data){
+        $.get('/client-loading-site', { client_id: $client_id }, function (data) {
             $array = data.split('`');
             $("#loadingSiteContainer").html($array[0]);
             $('#productContainer').html($array[1]);
@@ -14,9 +14,9 @@ $(function() {
      * @return {Object}
      */
 
-    $("#transporterIdValue").change(function() {
+    $("#transporterIdValue").change(function () {
         $transporter_id = $("#transporterIdValue").val();
-        $.get('/transporter-phone', {transporter_id:$transporter_id}, function(data){
+        $.get('/transporter-phone', { transporter_id: $transporter_id }, function (data) {
             $("#transporterNumber").val(data[0].phone_no);
         });
     });
@@ -26,25 +26,25 @@ $(function() {
      * @return [{Object}] Array of Object
      */
 
-     $("#truckId").change(function() {
+    $("#truckId").change(function () {
         $truck_id = $("#truckId").val();
-        $.get('/truck-info', {truck_id:$truck_id}, function(data){
+        $.get('/truck-info', { truck_id: $truck_id }, function (data) {
             $("#truckType").val(data[0].truck_type);
             $("#tonnage").val(data[0].tonnage);
             $('#truckTonnage').val(data[0].tonnage);
         });
-     });
+    });
 
-     /**
-      * @description GET METHOD to get driver's information
-      * @return [{Object}]
-      */
+    /**
+     * @description GET METHOD to get driver's information
+     * @return [{Object}]
+     */
 
-    $("#driverId").change(function() {
+    $("#driverId").change(function () {
         $driver_id = $("#driverId").val();
-        $.get('/driver-info', {driver_id:$driver_id}, function(data){
+        $.get('/driver-info', { driver_id: $driver_id }, function (data) {
             $("#driverPhoneNumber").val(data[0].driver_phone_number);
-            $("#motorBoyName").val(data[0].motor_boy_first_name+' '+data[0].motor_boy_last_name);
+            $("#motorBoyName").val(data[0].motor_boy_first_name + ' ' + data[0].motor_boy_last_name);
             $("#motorBoyNumber").val(data[0].motor_boy_phone_no);
         });
     });
@@ -54,194 +54,194 @@ $(function() {
      * @return [{Object}]
      */
 
-    $("#destinationState").change(function() {
+    $("#destinationState").change(function () {
         $state_id = $("#destinationState").val();
         $('#exactLocationHolder').html('<i class="icon-spinner2 spinner mr-2"></i>Loading...');
-        $.get('/exact-destination', {state_id:$state_id}, function(data){
+        $.get('/exact-destination', { state_id: $state_id }, function (data) {
             $("#exactLocationHolder").html(data);
         });
     });
 
-    $(document).on("change", '#exactLocation', function() {
-        $selectedLocation = $(this).val().trim()
-        $exactLocations = $('#exactLocationIds').val().trim()
-        $myLocations = $exactLocations+' '+$selectedLocation
+    $(document).on("change", '#exactLocation', function () {
+        $selectedLocation = $(this).val()
+        $exactLocations = $('#exactLocationIds').val()
+        $myLocations = $exactLocations + ' ' + $selectedLocation
         $exactLocations = $('#exactLocationIds').val($myLocations)
     })
 
-    $('#clearAllLocations').click(function() {
+    $('#clearAllLocations').click(function () {
         const ask = confirm("Are you sure you want to clear this locations?")
-        if(ask) {
+        if (ask) {
             $('#exactLocationIds').val("")
             $('#exactLocation').val("")
             $('#destinationState').val("")
         }
-        else{
+        else {
             return false
         }
     })
 
-    $('#exactLocationIds').blur(function(data) {
-        const value = $(this).val().replace(',', '')
-        $(this).val(value)
-    })
-
-    
     function submitTrip(uri, frmName, pageReloadUrl) {
         $ask = confirm('Are you sure all informations supplied are accurate? once submitted, it can\t be modified. Click on cancel to proofread');
-        if($ask){
+        if ($ask) {
             $("#loader").html('<i class="icon-spinner2 spinner mr-2"></i>Please Wait...').addClass('error');
-            $.post(uri, $(frmName).serialize(), function(response) {
-                if(response === 'exists') {
+            $.post(uri, $(frmName).serialize(), function (response) {
+                if (response === 'exists') {
                     $("#loader").html('Operation Aborted. The last trip made by this truck has not been marked offloaded. Please contact the visibility team').addClass("error", "font-weight-semibold")
                     return;
                 }
                 else {
-                    if((response === 'saved') || response === ('updated')) {
+                    if ((response === 'saved') || response === ('updated')) {
                         $("#loader").html(`Trip successfully ${response}`).addClass("error", "font-weight-semibold");
                         window.location = pageReloadUrl
                     }
                     else {
-                        if(response === "transporterNumberExists"){
+                        if (response === "transporterNumberExists") {
                             $("#loader").html(`Transporter already exist. Two different transporters cannot share the same phone number.`).addClass("error");
                             return;
                         }
-                        else if(response === "driversNumberExists"){
+                        else if (response === "driversNumberExists") {
                             $("#loader").html(`Driver phone number already exist.`).addClass("error");
                             return;
                         }
-                         
+
                     }
                 }
 
             });
         }
-        else{
+        else {
             return false;
         }
     }
-    
 
-    $("#registerTrip").click(function(e) {
-         e.preventDefault();
-        //  if(validateGatedIn()===false) {return};
-        //  $(this).attr('disabled', 'disabled')
-         submitTrip('/trips', '#frmTrips', '/update-trip');
+
+    $("#registerTrip").click(function (e) {
+        e.preventDefault();
+        if (validateGatedIn() === false) { return };
+        $(this).attr('disabled', 'disabled')
+        $('#exactLocationIds').removeAttr('disabled', 'disabled')
+        submitTrip('/trips', '#frmTrips', '/update-trip');
     });
 
-    $("#updateArrivalAtloadingBay").click(function(e) {
+    $("#updateArrivalAtloadingBay").click(function (e) {
+        $('#exactLocationIds').removeAttr('disabled', 'disabled')
         e.preventDefault();
         $id = $("#id").val();
-        if(validateGatedIn()===false) { return }
-        if(validateArrivalAtLoadingBay() === false) {return;};
-        submitTrip(`/trips/${$id}`, '#frmTrips', '/update-trip');        
+        if (validateGatedIn() === false) { return }
+        if (validateArrivalAtLoadingBay() === false) { return; };
+        submitTrip(`/trips/${$id}`, '#frmTrips', '/update-trip');
     });
 
-    $("#updateLoadingInformation").click(function(e) {
+    $("#updateLoadingInformation").click(function (e) {
+        $('#exactLocationIds').removeAttr('disabled', 'disabled')
         e.preventDefault();
         $id = $("#id").val();
-        if(validateGatedIn()===false) { return }
-        if(validateArrivalAtLoadingBay()===false) { return };
-        if(validateLoadingInformation()==false){return false};
-        submitTrip(`/trips/${$id}`, '#frmTrips', '/update-trip'); 
+        if (validateGatedIn() === false) { return }
+        if (validateArrivalAtLoadingBay() === false) { return };
+        if (validateLoadingInformation() == false) { return false };
+        submitTrip(`/trips/${$id}`, '#frmTrips', '/update-trip');
     });
 
-    $("#updateDeparture").click(function(e){
+    $("#updateDeparture").click(function (e) {
+        $('#exactLocationIds').removeAttr('disabled', 'disabled')
         e.preventDefault();
         $id = $("#id").val();
         $tripId = $("#tripId").val();
-        if(validateGatedIn()===false) { return }
-        if(validateArrivalAtLoadingBay()===false) { return };
-        if(validateLoadingInformation()===false) { return };
-        if(validateDeparture()===false){ return };
+        if (validateGatedIn() === false) { return }
+        if (validateArrivalAtLoadingBay() === false) { return };
+        if (validateLoadingInformation() === false) { return };
+        if (validateDeparture() === false) { return };
         submitTrip(`/trips/${$id}`, '#frmTrips', `/way-bill/${$tripId}/${$tripId}`);
     });
 
-    
 
-    $("#updateGatedOut").click(function(e) {
+
+    $("#updateGatedOut").click(function (e) {
+        $('#exactLocationIds').removeAttr('disabled', 'disabled')
         e.preventDefault();
         $id = $("#id").val();
         $tripId = $("#tripId").val();
-        if(validateGatedIn()===false) { return }
-        if(validateArrivalAtLoadingBay()===false) { return };
-        if(validateLoadingInformation()===false) { return };
-        if(validateDeparture()===false) { return };
-        
-        if(validateGatedOut() === false) { return };
+        if (validateGatedIn() === false) { return }
+        if (validateArrivalAtLoadingBay() === false) { return };
+        if (validateLoadingInformation() === false) { return };
+        if (validateDeparture() === false) { return };
+
+        if (validateGatedOut() === false) { return };
         $("#loader").html('<i class="icon-spinner4 spinner mr-2"></i>Please Wait...').addClass('error');
         submitTrip(`/trips/${$id}`, '#frmTrips', '/update-trip');
     });
 
 
-     /**
-      * 
-      * @param {*} domid Document Object Model ID to reference the status
-      * @param {*} content Error or success content
-      */
+    /**
+     * 
+     * @param {*} domid Document Object Model ID to reference the status
+     * @param {*} content Error or success content
+     */
 
-     function errorDisplay(domid, content, className) {
+    function errorDisplay(domid, content, className) {
         $(domid).html(`<i class='icon-x'></i>${content}`).addClass(className).fadeIn(100).delay(3000).fadeOut(300);;
-     }
+    }
 
-     function validateGatedIn() {
+    function validateGatedIn() {
         $gateIn = $("#gateIn").val();
-         if($gateIn == "") {
-             errorDisplay('#loader', 'The date and time for gate in is required.', 'error');
-             return false;
-         }
-         $client = $("#clientId").val();
-         if($client == "") {
-             errorDisplay('#loader', 'Choose a client.', 'error');
-             return false;
-         }
-         $loadingSite = $("#loadingSite").val();
-         if($loadingSite == "") {
-             errorDisplay('#loader', 'Choose a loading site', 'error');
-             return false;
-         }
-         $truckId = $("#searchTruckNo").val();
-         if($truckId == "") {
-             errorDisplay('#loader', 'Enter the truck number or choose from the pop up list', 'error');
-             return false;
-         }
-         $transporterId = $("#transporterIdValue").val();
-         if($transporterId == "") {
-             errorDisplay('#loader', 'Enter transporter information or choose from the pop up list', 'error');
-             return false;
-         }
-         
-         $driverId = $("#searchDriver").val();
-         if($driverId == "") {
-             errorDisplay('#loader', 'Enter the driver information or choose from the pop up list', 'error');
-             return false;
-         }
-         $productId = $("#productId").val();
-         if($productId == "") {
-             errorDisplay('#loader', 'Choose a product', 'error');
-             return false;
-         }
-         $destinationState = $("#destinationState").val();
-         if($destinationState == "") {
-             errorDisplay('#loader', 'Choose destination state of the product.', 'error');
-             return false;
-         }
-         $exactLocation = $("#exactLocation").val();
-         if($exactLocation == "") {
-             errorDisplay('#loader', 'Choose exact location where the product is headed.', 'error');
-             return false;
-         }
-         return true;
+        if ($gateIn == "") {
+            errorDisplay('#loader', 'The date and time for gate in is required.', 'error');
+            return false;
+        }
+        $client = $("#clientId").val();
+        if ($client == "") {
+            errorDisplay('#loader', 'Choose a client.', 'error');
+            return false;
+        }
+        $loadingSite = $("#loadingSite").val();
+        if ($loadingSite == "") {
+            errorDisplay('#loader', 'Choose a loading site', 'error');
+            return false;
+        }
+        $truckId = $("#searchTruckNo").val();
+        if ($truckId == "") {
+            errorDisplay('#loader', 'Enter the truck number or choose from the pop up list', 'error');
+            return false;
+        }
+        $transporterId = $("#transporterIdValue").val();
+        if ($transporterId == "") {
+            errorDisplay('#loader', 'Enter transporter information or choose from the pop up list', 'error');
+            return false;
+        }
+
+        $driverId = $("#searchDriver").val();
+        if ($driverId == "") {
+            errorDisplay('#loader', 'Enter the driver information or choose from the pop up list', 'error');
+            return false;
+        }
+        $productId = $("#productId").val();
+        if ($productId == "") {
+            errorDisplay('#loader', 'Choose a product', 'error');
+            return false;
+        }
+        $destinationState = $("#destinationState").val();
+        if ($destinationState == "") {
+            errorDisplay('#loader', 'Choose destination state of the product.', 'error');
+            return false;
+        }
+        $exactLocation = $("#exactLocation").val();
+        $exactLocationIds = $('#exactLocationIds');
+        if ($exactLocation == "" && $exactLocationIds == "") {
+            errorDisplay('#loader', 'Choose exact location where the product is headed.', 'error');
+            return false;
+        }
+        return true;
     }
 
     function validateArrivalAtLoadingBay() {
         $tracker = $("#tracker").val();
-        if($tracker == "") {
+        if ($tracker == "") {
             errorDisplay('#loader', 'Please, choose the specific trip level above', 'error');
             return false;
         }
         $loadingBayArrival = $("#loadingBayArrival").val();
-        if($loadingBayArrival == "") {
+        if ($loadingBayArrival == "") {
             errorDisplay('#loader', 'Arrival time and date is required for loading bay', 'error');
             return false;
         }
@@ -250,7 +250,7 @@ $(function() {
 
     function validateLoadingInformation() {
         $timeLoadingStart = $("#timeLoadingStart").val();
-        if($timeLoadingStart == "") {
+        if ($timeLoadingStart == "") {
             errorDisplay('#loader', 'Time loading starts is required.', 'error');
             return false;
         }
@@ -264,50 +264,50 @@ $(function() {
 
     function validateDeparture() {
         $departure = $("#departure").val();
-        if($departure == "") {
+        if ($departure == "") {
             errorDisplay('#loader', 'Loading bay departure time and date is required.', 'error');
             return false;
         }
         return true;
     }
 
-    function validateGatedOut() {   
+    function validateGatedOut() {
 
         $gatedOut = $("#gatedOut").val();
-        if($gatedOut == "") {
+        if ($gatedOut == "") {
             errorDisplay('#loader', 'Gated out time and date is required.', 'error');
             return false;
         }
         $customerName = $("#customerName").val();
-        if($customerName == "") {
+        if ($customerName == "") {
             errorDisplay('#loader', 'Customer\'s name is required.', 'error');
             return false;
         }
         $customerNumber = $("#customerNumber").val();
-        if($customerNumber == "") {
+        if ($customerNumber == "") {
             errorDisplay('#loader', 'Customer\'s phone number is required.', 'error');
             return false;
         }
         $loadedQuantity = $("#loadedQuantity").val();
-        if($loadedQuantity == "") {
+        if ($loadedQuantity == "") {
             errorDisplay('#loader', 'Loaded quantity is required.', 'error');
             return false;
         }
         $loadedWeight = $("#loadedWeight").val();
-        if($loadedWeight == "") {
+        if ($loadedWeight == "") {
             errorDisplay('#loader', 'Loaded weight is required.', 'error');
             return false;
         }
         $customerAddress = $("#customerAddress").val();
-        if($customerAddress == "") {
+        if ($customerAddress == "") {
             errorDisplay('#loader', 'Customer\'s address is required.', 'error');
             return false;
-        } 
+        }
         $tripType = $("#tripType").val();
-        if($tripType == "") {
+        if ($tripType == "") {
             errorDisplay('#loader', 'Truck type is required.', 'error');
             return false;
-        } 
+        }
     }
 
     function loader(placeholder, loadingtext, cssName) {
@@ -319,56 +319,54 @@ $(function() {
     }
 
     // Void Trip
-    $('.voidTrip').click(function(){
+    $('.voidTrip').click(function () {
         $id = $(this).attr('id');
         $trip_id = $(this).attr('value');
         $ask = confirm('Are you sure you want to cancel this trip?');
-        if($ask){
-            $.post('/trip-cancel-order/'+$id, $('#frmCancelTrip').serializeArray(), function(data) {
-                if(data == 'error'){
+        if ($ask) {
+            $.post('/trip-cancel-order/' + $id, $('#frmCancelTrip').serializeArray(), function (data) {
+                if (data == 'error') {
                     alert('Oops! Something went wrong while trying to void this trip, please contact the administrator!');
                     return
                 }
-                else{
-                    if(data == 'voided'){
-                        alert('You have successfully cancelled trip: '+$trip_id);
+                else {
+                    if (data == 'voided') {
+                        alert('You have successfully cancelled trip: ' + $trip_id);
                         $url = '/view-orders';
                         window.location = $url;
                     }
                 }
             });
-        }   
-        else{
+        }
+        else {
             return false;
         }
     });
 
-    $('#changeGateInTime').click(function(){
+    $('#changeGateInTime').click(function () {
         $(this).addClass('hidden');
         $('#gateInPlaceholder').removeClass('hidden');
-        $('#gateIn').css({fontSize:'10px'});
+        $('#gateIn').css({ fontSize: '10px' });
     });
 
-    $('#changeArrivalTime').click(function(){
+    $('#changeArrivalTime').click(function () {
         $(this).addClass('hidden');
         $('#ArrivalPlaceholder').removeClass('hidden');
-        $('#loadingBayArrival').css({fontSize:'10px'});
+        $('#loadingBayArrival').css({ fontSize: '10px' });
     });
 
 
-    $('#changeGateOutTime').click(function(){
+    $('#changeGateOutTime').click(function () {
         $(this).addClass('hidden');
         $('#gateOutPlaceholder').removeClass('hidden');
-        $('#gatedOut').css({fontSize:'10px'});
+        $('#gatedOut').css({ fontSize: '10px' });
     });
 
-
-    $('.tripType').click(function() {
+    $('.tripType').click(function () {
         $tripType = $(this).attr('value')
         $('#tripType').val($tripType)
     })
 
-    
 
 
 
@@ -376,7 +374,6 @@ $(function() {
 
 
 
-   
 
 
 });

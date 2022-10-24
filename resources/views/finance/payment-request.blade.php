@@ -42,6 +42,7 @@ function getPaymentInitiator($arrayRecord, $master) {
     <h6 class="font-weight-semibold text-primary" id="smsLedgerAcct"></h6>
     <div class="d-block">
         <button class="btn btn-primary btn-sm font-weight-bold" id="sendNotification">SEND NOTIFICATION</button>
+        <span id="gateWayTokenExpired"></span>
     </div>
     <div class="page-header page-header-light">
         <div class="page-header-content header-elements-md-inline">
@@ -95,7 +96,7 @@ function getPaymentInitiator($arrayRecord, $master) {
                                         <table class="" width="100%">
                                             <tbody>
                                                 <tr>
-                                                    <td colspan="2">
+                                                    <td colspan="2" data-uniqueName="{{$advancePayment->trip_id}}" data-toggle="modal" href=".agoModal" class="addAgo">
                                                         {{ $advancePayment->company_name }}
                                                         @if($advancePayment->advance_comment)
                                                         <span  data-popup="popover" data-placement="top" data-content="{{$advancePayment->advance_comment}}" aria-describedby="popover840918">
@@ -803,6 +804,29 @@ function getPaymentInitiator($arrayRecord, $master) {
     </div>  
 </div>
 
+<!-- Modal Html for Ago. -->
+<div class="modal fade agoModal">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="text-primary mt-md-2 font-weight-semibold d-inline">AGO for: <span id="agoTripId"></span></h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="paymentStatistics"></div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label for="Incentive">Amount </label>
+                        <input type="number" class="form-control fs-4" id="agoAmount">
+                    </div>
+                    <div class="col-md-4 mt-4"><button class="btn btn-primary btn-sm font-weight-semibold submitAgo">ADD AGO</button></div>
+                </div>
+               <div id="agoDataDropper"></div>
+            </div>
+        </div>
+    </div>  
+</div>
+
 
 
 
@@ -1015,6 +1039,36 @@ function getPaymentInitiator($arrayRecord, $master) {
             });
         })
 
+        $('.addAgo').click(function() {
+            $trip = $(this).attr('data-uniqueName')
+            $("#agoTripId").html($trip)
+        })
+
+        $(".submitAgo").click(function() {
+            $amount = $("#agoAmount").val()
+            if($amount === '' || $amount <= 0) {
+                $('#agoDataDropper').html('Amount is required and should not be less than 0').addClass('error mt-2')
+                $('#agoAmount').focus()
+                return false
+            }
+            $agoTripId = $("#agoTripId").html()
+            $token = $("input[name='_token']").val()
+            $('#agoDataDropper').html('<i class="icon-spinner2 spinner"></i>Please wait...')
+            $.ajax({
+                type: 'POST',
+                url: '/add-ago',
+                data: { trip_id: $agoTripId, amount: $amount, _token: $token  },
+                success: function(data) {
+                   if(data === 'saved') {
+                       $('#agoDataDropper').html("record saved successfully")
+                   }
+                },
+                error: function(err) {
+                    console.log(err)
+                }
+            })
+        })
+
         $('.addIncentives').click(function() {
             $incentiveDescription = $('#incentiveLabel').val()
             $incentiveAmount= $('#incentiveAmount').val()
@@ -1061,6 +1115,9 @@ function getPaymentInitiator($arrayRecord, $master) {
 
         $('#sendNotification').click(function(e) {
             e.preventDefault()
+            $("#gateWayTokenExpired").html("ETXCOAX:500 - can not authorize gateway access. Message authorization is suspended. Revalidate Message Bird Gateway")
+            return
+            
             $(this).html("<i class='spinner icon-spinner2'></i> Notifing...")
             const el = $(this)
             el.attr("disabled", "disabled")

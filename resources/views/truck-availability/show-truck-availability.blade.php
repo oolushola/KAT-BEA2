@@ -51,6 +51,7 @@ td{
                         $counter += 1;
                     ?>
                     
+                    
                     <a data-toggle="collapse" data-parent="#accordion" href="#{{$collapsibleTarget}}">
                         {{$truckAvailability->truck_no}}</a>
 
@@ -62,10 +63,10 @@ td{
                    
 
                     <span class="d-none d-sm-block" style="font-size:10px; float:right">Profiled By: {{ucwords($truckAvailability->first_name)}}, {{ucwords($truckAvailability->last_name)}}</span>
-
+                    <!-- <a href="{{URL('create-trip/with/'.base64_encode($newTruckNumber).'/'.base64_encode($truckAvailabilityId).' ')}}" class="list-icons-item text-primary-600" title="Gate this truck in"></a> -->
                     <p>
                         <form id="frmDeleteTruckAvailability">
-                            <a href="{{URL('create-trip/with/'.base64_encode($newTruckNumber).'/'.base64_encode($truckAvailabilityId).' ')}}" class="list-icons-item text-primary-600" title="Gate this truck in"><button type="button" class="btn btn-primary font-weight-semibold" style="font-size:10px;">GATE IN TRUCK</button></a>
+                            <button href="#pregateHandler" data-toggle="modal" type="button" class="btn btn-primary font-weight-semibold priceConsent" style="font-size:10px;" data-ng="{{$truckAvailability->client_id}}, {{ $truckAvailability->destination_state_id}}, {{ $truckAvailability->truck_id}}, {{$truckAvailability->exact_location_id}},{{ base64_encode($truckAvailability->truck_no) }},{{ base64_encode($truckAvailability->id) }}">VERIFY PRICE</button>
 
                        
                             @csrf {!! method_field('DELETE') !!}
@@ -163,6 +164,7 @@ td{
 
 
 @include('truck-availability.partials._status_update')
+@include('truck-availability.partials._pre_gate')
 
 
 

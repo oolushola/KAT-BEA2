@@ -16,6 +16,7 @@ use App\OffloadWaybillStatus;
 use App\OffloadWaybillRemark;
 use App\EirProofOfDelivery;
 use App\tripWaybill;
+use App\TruckDocuments;
 
 class dashboardController extends Controller
 {
@@ -349,6 +350,7 @@ class dashboardController extends Controller
         foreach($arrayObject as $key=> $trip) {
             $waybillsInfo_[] = tripWaybill::WHERE('trip_id', $trip->id)->GET();
         }
+       
         
         $data = '<div class="table-responsive">
             <table class="table table-striped table-hover">
@@ -575,11 +577,29 @@ class dashboardController extends Controller
                                 }
                                 $data.='</td>'; 
                             }
+
+                            $truckDocuments = TruckDocuments::WHERE('truck_id', $object->truck_id)->GET()->FIRST();
                             
                             $data.='
                             </tr>
                             <tr>
-                                <td colspan="6">';
+                                <td colspan="3"> Docs: ';
+                                if($truckDocuments) {
+                                    $data.= '
+                                        <a class="badge badge-primary" href="/assets/img/truckdocuments/vehicle-licence/'.$truckDocuments->vehicle_licence.'" target="_blank">License</a>
+                                        <a class="badge badge-primary" href="/assets/img/truckdocuments/roadworthiness/'.$truckDocuments->roadworthiness.'" target="_blank">Roadworthiness</a>
+                                        <a class="badge badge-primary" href="/assets/img/truckdocuments/vehicle-insurance/'.$truckDocuments->insurance.'" target="_blank">Insurance</a>
+                                        <a class="badge badge-primary" href="/assets/img/truckdocuments/proof-of-ownership/'.$truckDocuments->proof_of_ownership.'" target="_blank">Proof of Ownership</a>
+                                    ';
+                                }
+                                else{   
+                                    $data.= 'Not found.';
+                                }
+                                
+                                $data.='
+                                </td>
+                                <td colspan="3">
+                                    Waybill Details';
                                     if(count($waybillsInfo_[$k]) > 0) {
                                         foreach($waybillsInfo_[$k] as $tripWaybills) {
                                             if($tripWaybills->trip_id == $object->id) {

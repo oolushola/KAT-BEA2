@@ -1,6 +1,6 @@
 @extends('layout')
 
-@section('title')Kaya::.Add Incentives @stop
+@section('title')Kaya::.Vouchers @stop
 
 @section('main')
 
@@ -101,6 +101,7 @@
                     <h5 class="card-title">Log of Vouchers</h5>
                 </div>
 
+                <div class="ml-3 mb-2 mt-2 font-size-md">{!! $paymentVouchers->links() !!}</div>
                 <div class="table-responsive" id="contentHolder">
                     <table class="table table-bordered">
                         <thead class="table-info">
@@ -109,6 +110,7 @@
                                 <th>Date</th>
                                 <th>Voucher ID</th>
                                 <th>Requested By:</th>
+                                <th>Amount</th>
                                 <th>Action</th>                         
                             </tr>
                         </thead>
@@ -131,6 +133,7 @@
                                             
                                         </td>
                                         <td class="font-weight-semibold">{{ ucfirst($users[$key]->first_name) }} {{ ucfirst($users[$key]->last_name) }}</td>
+                                        <td>&#x20A6;{{ number_format($sumTotal[$key], 2) }}</td>
                                         <td><a href="{{URL('payment-voucher/'.$voucher->uniqueId.'/'.md5($voucher->id).'')}}">View</a> <i class="icon-cloud-upload"></i></td>
                                     </tr>
                                 @endforeach

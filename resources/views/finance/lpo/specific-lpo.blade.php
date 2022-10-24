@@ -217,11 +217,21 @@
 
 					<div class="card-body">
 						<div class="row">
-							<div class="pt-2 mb-3 col-md-4">
+							<div class="pt-2 mb-3 col-md-5">
+								<h5 class="font-weight-bold">Payment Details.</h5>
 								
+								@if(count($payments))
+									<?php $counter = 0;  ?>
+									@foreach($payments as $payment)
+									<?php $counter += 1;  ?>
+										<p>{{ $counter }}. {{ $payment->payment_for }}: &#x20a6;{{ number_format($payment->amount, 2) }} <span class="badge badge-danger">{{ $payment->paid_time_stamps }}</span></p>
+									@endforeach
+								@else
+										<p>No payment log can be found for this trip.</p>
+								@endif
 							</div>
 
-							<div class="pt-2 mb-3 wmin-md-400 ml-auto col-md-8">
+							<div class="pt-2 mb-3 wmin-md-400 ml-auto col-md-7">
 								<div class="table-responsive">
 									<table class="table">
 										<tbody>

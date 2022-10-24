@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\HttpResponse;
 use App\incentives;
 use App\transporterRate;
+use App\trip;
+use App\Ago;
 
 class incentivesController extends Controller
 {
@@ -74,5 +76,15 @@ class incentivesController extends Controller
             $recid->UPDATE(['state'=>$request->state, 'exact_location' => $request->exact_location_id, 'incentive_description' => $request->incentive_description, 'amount' => $request->amount]);
             return 'updated ';
         }
+    }
+
+    public function addAgo(Request $request) {
+        $tripId = $request->trip_id;    
+        $tripInfo = trip::WHERE('trip_id', $tripId)->GET()->FIRST();
+        $newAgo = Ago::FIRSTORNEW(['trip_id' => $tripInfo->id]);
+        $newAgo->amount = $request->amount;
+        $newAgo->save();
+        return 'saved';
+
     }
 }

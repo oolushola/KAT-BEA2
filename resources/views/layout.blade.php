@@ -9,7 +9,12 @@
     <meta name="author" content="Kaya Africa Technology">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>@yield('title')</title>
-	<noscript>Hey, you need to enable javascript before using this application</noscript>
+	<noscript>
+		Hey, you! some scripts are disabled on your device, please contact Kaya Tech Support!
+		<script>
+			prompt("Contact Tech Support!")
+		<script>
+	</noscript>
     
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -266,6 +271,12 @@
 								<span>Refunds</span>
 							</a>
 						</li>
+						<li class="nav-item">
+							<a href="{{URL('rate-sheet')}}" class="nav-link">
+								<i class="icon-file-spreadsheet2"></i>
+								<span>Rate Sheet</span>
+							</a>
+						</li>
 						@endif
 						
 						@if(Session::get('$prsSession'))
@@ -304,10 +315,12 @@
 									<a href="{{URL('truck-availability')}}" class="nav-link">
 										Truck Availability</a>
 								</li>
+								@if($auth == 1)
 								<li class="nav-item">
 									<a href="{{URL('trips')}}" class="nav-link {{request()->is('trips') ? 'active' : ''}}">
 										Create New Trip</a>
 								</li>
+								@endif
 								<li class="nav-item">
 									<a href="{{URL('truck-availability-list')}}" class="nav-link {{request()->is('trips') ? 'active' : ''}}">
 										Create Trip From Availability</a>

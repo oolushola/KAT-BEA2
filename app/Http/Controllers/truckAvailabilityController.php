@@ -15,15 +15,33 @@ use App\drivers;
 use App\product;
 use App\client;
 use App\truckAvailability;
-
+use Auth;
 
 
 
 class truckAvailabilityController extends Controller
 {
+
     public function index() {
+        $isRomOil = DB::SELECT(
+            DB::RAW(
+                'SELECT * FROM tbl_kaya_loading_sites WHERE id IN (SELECT loading_site_id FROM tbl_kaya_pair_ops_loading_site WHERE user_id = "'.Auth::user()->id.'") AND loading_site_code = "ROI"'
+            )
+        );
+        $transporters = transporter::SELECT('id', 'transporter_name')->WHERE('transporter_status', TRUE)->ORDERBY('transporter_name', 'ASC')->GET();
+        $truckTypes = truckType::SELECT('id', 'truck_type', 'tonnage')->ORDERBY('truck_type', 'ASC')->GET();
+        return view('truck-availability.create', 
+            compact(
+                'transporters',
+                'truckTypes',
+                'isRomOil'
+            )
+        );
+    }
+
+    public function createTruckAvailability() {
         $loadingsites = loadingSite::ORDERBY('loading_site', 'ASC')->GET();
-        $transporters = transporter::WHERE('transporter_status', TRUE)->ORDERBY('transporter_name', 'ASC')->GET();
+        $transporters = transporter::SELECT('id', 'transporter_name')->WHERE('transporter_status', TRUE)->ORDERBY('transporter_name', 'ASC')->GET();
         $trucks = trucks::ORDERBY('truck_no', 'ASC')->GET();
         $drivers = drivers::ORDERBY('driver_first_name', 'ASC')->GET();
         $products = product::ORDERBY('product', 'ASC')->GET();
@@ -32,8 +50,8 @@ class truckAvailabilityController extends Controller
                 'SELECT * FROM tbl_regional_state WHERE regional_country_id = \'94\' ORDER BY state ASC'
             )
         );
-        $truckTypes = truckType::SELECT('truck_type')->ORDERBY('truck_type', 'ASC')->DISTINCT()->GET();
-        return view('truck-availability.create', 
+        $truckTypes = truckType::SELECT('id', 'truck_type', 'tonnage')->ORDERBY('truck_type', 'ASC')->GET();
+        return view('truck-availability.new', 
             compact(
                 'loadingsites',
                 'transporters',
@@ -53,7 +71,7 @@ class truckAvailabilityController extends Controller
             'loading_site_id' => 'required | integer',
             'product_id' => 'required | integer',
             'destination_state_id' => 'required | integer',
-            'exact_location_id' => 'required | string',
+            'locations' => 'required | string',
             'truck_status' => 'required'
         ]);
 
@@ -73,30 +91,30 @@ class truckAvailabilityController extends Controller
             }
         }
 
-        $driverChecker = $request->driverChecker;
-        if($driverChecker != 1){
-            $checkDriversPhoneNumber = drivers::WHERE('driver_phone_number', $request->drivers_phone_no)->exists();
-            if($checkDriversPhoneNumber)
-            {
-                return 'driversNumberExists';
-            }
-            else{
-                $driversName = explode(' ', $request->drivers_name);
-                $drivers_first_name = $driversName[0];
-                if(isset($driversName[1]))
-                {
-                    $drivers_last_name = $driversName[1];
-                } else {
-                    $drivers_last_name = '';
-                }
-                $addNewDriver = drivers::firstOrNew(['driver_first_name' => $drivers_first_name, 'driver_last_name' => $drivers_last_name]);
-                $addNewDriver->driver_phone_number = $request->drivers_phone_no;
-                $addNewDriver->motor_boy_first_name = $request->motor_boy_name;
-                $addNewDriver->motor_boy_phone_no = $request->motor_boy_number;
-                $addNewDriver->save();
-                $request->driver_id = $addNewDriver->id;
-            }
-        }
+        // $driverChecker = $request->driverChecker;
+        // if($driverChecker != 1){
+        //     $checkDriversPhoneNumber = drivers::WHERE('driver_phone_number', $request->drivers_phone_no)->exists();
+        //     if($checkDriversPhoneNumber)
+        //     {
+        //         return 'driversNumberExists';
+        //     }
+        //     else{
+        //         $driversName = explode(' ', $request->drivers_name);
+        //         $drivers_first_name = $driversName[0];
+        //         if(isset($driversName[1]))
+        //         {
+        //             $drivers_last_name = $driversName[1];
+        //         } else {
+        //             $drivers_last_name = '';
+        //         }
+        //         $addNewDriver = drivers::firstOrNew(['driver_first_name' => $drivers_first_name, 'driver_last_name' => $drivers_last_name]);
+        //         $addNewDriver->driver_phone_number = $request->drivers_phone_no;
+        //         $addNewDriver->motor_boy_first_name = $request->motor_boy_name;
+        //         $addNewDriver->motor_boy_phone_no = $request->motor_boy_number;
+        //         $addNewDriver->save();
+        //         $request->driver_id = $addNewDriver->id;
+        //     }
+        // }
 
         $checker = truckAvailability::WHERE('truck_id', $request->truck_id)->WHERE('status', FALSE)->exists();
         if($checker){
@@ -107,7 +125,7 @@ class truckAvailabilityController extends Controller
             $addTruckAvailability->driver_id = $request->driver_id;
             $addTruckAvailability->product_id = $request->product_id;
             $addTruckAvailability->destination_state_id = $request->destination_state_id;
-            $addTruckAvailability->exact_location_id = $request->exact_location_id;
+            $addTruckAvailability->exact_location_id = $request->locations;
             $addTruckAvailability->truck_status = $request->truck_status;
             $addTruckAvailability->reported_by = $request->reported_by;
             $addTruckAvailability->dated = $request->dated;

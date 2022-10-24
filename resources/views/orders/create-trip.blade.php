@@ -106,8 +106,12 @@
                 <input type="datetime-local" class="form-control" name="gate_in" id="gateIn" value="<?php if(isset($recid)){ echo $recid[0]->gate_in; } else { echo date('Y-m-d\TH:i'); } ?>" >
             </span></h6>
             <span></span>
-
+            
+            @if(Auth::user()->role_id <= 4)
             <span style="font-size:8px; font-family:tahoma; cursor:pointer; color:blue; font-weight:bold" id="changeGateInTime">Change Time and Date of Gate In</span>
+            @else
+            <span>&nbsp;</span>
+            @endif
         </div>
         
         <div class="row ml-3 mr-3 mt-3">
@@ -154,9 +158,7 @@
                     <input type="hidden" name="truck_id" id="truckIdValue" value="<?php if(isset($recid)){ echo $recid[0]->truck_id; } else echo ''; ?>">
                 </div>
                 <div class="table-responsive hidden" style="position:absolute; background:#f1f1f1; max-height:350px; border-radius:5px; margin-top:-20px; box-shadow:2px 2px 2px #ccc; z-index:10; font-size:11px; width:290px;" id="truckNoLists">
-                    
                     <section id="closeTruckBank" style="font-size:11px; tect-decoration:underline; padding:5px; text-align:right; background:#fbfbfb; color:red; cursor:pointer; font-weight:bold; font-family:tahoma; font-size:10px;">Close</section>
-
                     <table class="table table-stripped" id="truckBank">
                         <tbody>
                             @if(count($trucks))
@@ -178,7 +180,6 @@
             <div class="col-md-3">
                 <div class="form-group">
                     <label class="font-weight-semibold">Truck Type *</label>
-                    
                     <select id="truckType"  name="truck_type" class="form-control">
                         <option value="">Choose Truck Type</option>
                         @foreach($truckTypes as $specificTruckType)
@@ -214,6 +215,7 @@
                         @endforeach
                     </select>
                 </div>
+                
             </div>
             
             <div class="col-md-3" id="transporterPhoneNumber">
@@ -233,7 +235,6 @@
                 <div class="table-responsive hidden" style="position:absolute; background:#f1f1f1; max-height:350px; border-radius:5px; margin-top:-20px; box-shadow:2px 2px 2px #ccc; z-index:10; font-size:11px; width:290px;" id="driversList">
 
                 <section id="closeDriverBank" style="font-size:11px; tect-decoration:underline; padding:5px; text-align:right; background:#fbfbfb; color:red; cursor:pointer; font-weight:bold; font-family:tahoma; font-size:10px;">Close</section>
-
                     <table class="table table-stripped"  id="driversBank">
                         <tbody>
                             @if(count($drivers))
@@ -276,7 +277,6 @@
             <div class="col-md-3">
                 <div class="form-group" id="productContainer">
                     <label class="font-weight-semibold">Product *</label>
-                    
                         <select class="form-control" name="product_id" id="productId">
                             <option value="">View all products</option>
                             @foreach($products as $product)
@@ -326,12 +326,11 @@
                     </select>
                 </div>
             </div>
-
             <div class="col-md-3">
                 <div class="form-group">
-                    <label class="font-weight-semibold">Locations </label>
+                    <label class="font-weight-semibold">Locations</label>
                     <span style="float:right; color: red; cursor: pointer; text-decoration: underline" id="clearAllLocations">Clear All</span>
-                    <input type="text" class="form-control" name="exact_location_id" id="exactLocationIds" value="<?php if(isset($recid)){echo $recid[0]->exact_location_id;}?>">
+                    <input type="text" class="form-control" name="exact_location_id" id="exactLocationIds" value="<?php if(isset($recid)) { echo $recid[0]->exact_location_id; } else { echo ''; } ?>" disabled>
                 </div>
             </div>
         </div>
@@ -361,7 +360,20 @@
     @endif
 
     @if(isset($recid) && ($recid[0]->tracker)>=4)
-        @include('orders.partials._gatedout')
+        <?php $noWaybill = 0; ?>
+        @foreach($waybillUploadCount as $waybill)
+            @if(!$waybill->photo) 
+                <?php $noWaybill += 1; ?>
+            @endif
+        @endforeach
+        
+        @if($noWaybill > 0)
+            <a href="{{URL('/way-bill/'.$recid[0]->trip_id.'/'.$recid[0]->trip_id )}}" class="btn btn-danger text-white mb-3" style="font-size:10px; font-weight:bold;">Upload Waybill Details Now!!!</a>
+             <span class="text-danger font-weight-bold mt-2"><i class="icon-x"></i>Sorry, you cannot gate out  this truck without uploading the waybill</span> &nbsp;
+        @else
+            @include('orders.partials._gatedout')
+        @endif
+
         <input type="hidden" name="day" value="{{date('d')}}">
         <input type="hidden" name="month" value="{{date('F')}}">
         <input type="hidden" name="year" value="{{date('Y')}}">
@@ -376,5 +388,5 @@
 @section('script')
 <script type="text/javascript" src="{{URL::asset('js/validator/tripvalidations.js')}}"></script>
 <script type="text/javascript" src="{{URL::asset('js/validator/truckAvailability.js')}}"></script>
-<script type="text/javascript" src="{{URL::asset('js/validator/trip.js')}}"></script>
+<script type="text/javascript" src="{{URL::asset('js/validator/trip.js?v=').time()}}"></script>
 @stop

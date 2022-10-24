@@ -10,6 +10,8 @@ use App\transporter;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use App\trip;
+use App\PaymentNotification;
 
 class lpoController extends Controller
 {
@@ -46,12 +48,16 @@ class lpoController extends Controller
     }
 
     public function show(Request $request, $id) {
+        $tripInfo = trip::WHERE('trip_id', $id)->GET()->LAST();
         $trip_id = $id;
         $lposummary = DB::SELECT(
             DB::RAW(
                 'SELECT a.*, b.loading_site, c.`driver_first_name`, c.`driver_last_name`, c.`driver_phone_number`, c.`motor_boy_first_name`, c.`motor_boy_last_name`, c.`motor_boy_phone_no`, d.transporter_name, d.phone_no, e.product, f.truck_no, g.truck_type, g.tonnage FROM tbl_kaya_trips a JOIN tbl_kaya_loading_sites b JOIN tbl_kaya_drivers c JOIN tbl_kaya_transporters d JOIN tbl_kaya_products e JOIN tbl_kaya_trucks f JOIN tbl_kaya_truck_types g ON a.loading_site_id = b.id AND a.driver_id = c.id AND a.transporter_id = d.id AND a.product_id = e.id AND a.truck_id = f.id AND f.truck_type_id = g.id  WHERE a.trip_status = \'1\' AND tracker <> \'0\' AND trip_id = "'.$id.'" ORDER BY a.trip_id ASC'
             )
         );
+
+        $payments = PaymentNotification::WHERE('trip_id', $tripInfo->id)->GET();
+
         $transporterInformation = transporter::WHERE('id', $lposummary[0]->transporter_id)->GET();
         $companyProfile = companyProfile::LIMIT(1)->GET();
         $waybillinfos = tripWaybill::SELECT('id', 'invoice_no', 'sales_order_no', 'trip_id')->ORDERBY('trip_id', 'ASC')->GET();
@@ -61,7 +67,9 @@ class lpoController extends Controller
                 'trip_id',
                 'lposummary',
                 'transporterInformation',
-                'waybillinfos'
+                'waybillinfos',
+                'payments'
+                
             )
         );
     }

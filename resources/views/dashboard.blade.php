@@ -1003,6 +1003,7 @@ input, select{
     }, 60000);
 
     $('.tripStatusMenu').click(function() {
+        $("#tripStatusResponse").html('<i class="icon-spinner3 spinner"></i> Please wait...')
         $('.tripStatusMenu').removeClass('badge badge-success')
         $(this).addClass('badge badge-success')
         $status = this.innerHTML

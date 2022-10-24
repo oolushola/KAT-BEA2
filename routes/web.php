@@ -70,6 +70,7 @@ Route::group(['middleware' => 'auth'], function() {
 
     Route::get('trip-initial-requirement', 'ordersController@getinitialrequirement');
     Route::resource('truck-availability', 'truckAvailabilityController');
+    Route::get('new-truck-availability', "truckAvailabilityController@createTruckAvailability");
     Route::get('truck-availability-list', 'truckAvailabilityController@show');
     Route::resource('trips', 'ordersController');
     Route::get('create-trip/with/{truck_no}/{id}', 'ordersController@createTripByAvailability');
@@ -411,6 +412,18 @@ Route::group(['middleware' => 'auth'], function() {
     //Kaya Chase
     Route::get('kaya-chase/follow-up/{tripId}', 'KayaChaseController@displayFollowUpDetails');
     Route::post('kaya-chase/follow-up', 'KayaChaseController@displayFollowUpDetails');
+
+
+    Route::get("verify-rate-sheet-price", "RateSheetController@rateVerification");
+    Route::resource("rate-sheet", "RateSheetController");
+    Route::post("bulk-rate-sheet", "RateSheetController@uploadBulkRateSheet");
+
+    Route::get('verify-truck-documents', 'TruckDocumentsController@verifyTruckDocuments');
+    Route::post('upload-truck-documents', 'TruckDocumentsController@uploadTruckDocuments');
+    Route::post('add-ago', 'incentivesController@addAgo');
+    Route::get('reversed-invoice-ago', 'invoiceController@reverseInvoiceAgo');
+    Route::post('create-ago-records', 'invoiceController@createAgoRecords');
+    Route::post('remove-ago-record', 'invoiceController@removeReversedAgo');
 
     
 
